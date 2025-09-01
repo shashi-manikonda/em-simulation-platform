@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0", "numpy>=1.20", "pybind11>=2.10"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtflib"
+version = "2.0.1"
+authors = [
+    { name="Shashikant Manikonda", email="manikonda@outlook.com" },
+]
+description = "A library for working with Multivariate Taylor Functions."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "jupytext",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "matplotlib",
+    "nbconvert",
+    "ipykernel",
+    "jupytext",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/sm-physics/mtflib"
+"Bug Tracker" = "https://github.com/sm-physics/mtflib/issues"
