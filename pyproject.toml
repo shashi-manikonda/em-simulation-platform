@@ -1,14 +1,14 @@
 [build-system]
-requires = ["setuptools>=61.0", "numpy>=1.20", "pybind11>=2.10"]
+requires = ["setuptools>=61.0", "numpy>=1.20"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mtflib"
-version = "2.0.1"
+name = "em-app"
+version = "0.1.0"
 authors = [
     { name="Shashikant Manikonda", email="manikonda@outlook.com" },
 ]
-description = "A library for working with Multivariate Taylor Functions."
+description = "A package for Electromagnetic applications using MTFLibrary."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
@@ -18,7 +18,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: C++",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Topic :: Software Development :: Libraries",
 ]
@@ -26,6 +25,7 @@ dependencies = [
     "numpy",
     "pandas",
     "jupytext",
+    "mtflib",
 ]
 
 [project.optional-dependencies]
