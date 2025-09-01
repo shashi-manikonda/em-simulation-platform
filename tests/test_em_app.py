@@ -2,8 +2,8 @@
 import pytest
 import numpy as np
 import mtflib
-from src.applications.em import biot_savart
-from src.applications.em import current_ring
+from em_app import biot_savart
+from em_app import current_ring
 from mtflib import MultivariateTaylorFunction
 
 @pytest.fixture(scope="function", autouse=True)
