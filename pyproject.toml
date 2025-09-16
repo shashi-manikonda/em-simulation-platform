@@ -25,7 +25,7 @@ dependencies = [
     "numpy",
     "pandas",
     "jupytext",
-    "mtflib",
+    "mtflib==1.5.0",
 ]
 
 [project.optional-dependencies]

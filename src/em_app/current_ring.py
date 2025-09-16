@@ -1,6 +1,6 @@
 import numpy as np
-from mtflib import MultivariateTaylorFunction, Var, convert_to_mtf
-from mtflib.elementary_functions import cos_taylor, sin_taylor, exp_taylor, gaussian_taylor, sqrt_taylor, log_taylor, arctan_taylor, sinh_taylor, cosh_taylor, tanh_taylor, arcsin_taylor, arccos_taylor, arctanh_taylor
+from mtflib import MultivariateTaylorFunction
+from mtflib import mtf
 
 def current_ring(ring_radius, num_segments_ring, ring_center_point, ring_axis_direction, return_mtf=True):
     """
@@ -57,16 +57,16 @@ def current_ring(ring_radius, num_segments_ring, ring_center_point, ring_axis_di
     rotation_align_z_axis = rotation_matrix_align_vectors(np.array([0, 0, 1.0]), ring_axis_direction_unit)
 
     if return_mtf:
-        u = Var(4)
+        u = mtf.var(4)
         segment_mtfs_ring = []
         element_lengths_ring = []
         direction_vectors_ring = []
 
         for i in range(num_segments_ring):
             phi = (i + 0.5 + 0.5*u) * d_phi
-            x_center = ring_radius * cos_taylor(phi)
-            y_center = ring_radius * sin_taylor(phi)
-            z_center = convert_to_mtf(0.0)
+            x_center = ring_radius * mtf.cos(phi)
+            y_center = ring_radius * mtf.sin(phi)
+            z_center = mtf.to_mtf(0.0)
 
             center_point = np.array([x_center, y_center, z_center], dtype=object)
             center_point_rotated = np.dot(rotation_align_z_axis, center_point)
@@ -75,11 +75,11 @@ def current_ring(ring_radius, num_segments_ring, ring_center_point, ring_axis_di
 
             element_lengths_ring.append(ring_radius * d_phi)
 
-            direction_base = np.array([-sin_taylor(phi), cos_taylor(phi), convert_to_mtf(0.0)], dtype=object)
+            direction_base = np.array([-mtf.sin(phi), mtf.cos(phi), mtf.to_mtf(0.0)], dtype=object)
             direction_rotated = np.dot(rotation_align_z_axis, direction_base)
             norm_mtf_squared = direction_rotated[0]**2 + direction_rotated[1]**2 + direction_rotated[2]**2
             norm_mtf_squared.set_coefficient((0,0,0,0), 1.0)
-            norm_mtf = sqrt_taylor(norm_mtf_squared)
+            norm_mtf = mtf.sqrt(norm_mtf_squared)
             direction_normalized_mtf = [direction_rotated[i] / norm_mtf for i in range(3)]
             direction_vectors_ring.append(direction_normalized_mtf)
 
