@@ -143,3 +143,30 @@ class RectangularLoop(CurrentLoop):
                 all_segments.append(segment_data)
 
         self.segments = np.array(all_segments)
+
+class StraightWire(CurrentLoop):
+    """
+    A straight current-carrying wire.
+    """
+    def __init__(self, current, start_point, end_point, num_segments):
+        super().__init__(current)
+        self.start_point = np.array(start_point)
+        self.end_point = np.array(end_point)
+        self.num_segments = num_segments
+        self._generate_segments()
+
+    def _generate_segments(self):
+        all_segments = []
+        wire_vector = self.end_point - self.start_point
+        wire_length = np.linalg.norm(wire_vector)
+        wire_direction = wire_vector / wire_length
+
+        segment_length = wire_length / self.num_segments
+
+        for i in range(self.num_segments):
+            pos = self.start_point + wire_direction * (i + 0.5) * segment_length
+            dl_vector = wire_direction * segment_length
+            segment_data = np.hstack([pos, dl_vector])
+            all_segments.append(segment_data)
+
+        self.segments = np.array(all_segments)

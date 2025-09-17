@@ -118,3 +118,32 @@ def plot_field_on_plane(loops, center_point, normal_vector, size=(2, 2), resolut
     ax.axis('equal')
 
     return fig, ax
+
+def plot_field_vectors_3d(loops, points, ax=None, scale=1.0, **kwargs):
+    """
+    Visualizes the B-field vectors at a grid of 3D points.
+    """
+    if ax is None:
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(111, projection='3d')
+
+    _plot_loop_geometry(ax, loops)
+
+    B_vectors = np.zeros_like(points, dtype=float)
+    for i, point in enumerate(points):
+        B_total_at_point = np.zeros(3)
+        for loop in loops:
+            B_total_at_point += loop.biot_savart(np.array([point]))[0]
+        B_vectors[i] = B_total_at_point
+
+    ax.quiver(points[:, 0], points[:, 1], points[:, 2],
+              B_vectors[:, 0], B_vectors[:, 1], B_vectors[:, 2],
+              length=scale, normalize=True, **kwargs)
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('3D B-Field Vector Plot')
+    ax.axis('equal')
+
+    return plt.gcf(), ax
