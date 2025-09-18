@@ -1,0 +1,16 @@
+Demo: Field_Plotting_Demo.ipynb
+Execution Time: 2.88 seconds
+Return Code: 0
+Timestamp: 2025-09-17 19:54:51
+==================================================
+STDOUT:
+Initializing MTF globals with: _MAX_ORDER=6, _MAX_DIMENSION=4
+Loading/Precomputing Taylor coefficients up to order 6
+Global precomputed coefficients loading/generation complete.
+Size of precomputed_coefficients dictionary in memory: 464 bytes, 0.45 KB, 0.00 MB
+MTF globals initialized: _MAX_ORDER=6, _MAX_DIMENSION=4, _INITIALIZED=True
+Max coefficient count (order=6, nvars=4): 210
+Precomputed coefficients loaded and ready for use.
+Saved plot as: Field_Plotting_Demo_fig001.png
+Saved plot as: Field_Plotting_Demo_fig002.png
+Saved plot as: Field_Plotting_Demo_fig003.png

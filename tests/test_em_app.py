@@ -2,9 +2,9 @@
 import pytest
 import numpy as np
 import mtflib
-from em_app import biot_savart
 from em_app import currentcoils
 from mtflib import MultivariateTaylorFunction
+
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_function():
@@ -27,14 +27,11 @@ def test_ring_loop_biot_savart():
     pose = currentcoils.Pose(
         position=np.array([0, 0, 0]),
         orientation_axis=np.array([0, 0, 1]),
-        orientation_angle=0
+        orientation_angle=0,
     )
 
     ring = currentcoils.RingLoop(
-        current=1.0,
-        radius=ring_radius,
-        num_segments=num_segments,
-        pose=pose
+        current=1.0, radius=ring_radius, num_segments=num_segments, pose=pose
     )
 
     field_points = np.array([[0, 0, 0]])
@@ -61,14 +58,11 @@ def test_ring_loop_segment_positions():
     pose = currentcoils.Pose(
         position=np.array([0, 0, 0]),
         orientation_axis=np.array([0, 0, 1]),
-        orientation_angle=0
+        orientation_angle=0,
     )
 
     ring = currentcoils.RingLoop(
-        current=1.0,
-        radius=ring_radius,
-        num_segments=num_segments,
-        pose=pose
+        current=1.0, radius=ring_radius, num_segments=num_segments, pose=pose
     )
 
     segments = ring.get_segments()
@@ -77,6 +71,7 @@ def test_ring_loop_segment_positions():
     for pos in positions:
         distance_from_center = np.linalg.norm(pos - pose.position)
         assert np.isclose(distance_from_center, ring_radius)
+
 
 def test_rectangular_loop_biot_savart():
     """
@@ -87,15 +82,11 @@ def test_rectangular_loop_biot_savart():
     pose = currentcoils.Pose(
         position=np.array([0, 0, 0]),
         orientation_axis=np.array([0, 0, 1]),
-        orientation_angle=0
+        orientation_angle=0,
     )
 
     rect_loop = currentcoils.RectangularLoop(
-        current=1.0,
-        width=0.2,
-        height=0.4,
-        num_segments_per_side=10,
-        pose=pose
+        current=1.0, width=0.2, height=0.4, num_segments_per_side=10, pose=pose
     )
 
     field_points = np.array([[0, 0, 0.1]])

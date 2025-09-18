@@ -10,7 +10,7 @@ except ImportError:
     mpi_installed = False
     MPI = None  # Set MPI to None so we can check for it later
 
-mu_0_4pi = 1e-7 # Define mu_0_4pi if it's not already globally defined
+mu_0_4pi = 1e-7  # Define mu_0_4pi if it's not already globally defined
 
 
 def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None):
@@ -27,7 +27,14 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
     for i in range(r_squared.shape[0]):
         for j in range(r_squared.shape[1]):
             if isinstance(r_squared[i, j], MultivariateTaylorFunction):
-                if abs(r_squared[i, j].extract_coefficient(tuple([0]*r_squared[i, j].dimension))) < 1e-18:
+                if (
+                    abs(
+                        r_squared[i, j].extract_coefficient(
+                            tuple([0] * r_squared[i, j].dimension)
+                        )
+                    )
+                    < 1e-18
+                ):
                     r_squared[i, j] += 1e-18
             elif r_squared[i, j] == 0:
                 r_squared[i, j] = 1e-18
@@ -37,7 +44,7 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
 
     # Calculate 1/r^3 for magnitude scaling.
     # This is done as 1/r^2 * 1/r to work with MTF ufunc overrides.
-    inv_r_cubed = np.reciprocal(r_squared) * r_squared**(-0.5)
+    inv_r_cubed = np.reciprocal(r_squared) * r_squared ** (-0.5)
     inv_r_cubed_expanded = np.expand_dims(inv_r_cubed, axis=2)
 
     dB_contributions = (mu_0_4pi * cross_products) * inv_r_cubed_expanded
@@ -52,6 +59,7 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
                     B_field[i, j] = B_field[i, j].truncate(order)
 
     return B_field
+
 
 def _cpp_biot_savart_core(source_points, dl_vectors, field_points, order=None):
     """
@@ -79,20 +87,35 @@ def _cpp_biot_savart_core(source_points, dl_vectors, field_points, order=None):
 
     dimension = MultivariateTaylorFunction.get_max_dimension()
 
-    shapes = np.array([len(source_points), len(dl_vectors), len(field_points), dimension] + sp_shapes + dl_shapes + fp_shapes, dtype=np.int32)
+    shapes = np.array(
+        [len(source_points), len(dl_vectors), len(field_points), dimension]
+        + sp_shapes
+        + dl_shapes
+        + fp_shapes,
+        dtype=np.int32,
+    )
     all_exponents = np.vstack(all_exponents)
     all_coeffs = np.concatenate(all_coeffs)
 
-    b_field_dicts = mtf_cpp.biot_savart_from_flat_numpy(all_exponents, all_coeffs, shapes)
+    b_field_dicts = mtf_cpp.biot_savart_from_flat_numpy(
+        all_exponents, all_coeffs, shapes
+    )
 
     b_field_py = []
     for b_vec_dicts in b_field_dicts:
-        b_field_py.append([MultivariateTaylorFunction(coefficients=(d['exponents'], d['coeffs'])) for d in b_vec_dicts])
+        b_field_py.append(
+            [
+                MultivariateTaylorFunction(coefficients=(d["exponents"], d["coeffs"]))
+                for d in b_vec_dicts
+            ]
+        )
 
     return np.array(b_field_py)
 
 
-def numpy_biot_savart(element_centers, element_lengths, element_directions, field_points, order=None):
+def numpy_biot_savart(
+    element_centers, element_lengths, element_directions, field_points, order=None
+):
     """
     NumPy vectorized Biot-Savart calculation using element inputs.
 
@@ -129,10 +152,14 @@ def numpy_biot_savart(element_centers, element_lengths, element_directions, fiel
         [[ 0.00000000e+00  0.00000000e+00  1.00000000e-08]
          [ 0.00000000e+00  0.00000000e+00  5.00000000e-09]]
     """
-    return serial_biot_savart(element_centers, element_lengths, element_directions, field_points, order=order)
+    return serial_biot_savart(
+        element_centers, element_lengths, element_directions, field_points, order=order
+    )
 
 
-def mpi_biot_savart(element_centers, element_lengths, element_directions, field_points, order=None):
+def mpi_biot_savart(
+    element_centers, element_lengths, element_directions, field_points, order=None
+):
     """
     Parallel Biot-Savart calculation using mpi4py with element inputs.
 
@@ -195,7 +222,13 @@ def mpi_biot_savart(element_centers, element_lengths, element_directions, field_
     end_index = start_index + chunk_size + (1 if rank < remainder else 0)
     local_field_points = field_points[start_index:end_index]
 
-    local_B_field = serial_biot_savart(element_centers, element_lengths, element_directions, local_field_points, order=order)
+    local_B_field = serial_biot_savart(
+        element_centers,
+        element_lengths,
+        element_directions,
+        local_field_points,
+        order=order,
+    )
 
     all_B_field_chunks = comm.gather(local_B_field, root=0)
 
@@ -232,16 +265,24 @@ def _c_biot_savart_core(source_points, dl_vectors, field_points, order=None):
 
     dimension = MultivariateTaylorFunction.get_max_dimension()
 
-    shapes = np.array([len(source_points), len(dl_vectors), len(field_points), dimension] + sp_shapes + dl_shapes + fp_shapes, dtype=np.int32)
+    shapes = np.array(
+        [len(source_points), len(dl_vectors), len(field_points), dimension]
+        + sp_shapes
+        + dl_shapes
+        + fp_shapes,
+        dtype=np.int32,
+    )
     all_exponents = np.vstack(all_exponents)
     all_coeffs = np.concatenate(all_coeffs)
 
-    result_dict = mtf_c_backend.biot_savart_c_from_flat_numpy(all_exponents, all_coeffs, shapes)
+    result_dict = mtf_c_backend.biot_savart_c_from_flat_numpy(
+        all_exponents, all_coeffs, shapes
+    )
 
     # Reconstruct MTF objects from the result
-    res_exps = result_dict['exponents']
-    res_coeffs = result_dict['coeffs']
-    res_shapes = result_dict['shapes']
+    res_exps = result_dict["exponents"]
+    res_coeffs = result_dict["coeffs"]
+    res_shapes = result_dict["shapes"]
 
     n_field_points = res_shapes[0]
     b_field_py = []
@@ -251,8 +292,8 @@ def _c_biot_savart_core(source_points, dl_vectors, field_points, order=None):
         vec = []
         for j in range(3):
             n_terms = res_shapes[shape_idx]
-            exps = res_exps[current_offset:current_offset+n_terms]
-            coeffs = res_coeffs[current_offset:current_offset+n_terms]
+            exps = res_exps[current_offset : current_offset + n_terms]
+            coeffs = res_coeffs[current_offset : current_offset + n_terms]
             vec.append(MultivariateTaylorFunction(coefficients=(exps, coeffs)))
             current_offset += n_terms
             shape_idx += 1
@@ -260,7 +301,15 @@ def _c_biot_savart_core(source_points, dl_vectors, field_points, order=None):
 
     return np.array(b_field_py)
 
-def serial_biot_savart(element_centers, element_lengths, element_directions, field_points, order=None, backend='python'):
+
+def serial_biot_savart(
+    element_centers,
+    element_lengths,
+    element_directions,
+    field_points,
+    order=None,
+    backend="python",
+):
     """
     Serial Biot-Savart calculation with element inputs.
 
@@ -297,10 +346,21 @@ def serial_biot_savart(element_centers, element_lengths, element_directions, fie
 
     if element_centers.ndim != 2 or element_centers.shape[1] != 3:
         raise ValueError("element_centers must be a NumPy array of shape (N, 3)")
-    if element_lengths.ndim != 1 or element_lengths.shape[0] != element_centers.shape[0]:
-        raise ValueError("element_lengths must be a NumPy array of shape (N,) and have the same length as element_centers")
-    if element_directions.ndim != 2 or element_directions.shape[1] != 3 or element_directions.shape[0] != element_centers.shape[0]:
-        raise ValueError("element_directions must be a NumPy array of shape (N, 3) and have the same length as element_centers")
+    if (
+        element_lengths.ndim != 1
+        or element_lengths.shape[0] != element_centers.shape[0]
+    ):
+        raise ValueError(
+            "element_lengths must be a NumPy array of shape (N,) and have the same length as element_centers"
+        )
+    if (
+        element_directions.ndim != 2
+        or element_directions.shape[1] != 3
+        or element_directions.shape[0] != element_centers.shape[0]
+    ):
+        raise ValueError(
+            "element_directions must be a NumPy array of shape (N, 3) and have the same length as element_centers"
+        )
     if field_points.ndim != 2 or field_points.shape[1] != 3:
         raise ValueError("field_points must be a NumPy array of shape (M, 3)")
 
@@ -310,11 +370,11 @@ def serial_biot_savart(element_centers, element_lengths, element_directions, fie
     if backend is None:
         backend = MultivariateTaylorFunction._IMPLEMENTATION
 
-    if backend == 'cpp':
+    if backend == "cpp":
         return _cpp_biot_savart_core(source_points, dl_vectors, field_points, order)
-    elif backend == 'c':
+    elif backend == "c":
         return _c_biot_savart_core(source_points, dl_vectors, field_points, order)
-    elif backend == 'cpp_v2':
+    elif backend == "cpp_v2":
         return _cpp_biot_savart_core(source_points, dl_vectors, field_points, order)
-    else: # python
+    else:  # python
         return _python_biot_savart_core(source_points, dl_vectors, field_points, order)
