@@ -18,7 +18,6 @@ def setup_function():
     yield global_dim, exponent_zero
     mtf._INITIALIZED = False
 
-
 def test_bvec_initialization():
     """
     Test that Bvec objects are initialized correctly for both numerical
@@ -33,7 +32,6 @@ def test_bvec_initialization():
     # Test with MTF data
     try:
         from mtflib import mtf
-
         bx_mtf = mtf.var(1)
         by_mtf = mtf.var(2)
         bz_mtf = mtf.var(3)
@@ -65,7 +63,6 @@ def test_bfield_magnitude():
     expected_magnitudes = np.array([1.0, np.sqrt(2)])
 
     assert np.allclose(magnitudes, expected_magnitudes)
-
 
 def test_bfield_initialization_numerical():
     """

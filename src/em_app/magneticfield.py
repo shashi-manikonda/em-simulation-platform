@@ -41,7 +41,6 @@ class Vector:
     This class handles standard vector operations like addition, subtraction,
     scalar multiplication/division, dot product, and cross product.
     """
-
     def __init__(self, x, y, z):
         """
         Initializes the vector.
@@ -67,11 +66,7 @@ class Vector:
         """
         if isinstance(other, Vector):
             return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
-        raise TypeError(
-            "unsupported operand type(s) for +: 'Vector' and '{}'".format(
-                type(other).__name__
-            )
-        )
+        raise TypeError("unsupported operand type(s) for +: 'Vector' and '{}'".format(type(other).__name__))
 
     def __sub__(self, other):
         """
@@ -85,11 +80,7 @@ class Vector:
         """
         if isinstance(other, Vector):
             return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
-        raise TypeError(
-            "unsupported operand type(s) for -: 'Vector' and '{}'".format(
-                type(other).__name__
-            )
-        )
+        raise TypeError("unsupported operand type(s) for -: 'Vector' and '{}'".format(type(other).__name__))
 
     def __mul__(self, other):
         """
@@ -103,11 +94,7 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             return Vector(self.x * other, self.y * other, self.z * other)
-        raise TypeError(
-            "unsupported operand type(s) for *: 'Vector' and '{}'".format(
-                type(other).__name__
-            )
-        )
+        raise TypeError("unsupported operand type(s) for *: 'Vector' and '{}'".format(type(other).__name__))
 
     def __rmul__(self, other):
         """
@@ -126,11 +113,7 @@ class Vector:
             Vector: A new Vector object with scaled components.
         """
         if not isinstance(other, (float, int)):
-            raise TypeError(
-                "unsupported operand type(s) for /: 'Vector' and '{}'".format(
-                    type(other).__name__
-                )
-            )
+            raise TypeError("unsupported operand type(s) for /: 'Vector' and '{}'".format(type(other).__name__))
         if other == 0:
             raise ZeroDivisionError("cannot divide a Vector by zero")
         return self.__mul__(1.0 / other)
@@ -147,11 +130,7 @@ class Vector:
                 dot product.
         """
         if not isinstance(other, Vector):
-            raise TypeError(
-                "unsupported operand type(s) for dot product: 'Vector' and '{}'".format(
-                    type(other).__name__
-                )
-            )
+            raise TypeError("unsupported operand type(s) for dot product: 'Vector' and '{}'".format(type(other).__name__))
 
         return self.x * other.x + self.y * other.y + self.z * other.z
 
@@ -166,11 +145,7 @@ class Vector:
             Vector: A new Vector object representing the resulting vector.
         """
         if not isinstance(other, Vector):
-            raise TypeError(
-                "unsupported operand type(s) for cross product: 'Vector' and '{}'".format(
-                    type(other).__name__
-                )
-            )
+            raise TypeError("unsupported operand type(s) for cross product: 'Vector' and '{}'".format(type(other).__name__))
 
         x_component = self.y * other.z - self.z * other.y
         y_component = self.z * other.x - self.x * other.z
@@ -211,12 +186,7 @@ class Vector:
             np.ndarray: A (3,) NumPy array of the vector components.
         """
         if self.is_mtf():
-            return np.array(
-                [
-                    comp.extract_coefficient(tuple([0] * comp.dimension))[0]
-                    for comp in [self.x, self.y, self.z]
-                ]
-            )
+            return np.array([comp.extract_coefficient(tuple([0] * comp.dimension))[0] for comp in [self.x, self.y, self.z]])
         else:
             return np.array([self.x, self.y, self.z])
 
@@ -241,7 +211,7 @@ class Vector:
             data = {
                 column_names[0]: [self.x],
                 column_names[1]: [self.y],
-                column_names[2]: [self.z],
+                column_names[2]: [self.z]
             }
             return pd.DataFrame(data)
 
@@ -253,23 +223,13 @@ class Vector:
 
                 # Handle the case where the function is zero.
                 if df.empty:
-                    df = pd.DataFrame(
-                        [
-                            {
-                                "Order": 0,
-                                "Exponents": tuple([0] * component.dimension),
-                                "Coefficient": 0.0,
-                            }
-                        ]
-                    )
+                    df = pd.DataFrame([{'Order': 0, 'Exponents': tuple([0] * component.dimension), 'Coefficient': 0.0}])
 
-                df.rename(columns={"Coefficient": name}, inplace=True)
-                df = df.sort_values(by=["Order", "Exponents"]).reset_index(drop=True)
+                df.rename(columns={'Coefficient': name}, inplace=True)
+                df = df.sort_values(by=['Order', 'Exponents']).reset_index(drop=True)
                 dfs[name] = df
             else:
-                df = pd.DataFrame(
-                    [{"Order": 0, "Exponents": (0, 0, 0), name: component}]
-                )
+                df = pd.DataFrame([{'Order': 0, 'Exponents': (0,0,0), name: component}])
                 dfs[name] = df
 
         # Merge the dataframes
@@ -281,16 +241,14 @@ class Vector:
                 if merged_df.empty:
                     merged_df = dfs[name]
                 else:
-                    merged_df = pd.merge(
-                        merged_df, dfs[name], on=["Order", "Exponents"], how="outer"
-                    )
+                    merged_df = pd.merge(merged_df, dfs[name], on=['Order', 'Exponents'], how='outer')
 
         # Fill NaN values with 0.0 for a cleaner table
         merged_df = merged_df.fillna(0.0)
 
         # Reorder columns to place 'Order' and 'Exponents' at the end
-        cols = [col for col in merged_df.columns if col not in ["Order", "Exponents"]]
-        reordered_cols = cols + ["Order", "Exponents"]
+        cols = [col for col in merged_df.columns if col not in ['Order', 'Exponents']]
+        reordered_cols = cols + ['Order', 'Exponents']
         merged_df = merged_df[reordered_cols]
 
         return merged_df
@@ -306,6 +264,7 @@ class Vector:
         Provides a developer-friendly representation of the object.
         """
         return f"Vector(x={self.x}, y={self.y}, z={self.z})"
+
 
 
 class Bvec(Vector):
@@ -427,12 +386,11 @@ class Bvec(Vector):
             return super().__str__()
 
         import pandas as pd
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 1000)
 
-        pd.set_option("display.max_rows", None)
-        pd.set_option("display.max_columns", None)
-        pd.set_option("display.width", 1000)
-
-        df = self.to_dataframe(["Bx", "By", "Bz"])
+        df = self.to_dataframe(['Bx', 'By', 'Bz'])
         return df.to_string()
 
     def __repr__(self):
@@ -564,9 +522,7 @@ class Bfield:
                 for v in self._b_vectors_mtf:
                     norm = v.norm()
                     if v.is_mtf():
-                        magnitudes.append(
-                            norm.extract_coefficient(tuple([0] * v.Bx.dimension)).item()
-                        )
+                        magnitudes.append(norm.extract_coefficient(tuple([0] * v.Bx.dimension)).item())
                     else:
                         magnitudes.append(norm)
                 self._magnitude = np.array(magnitudes)

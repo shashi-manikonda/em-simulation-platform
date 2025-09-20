@@ -2,28 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def _plot_loop_geometry(ax, loops, refine_level=1, color="blue", label=None):
-    """
-    Helper function to plot the geometry of the loops.
-    """
-    for loop in loops:
-        segments = loop.get_segments()
-        positions = segments[:, 0:3]
-        dl_vectors = segments[:, 3:6]
-
-        # Plot the segments
-        for i in range(len(positions)):
-            start_point = positions[i] - dl_vectors[i] / 2
-            end_point = positions[i] + dl_vectors[i] / 2
-            ax.plot(
-                [start_point[0], end_point[0]],
-                [start_point[1], end_point[1]],
-                [start_point[2], end_point[2]],
-                color=color,
-                label=label if i == 0 else "",
-            )
-
-
 def plot_field_on_line(
     loops, start_point, end_point, component="magnitude", num_points=100
 ):
@@ -34,7 +12,8 @@ def plot_field_on_line(
     ax_3d = fig.add_subplot(121, projection="3d")
     ax_2d = fig.add_subplot(122)
 
-    _plot_loop_geometry(ax_3d, loops)
+    for loop in loops:
+        loop.plot(ax_3d)
 
     line_points = np.linspace(start_point, end_point, num_points)
     ax_3d.plot(
@@ -45,11 +24,11 @@ def plot_field_on_line(
         label="Observation Line",
     )
 
-    B_vectors = np.zeros((num_points, 3))
+    B_vectors = np.zeros((num_points, 3), dtype=np.complex128)
     for i, point in enumerate(line_points):
-        B_total_at_point = np.zeros(3)
+        B_total_at_point = np.zeros(3, dtype=np.complex128)
         for loop in loops:
-            B_total_at_point += loop.biot_savart(np.array([point]))[0]
+            B_total_at_point += loop.biot_savart(np.array([point]))[0].to_numpy_array()
         B_vectors[i] = B_total_at_point
 
     distances = np.linalg.norm(line_points - start_point, axis=1)
@@ -97,7 +76,8 @@ def plot_field_on_plane(
     fig = plt.figure(figsize=(12, 12))
     ax = fig.add_subplot(111, projection="3d")
 
-    _plot_loop_geometry(ax, loops)
+    for loop in loops:
+        loop.plot(ax)
 
     normal = np.array(normal_vector) / np.linalg.norm(normal_vector)
     u_vec = np.cross([0, 0, 1], normal)
@@ -115,9 +95,9 @@ def plot_field_on_plane(
     )
     points_flat = points_3d.reshape(-1, 3)
 
-    B_total = np.zeros_like(points_flat)
+    B_total = np.zeros_like(points_flat, dtype=np.complex128)
     for loop in loops:
-        B_total += loop.biot_savart(points_flat)
+        B_total += np.array([b.to_numpy_array() for b in loop.biot_savart(points_flat)])
 
     B_vectors_grid = B_total.reshape(points_3d.shape)
     B_magnitude = np.linalg.norm(B_total, axis=1).reshape(u_grid.shape)
@@ -178,13 +158,14 @@ def plot_field_vectors_3d(loops, points, ax=None, scale=1.0, **kwargs):
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111, projection="3d")
 
-    _plot_loop_geometry(ax, loops)
+    for loop in loops:
+        loop.plot(ax)
 
-    B_vectors = np.zeros_like(points, dtype=float)
+    B_vectors = np.zeros_like(points, dtype=np.complex128)
     for i, point in enumerate(points):
-        B_total_at_point = np.zeros(3)
+        B_total_at_point = np.zeros(3, dtype=np.complex128)
         for loop in loops:
-            B_total_at_point += loop.biot_savart(np.array([point]))[0]
+            B_total_at_point += loop.biot_savart(np.array([point]))[0].to_numpy_array()
         B_vectors[i] = B_total_at_point
 
     ax.quiver(

@@ -1,0 +1,27 @@
+Demo: magnetic_field_calculation_demo.ipynb
+Execution Time: 9.97 seconds
+Return Code: 0
+Timestamp: 2025-09-20 04:39:59
+==================================================
+STDOUT:
+Initializing MTF globals with: _MAX_ORDER=6, _MAX_DIMENSION=4
+Loading/Precomputing Taylor coefficients up to order 6
+Global precomputed coefficients loading/generation complete.
+Size of precomputed_coefficients dictionary in memory: 464 bytes, 0.45 KB, 0.00 MB
+MTF globals initialized: _MAX_ORDER=6, _MAX_DIMENSION=4, _INITIALIZED=True
+Max coefficient count (order=6, nvars=4): 210
+Precomputed coefficients loaded and ready for use.
+Saved plot as: magnetic_field_calculation_demo_fig001.png
+Biot-Savart method called by: RingCoil
+Saved plot as: magnetic_field_calculation_demo_fig002.png
+
+==================================================
+STDERR:
+/app/src/em_app/magneticfield.py:319: SyntaxWarning: invalid escape sequence '\m'
+  $\nabla \times \mathbf{B} = (\frac{\partial B_z}{\partial y} - \frac{\partial B_y}{\partial z}) \mathbf{i} + (\frac{\partial B_x}{\partial z} - \frac{\partial B_z}{\partial x}) \mathbf{j} + (\frac{\partial B_y}{\partial x} - \frac{\partial B_x}{\partial y}) \mathbf{k}$
+/app/src/em_app/magneticfield.py:340: SyntaxWarning: invalid escape sequence '\c'
+  $\nabla \cdot \mathbf{B} = \frac{\partial B_x}{\partial x} + \frac{\partial B_y}{\partial y} + \frac{\partial B_z}{\partial z}$
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/matplotlib/cbook.py:1719: ComplexWarning: Casting complex values to real discards the imaginary part
+  return math.isfinite(val)
+/home/jules/.pyenv/versions/3.12.11/lib/python3.12/site-packages/matplotlib/cbook.py:1355: ComplexWarning: Casting complex values to real discards the imaginary part
+  return np.asarray(x, float)

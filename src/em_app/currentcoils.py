@@ -208,15 +208,12 @@ def _straight_wire_segments(start_point, end_point, num_segments):
 
     for i in range(num_segments):
         factor = (i + 0.5) * segment_length_mtf
-        segment_centers[i] = start_point_mtf + np.array(
-            [v * factor for v in wire_direction_mtf]
-        )
+        segment_centers[i] = start_point_mtf + np.array([v * factor for v in wire_direction_mtf])
 
     segment_lengths = np.full(num_segments, segment_length_mtf)
     segment_directions = np.full((num_segments, 3), wire_direction_mtf, dtype=object)
 
     return segment_centers, segment_lengths, segment_directions
-
 
 def _get_3d_axes(ax=None):
     """
@@ -232,7 +229,6 @@ def _get_3d_axes(ax=None):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
     return ax
-
 
 class Coil(object):
     """
@@ -284,8 +280,8 @@ class Coil(object):
             return np.zeros(3)
 
         # Convert MTF objects to NumPy arrays for calculation
-        centers_numerical = mtf.to_numpy_array(self.segment_centers)
-        directions_numerical = mtf.to_numpy_array(self.segment_directions)
+        centers_numerical = np.array([np.array([x.extract_coefficient(tuple([0] * x.dimension)).item() for x in c]) for c in self.segment_centers])
+        directions_numerical = np.array([np.array([d.extract_coefficient(tuple([0] * d.dimension)).item() for d in c]) for c in self.segment_directions])
 
         # Calculate max and min coordinates
         all_coords = np.vstack(
@@ -321,9 +317,9 @@ class Coil(object):
         # Get or create the 3D axes
         plot_ax = _get_3d_axes(ax)
 
-        centers = mtf.to_numpy_array(self.segment_centers)
-        directions = mtf.to_numpy_array(self.segment_directions)
-        lengths = self.segment_lengths
+        centers = np.array([np.array([x.extract_coefficient(tuple([0] * x.dimension)).item() for x in c]) for c in self.segment_centers])
+        directions = np.array([np.array([d.extract_coefficient(tuple([0] * d.dimension)).item() for d in c]) for c in self.segment_directions])
+        lengths = np.array([l.extract_coefficient(tuple([0] * l.dimension)).item() if isinstance(l, mtf) else l for l in self.segment_lengths])
 
         for i in range(len(centers)):
             start_point = centers[i] - directions[i] * lengths[i] / 2
@@ -390,19 +386,11 @@ class Coil(object):
 
         # Apply the current scaling
         if isinstance(self.current, mtf):
-            b_field_vectors = np.array(
-                [
-                    Bvec(
-                        self.current * vec[0],
-                        self.current * vec[1],
-                        self.current * vec[2],
-                    )
-                    for vec in b_field_vectors
-                ],
-                dtype=object,
-            )
+            b_field_vectors = np.array([Bvec(self.current * vec[0], self.current * vec[1], self.current * vec[2]) for vec in b_field_vectors], dtype=object)
         else:
             b_field_vectors *= self.current
+
+        b_vectors_numerical = np.array([b.to_numpy_array() for b in b_field_vectors])
 
         if calling_class_name == "RingCoil":
             for i, vec in enumerate(b_field_vectors):

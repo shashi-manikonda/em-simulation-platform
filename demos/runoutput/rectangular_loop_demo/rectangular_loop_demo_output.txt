@@ -1,0 +1,16 @@
+Demo: rectangular_loop_demo.ipynb
+Execution Time: 2.50 seconds
+Return Code: 0
+Timestamp: 2025-09-20 04:46:00
+==================================================
+STDOUT:
+Initializing MTF globals with: _MAX_ORDER=6, _MAX_DIMENSION=4
+Loading/Precomputing Taylor coefficients up to order 6
+Global precomputed coefficients loading/generation complete.
+Size of precomputed_coefficients dictionary in memory: 464 bytes, 0.45 KB, 0.00 MB
+MTF globals initialized: _MAX_ORDER=6, _MAX_DIMENSION=4, _INITIALIZED=True
+Max coefficient count (order=6, nvars=4): 210
+Precomputed coefficients loaded and ready for use.
+Saved plot as: rectangular_loop_demo_fig001.png
+Biot-Savart method called by: RectangularCoil
+Computed B-field at the observation point: [-4.55243954e-09 -1.39667839e-09  2.32086797e-08]
