@@ -354,7 +354,6 @@ class Coil(object):
         """
         # --- Check the calling child class ---
         calling_class_name = self.__class__.__name__
-        print(f"Biot-Savart method called by: {calling_class_name}")
 
         # Check if segments have been generated
         if self.segment_centers is None:
