@@ -112,7 +112,7 @@ def test_biot_savart_with_mtf():
         mu_0 * 1.0 * radius**2
     ) / (2 * (radius**2 + z**2) ** 1.5)
 
-    assert np.isclose(b_vectors_mtf[0].Bz.get_constant(), b_z_analytical)
-    assert np.isclose(b_vectors_mtf[0].Bx.get_constant(), 0)
-    assert np.isclose(b_vectors_mtf[0].By.get_constant(), 0)
+    assert np.isclose(b_vectors_mtf[0].Bz.extract_coefficient(tuple([0] * b_vectors_mtf[0].Bz.dimension)).item(), b_z_analytical)
+    assert np.isclose(b_vectors_mtf[0].Bx.extract_coefficient(tuple([0] * b_vectors_mtf[0].Bx.dimension)).item(), 0)
+    assert np.isclose(b_vectors_mtf[0].By.extract_coefficient(tuple([0] * b_vectors_mtf[0].By.dimension)).item(), 0)
     

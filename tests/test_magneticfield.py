@@ -1,6 +1,22 @@
 import numpy as np
 import pytest
-from em_app import Bvec, Bfield
+from em_app.magneticfield import Bvec, Bfield
+from mtflib import mtf
+
+# Global settings for tests
+MAX_ORDER = 5
+MAX_DIMENSION = 4
+ETOL = 1e-20
+
+
+@pytest.fixture(scope="function", autouse=True)
+def setup_function():
+    mtf.initialize_mtf(max_order=MAX_ORDER, max_dimension=MAX_DIMENSION)
+    mtf.set_etol(ETOL)
+    global_dim = mtf.get_max_dimension()
+    exponent_zero = tuple([0] * global_dim)
+    yield global_dim, exponent_zero
+    mtf._INITIALIZED = False
 
 def test_bvec_initialization():
     """
@@ -38,7 +54,7 @@ def test_bfield_magnitude():
         [Bvec(vec[0], vec[1], vec[2]) for vec in b_vectors_numerical], dtype=object
     )
 
-    bfield = Bfield(field_points=field_points, b_vectors=b_vectors_objects)
+    bfield = Bfield(b_vectors_objects, field_points=field_points)
     
     # Calculate magnitude using the Bfield method
     magnitudes = bfield.get_magnitude()
@@ -54,8 +70,11 @@ def test_bfield_initialization_numerical():
     """
     field_points = np.array([[0, 0, 0], [1, 0, 0]])
     b_vectors = np.array([[0, 0, 1], [0, 0, 2]])
-    bfield = Bfield(field_points, b_vectors)
+    bfield = Bfield(b_vectors, field_points)
 
-    assert isinstance(bfield.b_vectors, np.ndarray)
-    assert len(bfield.b_vectors) == 2
-    assert isinstance(bfield.b_vectors[0], Bvec)
+    points, vectors = bfield._get_numerical_data()
+
+    assert isinstance(vectors, np.ndarray)
+    assert len(vectors) == 2
+    assert np.allclose(vectors, b_vectors)
+    assert np.allclose(points, field_points)

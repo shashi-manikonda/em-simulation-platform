@@ -161,7 +161,7 @@ class Vector:
             float or mtf.MultivariateTaylorFunction: The scalar magnitude.
         """
         squared_norm = self.dot(self)
-        if _MTFLIB_AVAILABLE and isinstance(squared_norm, mtf.MultivariateTaylorFunction):
+        if _MTFLIB_AVAILABLE and isinstance(squared_norm, mtf):
             return squared_norm.sqrt()
         else:
             return np.sqrt(squared_norm)
@@ -518,12 +518,14 @@ class Bfield:
                     raise RuntimeError(
                         "mtflib is required to get magnitude of Bvec objects."
                     )
-                self._magnitude = np.array(
-                    [
-                        v.norm().extract_coefficient(tuple([0] * v.Bx.dimension)).item()
-                        for v in self._b_vectors_mtf
-                    ]
-                )
+                magnitudes = []
+                for v in self._b_vectors_mtf:
+                    norm = v.norm()
+                    if v.is_mtf():
+                        magnitudes.append(norm.extract_coefficient(tuple([0] * v.Bx.dimension)).item())
+                    else:
+                        magnitudes.append(norm)
+                self._magnitude = np.array(magnitudes)
         return self._magnitude
 
     def plot_field_on_plane(

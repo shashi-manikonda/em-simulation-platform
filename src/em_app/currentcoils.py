@@ -109,7 +109,7 @@ def _current_ring(
         element_lengths_ring = []
         direction_vectors_ring = []
 
-        ring_center_point_mtf = mtf.from_numpy_array(ring_center_point)
+        ring_center_point_mtf = np.array([mtf.to_mtf(x) for x in ring_center_point])
 
         for i in range(num_segments_ring):
             phi = (i + 0.5 + 0.5 * u) * d_phi
@@ -195,20 +195,20 @@ def _straight_wire_segments(start_point, end_point, num_segments):
     Returns:
         tuple: A tuple of segment centers, lengths, and directions as MTF objects.
     """
-    start_point_mtf = mtf.from_numpy_array(start_point)
-    end_point_mtf = mtf.from_numpy_array(end_point)
+    start_point_mtf = np.array([mtf.to_mtf(x) for x in start_point])
+    end_point_mtf = np.array([mtf.to_mtf(x) for x in end_point])
 
     wire_vector_mtf = end_point_mtf - start_point_mtf
-    wire_length_mtf = mtf.sqrt(mtf.sum(wire_vector_mtf**2))
+    wire_length_mtf = mtf.sqrt(np.sum(wire_vector_mtf**2))
 
     segment_length_mtf = wire_length_mtf / num_segments
-    wire_direction_mtf = wire_vector_mtf / wire_length_mtf
+    wire_direction_mtf = np.array([v / wire_length_mtf for v in wire_vector_mtf])
 
     segment_centers = np.empty((num_segments, 3), dtype=object)
 
     for i in range(num_segments):
         factor = (i + 0.5) * segment_length_mtf
-        segment_centers[i] = start_point_mtf + wire_direction_mtf * factor
+        segment_centers[i] = start_point_mtf + np.array([v * factor for v in wire_direction_mtf])
 
     segment_lengths = np.full(num_segments, segment_length_mtf)
     segment_directions = np.full((num_segments, 3), wire_direction_mtf, dtype=object)
