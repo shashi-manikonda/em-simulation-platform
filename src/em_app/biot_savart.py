@@ -13,7 +13,9 @@ except ImportError:
 mu_0_4pi = 1e-7  # Define mu_0_4pi if it's not already globally defined
 
 
-def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None):
+def _python_biot_savart_core(
+    source_points, dl_vectors, field_points, current=1.0, order=None
+):
     """
     Core vectorized Biot-Savart calculation in pure Python.
     """
@@ -47,7 +49,7 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
     inv_r_cubed = np.reciprocal(r_squared) * r_squared ** (-0.5)
     inv_r_cubed_expanded = np.expand_dims(inv_r_cubed, axis=2)
 
-    dB_contributions = (mu_0_4pi * cross_products) * inv_r_cubed_expanded
+    dB_contributions = (current * mu_0_4pi * cross_products) * inv_r_cubed_expanded
 
     B_field = np.sum(dB_contributions, axis=0)
 
@@ -60,7 +62,9 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
     return B_field
 
 
-def _cpp_biot_savart_core(source_points, dl_vectors, field_points, order=None):
+def _cpp_biot_savart_core(
+    source_points, dl_vectors, field_points, current=1.0, order=None
+):
     """
     Core vectorized Biot-Savart calculation using C++ backend.
     """
@@ -109,11 +113,17 @@ def _cpp_biot_savart_core(source_points, dl_vectors, field_points, order=None):
             ]
         )
 
-    return np.array(b_field_py)
+    b_field_py = np.array(b_field_py)
+    return b_field_py * current
 
 
 def numpy_biot_savart(
-    element_centers, element_lengths, element_directions, field_points, order=None
+    element_centers,
+    element_lengths,
+    element_directions,
+    field_points,
+    current=1.0,
+    order=None,
 ):
     """
     NumPy vectorized Biot-Savart calculation using element inputs.
@@ -132,6 +142,8 @@ def numpy_biot_savart(
             direction of current flow for each element. Each row is a unit vector.
         field_points (numpy.ndarray): (M, 3) array of field point coordinates. Each row
             represents the (x, y, z) coordinates where the magnetic field is to be calculated.
+        current (float or mtf.MultivariateTaylorFunction, optional): The current flowing
+            through the elements. Defaults to 1.0.
 
     Returns:
         numpy.ndarray: (M, 3) array of magnetic field vectors at each field point. Each row
@@ -146,18 +158,28 @@ def numpy_biot_savart(
         >>> element_lengths = np.array([0.1, 0.1])
         >>> element_directions = np.array([[1, 0, 0], [0, 1, 0]])
         >>> field_points = np.array([[0, 1, 0], [1, 1, 0]])
-        >>> B_field = numpy_biot_savart(element_centers, element_lengths, element_directions, field_points)
+        >>> B_field = numpy_biot_savart(element_centers, element_lengths, element_directions, field_points, current=1.0)
         >>> print(B_field)
         [[ 0.00000000e+00  0.00000000e+00  1.00000000e-08]
          [ 0.00000000e+00  0.00000000e+00  5.00000000e-09]]
     """
     return serial_biot_savart(
-        element_centers, element_lengths, element_directions, field_points, order=order
+        element_centers,
+        element_lengths,
+        element_directions,
+        field_points,
+        current=current,
+        order=order,
     )
 
 
 def mpi_biot_savart(
-    element_centers, element_lengths, element_directions, field_points, order=None
+    element_centers,
+    element_lengths,
+    element_directions,
+    field_points,
+    current=1.0,
+    order=None,
 ):
     """
     Parallel Biot-Savart calculation using mpi4py with element inputs.
@@ -182,6 +204,8 @@ def mpi_biot_savart(
             (Broadcasted to all MPI processes).
         field_points (numpy.ndarray): (M, 3) array of field point coordinates.
             (Distributed across MPI processes).
+        current (float or mtf.MultivariateTaylorFunction, optional): The current flowing
+            through the elements. Defaults to 1.0.
 
     Returns:
         numpy.ndarray or None:
@@ -198,7 +222,7 @@ def mpi_biot_savart(
         >>> element_lengths = np.array([0.1, 0.1])
         >>> element_directions = np.array([[1, 0, 0], [0, 1, 0]])
         >>> field_points = np.array([[0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0]]) # More field points for MPI to distribute
-        >>> B_field = mpi_biot_savart(element_centers, element_lengths, element_directions, field_points)
+        >>> B_field = mpi_biot_savart(element_centers, element_lengths, element_directions, field_points, current=1.0)
         >>> if MPI.COMM_WORLD.Get_rank() == 0: # Only rank 0 has the full result
         >>>     print(B_field)
     """
@@ -226,6 +250,7 @@ def mpi_biot_savart(
         element_lengths,
         element_directions,
         local_field_points,
+        current=current,
         order=order,
     )
 
@@ -238,7 +263,9 @@ def mpi_biot_savart(
         return None
 
 
-def _c_biot_savart_core(source_points, dl_vectors, field_points, order=None):
+def _c_biot_savart_core(
+    source_points, dl_vectors, field_points, current=1.0, order=None
+):
     """
     Core vectorized Biot-Savart calculation using C backend.
     """
@@ -298,7 +325,8 @@ def _c_biot_savart_core(source_points, dl_vectors, field_points, order=None):
             shape_idx += 1
         b_field_py.append(vec)
 
-    return np.array(b_field_py)
+    b_field_py = np.array(b_field_py)
+    return b_field_py * current
 
 
 def serial_biot_savart(
@@ -306,6 +334,7 @@ def serial_biot_savart(
     element_lengths,
     element_directions,
     field_points,
+    current=1.0,
     order=None,
     backend="python",
 ):
@@ -322,6 +351,8 @@ def serial_biot_savart(
         element_lengths (numpy.ndarray): (N,) array of lengths of current elements (dl).
         element_directions (numpy.ndarray): (N, 3) array of unit vectors for current directions.
         field_points (numpy.ndarray): (M, 3) array of field point coordinates.
+        current (float or mtf.MultivariateTaylorFunction, optional): The current flowing
+            through the elements. Defaults to 1.0.
         order (int, optional): The maximum order of the Taylor series to compute.
                                If None, the global max order is used. Defaults to None.
 
@@ -333,10 +364,10 @@ def serial_biot_savart(
         >>> element_lengths = np.array([0.1, 0.1])
         >>> element_directions = np.array([[1, 0, 0], [0, 1, 0]])
         >>> field_points = np.array([[0, 1, 0], [1, 1, 0]])
-        >>> B_field = serial_biot_savart(element_centers, element_lengths, element_directions, field_points, order=0)
+        >>> B_field = serial_biot_savart(element_centers, element_lengths, element_directions, field_points, current=1.0, order=0)
         >>> print(B_field)
-        [[ 0.00000000e+00  0.00000000e+00  1.00000000e-08]
-         [ 0.00000000e+00  0.00000000e+00  5.00000000e-09]]
+        [[ 0.00000000e+00  0.00000000e+00  2.00000000e-08]
+         [ 0.00000000e+00  0.00000000e+00  1.00000000e-08]]
     """
     element_centers = np.array(element_centers)
     element_lengths = np.array(element_lengths)
@@ -364,16 +395,24 @@ def serial_biot_savart(
         raise ValueError("field_points must be a NumPy array of shape (M, 3)")
 
     source_points = element_centers
-    dl_vectors = 0.5 * element_lengths[:, np.newaxis] * element_directions
+    dl_vectors = element_lengths[:, np.newaxis] * element_directions
 
     if backend is None:
         backend = MultivariateTaylorFunction._IMPLEMENTATION
 
     if backend == "cpp":
-        return _cpp_biot_savart_core(source_points, dl_vectors, field_points, order)
+        return _cpp_biot_savart_core(
+            source_points, dl_vectors, field_points, current, order
+        )
     elif backend == "c":
-        return _c_biot_savart_core(source_points, dl_vectors, field_points, order)
+        return _c_biot_savart_core(
+            source_points, dl_vectors, field_points, current, order
+        )
     elif backend == "cpp_v2":
-        return _cpp_biot_savart_core(source_points, dl_vectors, field_points, order)
+        return _cpp_biot_savart_core(
+            source_points, dl_vectors, field_points, current, order
+        )
     else:  # python
-        return _python_biot_savart_core(source_points, dl_vectors, field_points, order)
+        return _python_biot_savart_core(
+            source_points, dl_vectors, field_points, current, order
+        )

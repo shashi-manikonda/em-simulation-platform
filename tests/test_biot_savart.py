@@ -5,22 +5,6 @@ from em_app.magneticfield import Bvec
 from em_app.biot_savart import mu_0_4pi
 from mtflib import mtf, ComplexMultivariateTaylorFunction
 
-# Global settings for tests
-MAX_ORDER = 5
-MAX_DIMENSION = 4
-ETOL = 1e-20
-
-
-@pytest.fixture(scope="function", autouse=True)
-def setup_function():
-    mtf.initialize_mtf(max_order=MAX_ORDER, max_dimension=MAX_DIMENSION)
-    mtf.set_etol(ETOL)
-    global_dim = mtf.get_max_dimension()
-    exponent_zero = tuple([0] * global_dim)
-    yield global_dim, exponent_zero
-    mtf._INITIALIZED = False
-
-
 def test_biot_savart_ring_on_axis():
     """
     Test the magnetic field calculation on the axis of a circular current loop.

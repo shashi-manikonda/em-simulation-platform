@@ -3,21 +3,6 @@ import pytest
 from em_app.magneticfield import Bvec, Bfield
 from mtflib import mtf
 
-# Global settings for tests
-MAX_ORDER = 5
-MAX_DIMENSION = 4
-ETOL = 1e-20
-
-
-@pytest.fixture(scope="function", autouse=True)
-def setup_function():
-    mtf.initialize_mtf(max_order=MAX_ORDER, max_dimension=MAX_DIMENSION)
-    mtf.set_etol(ETOL)
-    global_dim = mtf.get_max_dimension()
-    exponent_zero = tuple([0] * global_dim)
-    yield global_dim, exponent_zero
-    mtf._INITIALIZED = False
-
 def test_bvec_initialization():
     """
     Test that Bvec objects are initialized correctly for both numerical

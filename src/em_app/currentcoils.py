@@ -104,46 +104,36 @@ def _current_ring(
     )
 
     if return_mtf:
-        u = mtf.var(4)
-        segment_mtfs_ring = []
+        segment_centers_ring = []
         element_lengths_ring = []
         direction_vectors_ring = []
 
-        ring_center_point_mtf = np.array([mtf.to_mtf(x) for x in ring_center_point])
-
         for i in range(num_segments_ring):
-            phi = (i + 0.5 + 0.5 * u) * d_phi
-            x_center = ring_radius * mtf.cos(phi)
-            y_center = ring_radius * mtf.sin(phi)
-            z_center = mtf.from_constant(0.0)
+            phi = (i + 0.5) * d_phi
+            # Base ring in xy-plane
+            x_center = ring_radius * np.cos(phi)
+            y_center = ring_radius * np.sin(phi)
+            z_center = 0.0
 
-            center_point = np.array([x_center, y_center, z_center], dtype=object)
-            center_point_rotated = np.dot(rotation_align_z_axis, center_point)
-            center_point_translated = center_point_rotated + ring_center_point_mtf
-            segment_mtfs_ring.append(center_point_translated)
+            # Rotate and translate center point
+            center_point_rotated = rotation_align_z_axis @ np.array(
+                [x_center, y_center, z_center]
+            )
+            center_point_translated = center_point_rotated + ring_center_point
+            segment_centers_ring.append(center_point_translated)
 
             element_lengths_ring.append(ring_radius * d_phi)
 
-            direction_base = np.array(
-                [-mtf.sin(phi), mtf.cos(phi), mtf.from_constant(0.0)], dtype=object
-            )
-            direction_rotated = np.dot(rotation_align_z_axis, direction_base)
-            norm_mtf_squared = (
-                direction_rotated[0] ** 2
-                + direction_rotated[1] ** 2
-                + direction_rotated[2] ** 2
-            )
-            norm_mtf_squared.set_coefficient((0, 0, 0, 0), 1.0)
-            norm_mtf = mtf.sqrt(norm_mtf_squared)
-            direction_normalized_mtf = [
-                direction_rotated[i] / norm_mtf for i in range(3)
-            ]
-            direction_vectors_ring.append(direction_normalized_mtf)
+            # Tangent direction at center point (for base ring in xy-plane):
+            direction_base = np.array([-np.sin(phi), np.cos(phi), 0])
+            direction_rotated = rotation_align_z_axis @ direction_base
+            direction_normalized = direction_rotated / np.linalg.norm(direction_rotated)
+            direction_vectors_ring.append(direction_normalized)
 
         return (
-            np.array(segment_mtfs_ring, dtype=object),
+            np.array(segment_centers_ring),
             np.array(element_lengths_ring),
-            np.array(direction_vectors_ring, dtype=object),
+            np.array(direction_vectors_ring),
         )
 
     else:  # return_mtf is False, return NumPy arrays
@@ -183,35 +173,22 @@ def _current_ring(
 def _straight_wire_segments(start_point, end_point, num_segments):
     """
     (PRIVATE) Helper to discretize a straight wire into segments.
-
-    This is a private helper function and should not be used directly.
-    It generates segment data as MTF objects for a straight wire.
-
-    Args:
-        start_point (np.ndarray): The starting point of the wire.
-        end_point (np.ndarray): The ending point of the wire.
-        num_segments (int): Number of segments.
-
-    Returns:
-        tuple: A tuple of segment centers, lengths, and directions as MTF objects.
     """
-    start_point_mtf = np.array([mtf.to_mtf(x) for x in start_point])
-    end_point_mtf = np.array([mtf.to_mtf(x) for x in end_point])
+    wire_vector = end_point - start_point
+    wire_length = np.linalg.norm(wire_vector)
+    if np.isclose(wire_length, 0):
+        return np.array([]), np.array([]), np.array([])
 
-    wire_vector_mtf = end_point_mtf - start_point_mtf
-    wire_length_mtf = mtf.sqrt(np.sum(wire_vector_mtf**2))
+    wire_direction = wire_vector / wire_length
+    segment_length = wire_length / num_segments
 
-    segment_length_mtf = wire_length_mtf / num_segments
-    wire_direction_mtf = np.array([v / wire_length_mtf for v in wire_vector_mtf])
-
-    segment_centers = np.empty((num_segments, 3), dtype=object)
+    segment_centers = np.empty((num_segments, 3))
+    segment_lengths = np.full(num_segments, segment_length)
+    segment_directions = np.full((num_segments, 3), wire_direction)
 
     for i in range(num_segments):
-        factor = (i + 0.5) * segment_length_mtf
-        segment_centers[i] = start_point_mtf + np.array([v * factor for v in wire_direction_mtf])
-
-    segment_lengths = np.full(num_segments, segment_length_mtf)
-    segment_directions = np.full((num_segments, 3), wire_direction_mtf, dtype=object)
+        center_pos = start_point + (i + 0.5) * segment_length * wire_direction
+        segment_centers[i] = center_pos
 
     return segment_centers, segment_lengths, segment_directions
 
@@ -247,7 +224,7 @@ class Coil(object):
             current (float or mtf.MultivariateTaylorFunction): The current
                 flowing through the coil.
         """
-        self.current = mtf.to_mtf(current)
+        self.current = current
 
         # These will be populated by subclasses
         self.segment_centers = None
@@ -383,20 +360,12 @@ class Coil(object):
                 backend=backend,
             )
 
-        # Apply the current scaling
         if isinstance(self.current, mtf):
             b_field_vectors = np.array([Bvec(self.current * vec[0], self.current * vec[1], self.current * vec[2]) for vec in b_field_vectors], dtype=object)
         else:
             b_field_vectors *= self.current
+            b_field_vectors = np.array([Bvec(vec[0], vec[1], vec[2]) for vec in b_field_vectors], dtype=object)
 
-        b_vectors_numerical = np.array([b.to_numpy_array() for b in b_field_vectors])
-
-        if calling_class_name == "RingCoil":
-            for i, vec in enumerate(b_field_vectors):
-                vec.Bx = vec.Bx.integrate(4, -1, 1)
-                vec.By = vec.By.integrate(4, -1, 1)
-                vec.Bz = vec.Bz.integrate(4, -1, 1)
-                b_field_vectors[i] = vec
         return b_field_vectors
 
 
@@ -472,3 +441,28 @@ class RectangularCoil(Coil):
         self.segment_centers = np.concatenate([s[0] for s in all_segments], axis=0)
         self.segment_lengths = np.concatenate([s[1] for s in all_segments])
         self.segment_directions = np.concatenate([s[2] for s in all_segments], axis=0)
+
+
+class StraightWire(Coil):
+    """
+    Represents a straight current-carrying wire.
+    """
+
+    def __init__(self, current, start_point, end_point, num_segments):
+        """
+        Initializes a straight wire.
+        Args:
+            current (float or mtf.MultivariateTaylorFunction): The current.
+            start_point (np.ndarray): The starting point of the wire.
+            end_point (np.ndarray): The ending point of the wire.
+            num_segments (int): Number of segments for discretization.
+        """
+        super().__init__(current)
+
+        self.start_point = start_point
+        self.end_point = end_point
+        self.num_segments = num_segments
+
+        self.segment_centers, self.segment_lengths, self.segment_directions = (
+            _straight_wire_segments(start_point, end_point, num_segments)
+        )

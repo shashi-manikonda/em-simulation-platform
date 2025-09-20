@@ -5,22 +5,6 @@ from em_app.magneticfield import Bvec
 from em_app.biot_savart import mu_0_4pi
 from mtflib import mtf, ComplexMultivariateTaylorFunction
 
-# Global settings for tests
-MAX_ORDER = 5
-MAX_DIMENSION = 4
-ETOL = 1e-20
-
-
-@pytest.fixture(scope="function", autouse=True)
-def setup_function():
-    mtf.initialize_mtf(max_order=MAX_ORDER, max_dimension=MAX_DIMENSION)
-    mtf.set_etol(ETOL)
-    global_dim = mtf.get_max_dimension()
-    exponent_zero = tuple([0] * global_dim)
-    yield global_dim, exponent_zero
-    mtf._INITIALIZED = False
-
-
 def test_ring_coil_segment_generation():
     """
     Test if RingCoil correctly generates the specified number of segments
@@ -42,8 +26,7 @@ def test_ring_coil_segment_generation():
     assert np.allclose(coil.segment_lengths, expected_length)
 
     # Check if the segment centers are at the correct distance from the center
-    centers_numerical = np.array([np.array([x.extract_coefficient(tuple([0] * x.dimension)).item() for x in c]) for c in coil.segment_centers])
-    dist_from_center = np.linalg.norm(centers_numerical - center, axis=1)
+    dist_from_center = np.linalg.norm(coil.segment_centers - center, axis=1)
     assert np.allclose(dist_from_center, radius)
 
 

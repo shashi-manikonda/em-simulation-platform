@@ -15,6 +15,18 @@ __all__ = [
     "Coil",
     "RingCoil",
     "RectangularCoil",
+    "StraightWire",
     "Bvec",
     "Bfield",
 ]
+
+try:
+    from mtflib import mtf
+
+    # Initialize mtf with default values if it has not been initialized yet.
+    # This prevents errors when the library is used without explicit initialization.
+    if not getattr(mtf, "_INITIALIZED", False):
+        mtf.initialize_mtf(max_order=5, max_dimension=10)
+except ImportError:
+    # mtflib is not installed, but the package can still be used with numerical data.
+    pass
