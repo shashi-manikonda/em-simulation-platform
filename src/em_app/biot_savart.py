@@ -57,7 +57,6 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
             for j in range(B_field.shape[1]):
                 if isinstance(B_field[i, j], MultivariateTaylorFunction):
                     B_field[i, j] = B_field[i, j].truncate(order)
-
     return B_field
 
 

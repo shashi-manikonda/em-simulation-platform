@@ -1,9 +1,0 @@
-Demo: solenoid_field_demo.ipynb
-Execution Time: 2.28 seconds
-Return Code: 0
-Timestamp: 2025-09-17 19:54:49
-==================================================
-STDOUT:
-Saved plot as: solenoid_field_demo_fig001.png
-Computed Bz from Solenoid Model: 0.00023133718951448746
-Analytical Bz for Solenoid: 0.00023335164408915934

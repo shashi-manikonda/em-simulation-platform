@@ -1,8 +1,0 @@
-Demo: straight_wire_demo.ipynb
-Execution Time: 2.20 seconds
-Return Code: 0
-Timestamp: 2025-09-17 19:54:44
-==================================================
-STDOUT:
-Computed B-field: [0.00000000e+00 1.99007462e-06 0.00000000e+00]
-Analytical B-field (magnitude): 1.9900743804199785e-06

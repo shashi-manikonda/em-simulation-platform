@@ -1,8 +1,0 @@
-Demo: rectangular_loop_demo.ipynb
-Execution Time: 2.22 seconds
-Return Code: 0
-Timestamp: 2025-09-17 19:54:46
-==================================================
-STDOUT:
-Saved plot as: rectangular_loop_demo_fig001.png
-Computed B-field at the observation point: [-9.10487909e-09 -2.79335679e-09  4.64173595e-08]

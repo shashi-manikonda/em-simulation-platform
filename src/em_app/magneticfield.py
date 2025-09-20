@@ -35,7 +35,239 @@ except ImportError:
 #     pass  # Assume these will be provided externally if needed
 
 
-class Bvec:
+class Vector:
+    """
+    A generic class to represent a 3D vector.
+    This class handles standard vector operations like addition, subtraction,
+    scalar multiplication/division, dot product, and cross product.
+    """
+    def __init__(self, x, y, z):
+        """
+        Initializes the vector.
+
+        Args:
+            x (float or mtf.MultivariateTaylorFunction): The x-component.
+            y (float or mtf.MultivariateTaylorFunction): The y-component.
+            z (float or mtf.MultivariateTaylorFunction): The z-component.
+        """
+        self.x = x
+        self.y = y
+        self.z = z
+    
+    def __add__(self, other):
+        """
+        Adds another Vector object to this one.
+
+        Args:
+            other (Vector): The Vector object to add.
+
+        Returns:
+            Vector: A new Vector object representing the sum.
+        """
+        if isinstance(other, Vector):
+            return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
+        raise TypeError("unsupported operand type(s) for +: 'Vector' and '{}'".format(type(other).__name__))
+
+    def __sub__(self, other):
+        """
+        Subtracts another Vector object from this one.
+
+        Args:
+            other (Vector): The Vector object to subtract.
+
+        Returns:
+            Vector: A new Vector object representing the difference.
+        """
+        if isinstance(other, Vector):
+            return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+        raise TypeError("unsupported operand type(s) for -: 'Vector' and '{}'".format(type(other).__name__))
+
+    def __mul__(self, other):
+        """
+        Multiplies all components of the Vector by a scalar.
+
+        Args:
+            other (float or int): The scalar to multiply by.
+
+        Returns:
+            Vector: A new Vector object with scaled components.
+        """
+        if isinstance(other, (float, int)):
+            return Vector(self.x * other, self.y * other, self.z * other)
+        raise TypeError("unsupported operand type(s) for *: 'Vector' and '{}'".format(type(other).__name__))
+
+    def __rmul__(self, other):
+        """
+        Handles right-hand side scalar multiplication (e.g., 5 * Vector).
+        """
+        return self.__mul__(other)
+    
+    def __truediv__(self, other):
+        """
+        Divides all components of the Vector by a non-zero scalar.
+
+        Args:
+            other (float or int): The scalar to divide by.
+
+        Returns:
+            Vector: A new Vector object with scaled components.
+        """
+        if not isinstance(other, (float, int)):
+            raise TypeError("unsupported operand type(s) for /: 'Vector' and '{}'".format(type(other).__name__))
+        if other == 0:
+            raise ZeroDivisionError("cannot divide a Vector by zero")
+        return self.__mul__(1.0 / other)
+
+    def dot(self, other):
+        """
+        Calculates the dot product with another Vector object.
+
+        Args:
+            other (Vector): The Vector object to take the dot product with.
+
+        Returns:
+            mtf.MultivariateTaylorFunction or float: The scalar result of the
+                dot product.
+        """
+        if not isinstance(other, Vector):
+            raise TypeError("unsupported operand type(s) for dot product: 'Vector' and '{}'".format(type(other).__name__))
+        
+        return self.x * other.x + self.y * other.y + self.z * other.z
+    
+    def cross(self, other):
+        """
+        Calculates the cross product with another Vector object.
+
+        Args:
+            other (Vector): The Vector object to take the cross product with.
+
+        Returns:
+            Vector: A new Vector object representing the resulting vector.
+        """
+        if not isinstance(other, Vector):
+            raise TypeError("unsupported operand type(s) for cross product: 'Vector' and '{}'".format(type(other).__name__))
+
+        x_component = self.y * other.z - self.z * other.y
+        y_component = self.z * other.x - self.x * other.z
+        z_component = self.x * other.y - self.y * other.x
+
+        return Vector(x_component, y_component, z_component)
+    
+    def norm(self):
+        """
+        Calculates the magnitude (L2-norm) of the vector.
+        
+        Returns:
+            float or mtf.MultivariateTaylorFunction: The scalar magnitude.
+        """
+        squared_norm = self.dot(self)
+        if _MTFLIB_AVAILABLE and isinstance(squared_norm, mtf.MultivariateTaylorFunction):
+            return squared_norm.sqrt()
+        else:
+            return np.sqrt(squared_norm)
+        
+    def is_mtf(self):
+        """
+        Checks if any of the Vector's components are MTF objects.
+
+        Returns:
+            bool: True if any component is an MTF, False otherwise.
+        """
+        if not _MTFLIB_AVAILABLE:
+            return False
+        return any(isinstance(comp, mtf) for comp in [self.x, self.y, self.z])
+
+    def to_numpy_array(self):
+        """
+        Converts the Vector object to a NumPy array, evaluating MTFs to their
+        zeroth-order coefficient if they exist.
+
+        Returns:
+            np.ndarray: A (3,) NumPy array of the vector components.
+        """
+        if self.is_mtf():
+            return np.array([comp.extract_coefficient(tuple([0] * comp.dimension))[0] for comp in [self.x, self.y, self.z]])
+        else:
+            return np.array([self.x, self.y, self.z])
+
+    def to_dataframe(self, column_names):
+        """
+        Converts the Vector components into a pandas DataFrame.
+
+        This method is a helper for creating a clean, tabular representation
+        of the vector, especially when components are MTF objects.
+
+        Args:
+            column_names (list of str): A list of three strings to be used
+                                        as the column names for the components.
+
+        Returns:
+            pandas.DataFrame: A DataFrame representing the vector's components
+                              and their coefficients if they are MTFs.
+        """
+        import pandas as pd
+        
+        if not self.is_mtf():
+            data = {
+                column_names[0]: [self.x],
+                column_names[1]: [self.y],
+                column_names[2]: [self.z]
+            }
+            return pd.DataFrame(data)
+
+        # Handle MTF components
+        dfs = {}
+        for name, component in zip(column_names, [self.x, self.y, self.z]):
+            if isinstance(component, mtf):
+                df = component.get_tabular_dataframe()
+                
+                # Handle the case where the function is zero.
+                if df.empty:
+                    df = pd.DataFrame([{'Order': 0, 'Exponents': tuple([0] * component.dimension), 'Coefficient': 0.0}])
+                
+                df.rename(columns={'Coefficient': name}, inplace=True)
+                df = df.sort_values(by=['Order', 'Exponents']).reset_index(drop=True)
+                dfs[name] = df
+            else:
+                df = pd.DataFrame([{'Order': 0, 'Exponents': (0,0,0), name: component}])
+                dfs[name] = df
+        
+        # Merge the dataframes
+        merged_df = pd.DataFrame()
+        if column_names[0] in dfs:
+            merged_df = dfs[column_names[0]]
+        for name in column_names[1:]:
+            if name in dfs:
+                if merged_df.empty:
+                    merged_df = dfs[name]
+                else:
+                    merged_df = pd.merge(merged_df, dfs[name], on=['Order', 'Exponents'], how='outer')
+
+        # Fill NaN values with 0.0 for a cleaner table
+        merged_df = merged_df.fillna(0.0)
+
+        # Reorder columns to place 'Order' and 'Exponents' at the end
+        cols = [col for col in merged_df.columns if col not in ['Order', 'Exponents']]
+        reordered_cols = cols + ['Order', 'Exponents']
+        merged_df = merged_df[reordered_cols]
+        
+        return merged_df
+
+    def __str__(self):
+        """
+        Creates a basic string representation of the Vector object.
+        """
+        return f"Vector(x={self.x}, y={self.y}, z={self.z})"
+    
+    def __repr__(self):
+        """
+        Provides a developer-friendly representation of the object.
+        """
+        return f"Vector(x={self.x}, y={self.y}, z={self.z})"
+
+
+
+class Bvec(Vector):
     """
     Represents the magnetic field vector at a point as a set of
     Multivariate Taylor Functions (MTFs).
@@ -46,14 +278,39 @@ class Bvec:
         Initializes the B-field vector.
 
         Args:
-            Bx (mtf.MultivariateTaylorFunction): The x-component of the B-field.
-            By (mtf.MultivariateTaylorFunction): The y-component of the B-field.
-            Bz (mtf.MultivariateTaylorFunction): The z-component of the B-field.
+            Bx (mtf.MultivariateTaylorFunction or float): The x-component of
+                the field vector. Can be a numerical value or an MTF.
+            By (mtf.MultivariateTaylorFunction or float): The y-component of
+                the field vector. Can be a numerical value or an MTF.
+            Bz (mtf.MultivariateTaylorFunction or float): The z-component of
+                the field vector. Can be a numerical value or an MTF.
         """
-        self.Bx = Bx
-        self.By = By
-        self.Bz = Bz
+        super().__init__(Bx, By, Bz)
 
+    @property
+    def Bx(self):
+        return self.x
+
+    @Bx.setter
+    def Bx(self, value):
+        self.x = value
+
+    @property
+    def By(self):
+        return self.y
+
+    @By.setter
+    def By(self, value):
+        self.y = value
+
+    @property
+    def Bz(self):
+        return self.z
+
+    @Bz.setter
+    def Bz(self, value):
+        self.z = value
+                
     def curl(self):
         """
         Calculates the curl of the B-field vector, which is a new B-field vector.
@@ -117,19 +374,30 @@ class Bvec:
 
         return np.vstack([grad_Bx, grad_By, grad_Bz])
 
-    def norm(self):
+    def __str__(self):
         """
-        Calculates the magnitude (or L2 norm) of the B-field vector as a new MTF.
+        Creates a string representation of the Bvec object.
 
-        The magnitude of the B-field is given by $|\mathbf{B}| = \sqrt{B_x^2 + B_y^2 + B_z^2}$.
-        This method uses `mtf.sqrt` to compute the Taylor expansion of the
-        magnitude.
-
-        Returns:
-            mtf.MultivariateTaylorFunction: A new MTF representing the magnitude
-                                            of the magnetic field.
+        If components are MTFs, it returns a tabular format using the
+        to_dataframe method. Otherwise, it uses the base class's string
+        representation.
         """
-        return mtf.sqrt(self.Bx**2 + self.By**2 + self.Bz**2)
+        if not self.is_mtf():
+            return super().__str__()
+
+        import pandas as pd
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 1000)
+
+        df = self.to_dataframe(['Bx', 'By', 'Bz'])
+        return df.to_string()
+    
+    def __repr__(self):
+        """
+        Provides a developer-friendly representation of the object.
+        """
+        return f"Bvec(Bx={self.Bx}, By={self.By}, Bz={self.Bz})"
 
 
 class Bfield:
