@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# ignore runoutput
+demos/runoutput/
+
 # Distribution / packaging
 .Python
 build/
