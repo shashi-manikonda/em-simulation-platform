@@ -13,22 +13,22 @@ _figure_counter = 1
 # Override plt.show() to save figures instead
 def save_figure_as_png(*args, **kwargs):
     global _figure_counter
-    
+
     # Get current figure
     fig = plt.gcf()
-    
+
     # Only save if figure has content
     if fig.get_axes():
         # Create filename
         filename = f"Field_Plotting_Demo_fig{_figure_counter:03d}.png"
-        filepath = os.path.join("/home/manikonda/work/MTFLibrary/demos/runoutput/Field_Plotting_Demo", filename)
-        
+        filepath = os.path.join("/app/demos/runoutput/Field_Plotting_Demo", filename)
+
         # Save the figure
         fig.savefig(filepath, dpi=150, bbox_inches='tight', facecolor='white')
         print(f"Saved plot as: {filename}")
-        
+
         _figure_counter += 1
-    
+
     # Clear the figure to free memory
     plt.clf()
 
@@ -44,7 +44,7 @@ matplotlib.figure.Figure.show = fig_show_override
 
 # Execute the original script
 try:
-    exec(open(r"/home/manikonda/work/MTFLibrary/demos/em/Field_Plotting_Demo.py").read())
+    exec(open(r"/app/demos/em/Field_Plotting_Demo.py").read())
 except Exception as e:
     print(f"Error in demo execution: {e}", file=sys.stderr)
     raise

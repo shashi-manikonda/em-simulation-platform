@@ -9,9 +9,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mtflib import *
-from applications.em.current_ring import current_ring
-from applications.em.plotting import (
-    Coil, plot_field_on_line, plot_field_on_plane, plot_field_vectors_3d
+from em_app.currentcoils import RingCoil
+from em_app.plotting import (
+    plot_field_on_line,
+    plot_field_on_plane,
+    plot_field_vectors_3d,
 )
 from mtflib import MultivariateTaylorFunction
 
@@ -31,17 +33,13 @@ num_segments = 20
 
 # First coil
 center1 = np.array([0, 0, -separation / 2])
-segments1, lengths1, dirs1 = current_ring(
-    radius, num_segments, center1, np.array([0, 0, 1])
-)
-coil1 = Coil(segments1, lengths1, dirs1, current=current, label='Coil 1', color='b')
+axis1 = np.array([0, 0, 1])
+coil1 = RingCoil(current, radius, num_segments, center1, axis1)
 
 # Second coil
 center2 = np.array([0, 0, separation / 2])
-segments2, lengths2, dirs2 = current_ring(
-    radius, num_segments, center2, np.array([0, 0, 1])
-)
-coil2 = Coil(segments2, lengths2, dirs2, current=current, label='Coil 2', color='g')
+axis2 = np.array([0, 0, 1])
+coil2 = RingCoil(current, radius, num_segments, center2, axis2)
 
 helmholtz_coils = [coil1, coil2]
 
@@ -51,7 +49,7 @@ helmholtz_coils = [coil1, coil2]
 # %%
 start = [0.01, 0, -1]
 end = [0.01, 0, 1]
-fig, (ax3d, ax2d) = plot_field_on_line(helmholtz_coils, start, end, component='Bz')
+fig, (ax3d, ax2d) = plot_field_on_line(helmholtz_coils, start, end, component="Bz")
 plt.show()
 
 # %% [markdown]
@@ -61,8 +59,12 @@ plt.show()
 center = [0, 0.01, 0]
 normal = [0, 1, 0]  # Plot on the x-z plane
 fig, ax = plot_field_on_plane(
-    helmholtz_coils, center, normal, 
-    plot_type='quiver', size=(2, 2), resolution=(15, 15)
+    helmholtz_coils,
+    center,
+    normal,
+    plot_type="quiver",
+    size=(2, 2),
+    resolution=(15, 15),
 )
 plt.show()
 
