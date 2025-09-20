@@ -18,6 +18,7 @@ def setup_function():
     yield global_dim, exponent_zero
     mtf._INITIALIZED = False
 
+
 def test_bvec_initialization():
     """
     Test that Bvec objects are initialized correctly for both numerical
@@ -32,6 +33,7 @@ def test_bvec_initialization():
     # Test with MTF data
     try:
         from mtflib import mtf
+
         bx_mtf = mtf.var(1)
         by_mtf = mtf.var(2)
         bz_mtf = mtf.var(3)
@@ -48,21 +50,22 @@ def test_bfield_magnitude():
     # Create a simple Bfield with numerical data
     field_points = np.array([[0, 0, 0], [1, 1, 1]])
     b_vectors_numerical = np.array([[1, 0, 0], [0, 1, 1]])
-    
+
     # Wrap the vectors in Bvec objects
     b_vectors_objects = np.array(
         [Bvec(vec[0], vec[1], vec[2]) for vec in b_vectors_numerical], dtype=object
     )
 
     bfield = Bfield(b_vectors_objects, field_points=field_points)
-    
+
     # Calculate magnitude using the Bfield method
     magnitudes = bfield.get_magnitude()
-    
+
     # Expected magnitudes
     expected_magnitudes = np.array([1.0, np.sqrt(2)])
 
     assert np.allclose(magnitudes, expected_magnitudes)
+
 
 def test_bfield_initialization_numerical():
     """
