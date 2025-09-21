@@ -41,19 +41,83 @@ class Vector:
     This class handles standard vector operations like addition, subtraction,
     scalar multiplication/division, dot product, and cross product.
     """
-    def __init__(self, x, y, z):
+    def __init__(self, *components):
         """
         Initializes the vector.
 
-        Args:
-            x (float or mtf.MultivariateTaylorFunction): The x-component.
-            y (float or mtf.MultivariateTaylorFunction): The y-component.
-            z (float or mtf.MultivariateTaylorFunction): The z-component.
-        """
-        self.x = x
-        self.y = y
-        self.z = z
+        This constructor is flexible and can accept arguments in several formats:
+        - Three separate numeric or MTF values: `Vector(x, y, z)`
+        - A list or tuple of three values: `Vector([x, y, z])`
+        - A NumPy array of three values: `Vector(np.array([x, y, z]))`
 
+        Args:
+            *components (tuple): A tuple containing the components in one of the
+                                  formats listed above.
+        """
+        if len(components) == 1 and isinstance(components[0], (list, tuple, np.ndarray)):
+            components = components[0]
+        
+        if len(components) != 3:
+            raise ValueError(f"Vector initialization requires 3 components, but {len(components)} were given.")
+            
+        self.x, self.y, self.z = components
+
+    @classmethod
+    def from_array_of_vectors(cls, array):
+        """
+        Creates a NumPy array of Vector objects from a 2D NumPy array.
+        
+        Args:
+            array (np.ndarray): A NumPy array of shape (N, 3), where N is the
+                                number of vectors.
+                                
+        Returns:
+            np.ndarray: A NumPy array of Vector objects.
+        """
+        if not isinstance(array, np.ndarray) or array.ndim != 2 or array.shape[1] != 3:
+            raise TypeError(
+                "Input must be a 2D NumPy array with a shape of (N, 3)."
+            )
+        return np.array([cls(row) for row in array])
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        """
+        Enables the use of NumPy universal functions (ufuncs) with Vector objects.
+        This method is called when a NumPy ufunc is applied to a Vector instance.
+        It allows for seamless operations with other NumPy arrays, scalars, and
+        other Vector objects.
+        """
+        # Convert all Vector inputs to their NumPy array representation
+        out_inputs = []
+        for inp in inputs:
+            if isinstance(inp, Vector):
+                out_inputs.append(inp.to_numpy_array())
+            elif isinstance(inp, np.ndarray) and inp.dtype == object and all(isinstance(v, Vector) for v in inp.flat):
+                # Convert a NumPy array of Vector objects to a 2D numerical array
+                out_inputs.append(np.array([v.to_numpy_array() for v in inp.flatten()]).reshape(inp.shape + (3,)))
+            else:
+                out_inputs.append(inp)
+        
+        # Check if the method is supported
+        if method == '__call__':
+            # Apply the ufunc to the components
+            result = ufunc(*out_inputs, **kwargs)
+            
+            # Handle the various possible result types
+            if isinstance(result, np.ndarray):
+                if result.ndim == 1 and result.shape[0] == 3:
+                    return Vector(result)
+                elif result.ndim > 1 and result.shape[-1] == 3:
+                    # Return an array of Vector objects by reshaping the result
+                    return np.array([Vector(row) for row in result.reshape(-1, 3)]).reshape(result.shape[:-1])
+                # If result is not a 3-element array or a (...,3) array, return as is
+                return result
+            # If the result is not a NumPy array, return it as-is (e.g., a scalar from a reduction)
+            return result
+        
+        # Defer to NumPy's default behavior for other methods like 'reduce'
+        return NotImplemented
+    
     def __add__(self, other):
         """
         Adds another Vector object to this one.
@@ -162,7 +226,7 @@ class Vector:
         """
         squared_norm = self.dot(self)
         if _MTFLIB_AVAILABLE and isinstance(squared_norm, mtf):
-            return squared_norm.sqrt()
+            return mtf.sqrt(squared_norm)
         else:
             return np.sqrt(squared_norm)
 
@@ -179,17 +243,22 @@ class Vector:
 
     def to_numpy_array(self):
         """
-        Converts the Vector object to a NumPy array, evaluating MTFs to their
-        zeroth-order coefficient if they exist.
+        Converts the vector to a NumPy array.
 
-        Returns:
-            np.ndarray: A (3,) NumPy array of the vector components.
+        This method now handles components that are either numbers or
+        Multivariate Taylor Function (MTF) objects. For MTFs, it extracts the
+        constant part of the function.
         """
-        if self.is_mtf():
-            return np.array([comp.extract_coefficient(tuple([0] * comp.dimension))[0] for comp in [self.x, self.y, self.z]])
-        else:
-            return np.array([self.x, self.y, self.z])
-
+        comps = []
+        for comp in [self.x, self.y, self.z]:
+            if _MTFLIB_AVAILABLE and isinstance(comp, mtf):
+                # If it's an MTF, get its constant part
+                comps.append(comp.get_constant())
+            else:
+                # Otherwise, assume it's a number
+                comps.append(comp)
+        return np.array(comps, dtype=float)
+    
     def to_dataframe(self, column_names):
         """
         Converts the Vector components into a pandas DataFrame.
@@ -311,6 +380,21 @@ class Bvec(Vector):
     def Bz(self, value):
         self.z = value
 
+    def to_numpy_array(self):
+        """
+        Converts the Bvec to a NumPy array by extracting the constant part of
+        each component.
+        """
+        comps = []
+        for comp in [self.Bx, self.By, self.Bz]:
+            if isinstance(comp, (int, float)):
+                comps.append(comp)
+            elif _MTFLIB_AVAILABLE and isinstance(comp, mtf):
+                comps.append(comp.get_constant())
+            else:
+                raise TypeError("Components must be numerical or MTF objects to convert to a NumPy array.")
+        return np.array(comps, dtype=float)
+    
     def curl(self):
         """
         Calculates the curl of the B-field vector, which is a new B-field vector.
@@ -528,153 +612,6 @@ class Bfield:
                 self._magnitude = np.array(magnitudes)
         return self._magnitude
 
-    def plot_field_on_plane(
-        self, normal_vector, offset, title="B-Field Magnitude on Plane"
-    ):
-        """
-        Plots the magnitude of the magnetic field on a 2D plane.
-
-        This method projects the magnetic field data from the `Bfield` object
-        onto the specified plane and visualizes its magnitude using a 2D color
-        plot. It does not plot the source coils.
-
-        Args:
-            normal_vector (array-like): The normal vector [nx, ny, nz] defining
-                                        the plane's orientation.
-            offset (float): The scalar offset of the plane from the origin.
-            title (str, optional): The title of the plot. Defaults to
-                                   "B-Field Magnitude on Plane".
-        """
-        fig = plt.figure(figsize=(10, 8))
-        fig.add_subplot(111, projection="3d")
-
-        # Get numerical data
-        points_3d, B_vec_components = self._get_numerical_data()
-
-        # Normalize the normal vector
-        normal = np.array(normal_vector) / np.linalg.norm(normal_vector)
-
-        # Create an orthonormal basis for the plane
-        if np.allclose(normal, [0, 0, 1]) or np.allclose(normal, [0, 0, -1]):
-            u_vec = np.array([1, 0, 0])
-        else:
-            u_vec = np.cross([0, 0, 1], normal)
-            u_vec /= np.linalg.norm(u_vec)
-        v_vec = np.cross(normal, u_vec)
-
-        # Filter points that are on the plane
-        on_plane_indices = np.where(
-            np.isclose(np.dot(points_3d, normal), offset, atol=1e-6)
-        )[0]
-
-        if len(on_plane_indices) == 0:
-            warnings.warn("No field points found on the specified plane.")
-            plt.close(fig)
-            return
-
-        plane_points = points_3d[on_plane_indices]
-        plane_b_vectors = B_vec_components[on_plane_indices]
-        b_magnitudes = np.linalg.norm(plane_b_vectors, axis=1)
-
-        # Project the points onto the 2D plane
-        u_coords = np.dot(plane_points, u_vec)
-        v_coords = np.dot(plane_points, v_vec)
-
-        # Create the plot
-        fig_2d, ax_2d = plt.subplots(figsize=(8, 8))
-        scatter = ax_2d.scatter(
-            u_coords,
-            v_coords,
-            c=b_magnitudes,
-            cmap="viridis",
-            s=50,
-            alpha=0.8,
-        )
-        cbar = fig_2d.colorbar(scatter)
-        cbar.set_label("Magnetic Field Magnitude")
-
-        ax_2d.set_title(title)
-        ax_2d.set_xlabel("u (projected axis)")
-        ax_2d.set_ylabel("v (projected axis)")
-        ax_2d.set_aspect("equal", "box")
-        ax_2d.grid(True)
-        plt.show()
-
-    def plot_field_vectors_3d(
-        self, title="3D Magnetic Field Vectors", scale=1.0, color_by_magnitude=True
-    ):
-        """
-        Generates a 3D quiver plot of the magnetic field vectors.
-
-        Args:
-            title (str, optional): The title of the plot. Defaults to
-                                   "3D Magnetic Field Vectors".
-            scale (float, optional): A factor to control the length of the
-                                     plotted vectors. Defaults to 1.0.
-            color_by_magnitude (bool, optional): If True, the color of the
-                                                 vectors will correspond to the
-                                                 field's magnitude.
-        """
-        fig = plt.figure(figsize=(10, 8))
-        ax = fig.add_subplot(111, projection="3d")
-
-        # Get numerical data
-        points, B_vec_components = self._get_numerical_data()
-
-        X, Y, Z = points[:, 0], points[:, 1], points[:, 2]
-        U, V, W = B_vec_components[:, 0], B_vec_components[:, 1], B_vec_components[:, 2]
-
-        if color_by_magnitude:
-            magnitudes = np.linalg.norm(B_vec_components, axis=1)
-            if magnitudes.max() > 0:
-                colors = plt.cm.viridis(magnitudes / magnitudes.max())
-                ax.quiver(
-                    X,
-                    Y,
-                    Z,
-                    U,
-                    V,
-                    W,
-                    length=scale,
-                    normalize=True,
-                    colors=colors,
-                    arrow_length_ratio=0.5,
-                )
-                fig.colorbar(
-                    plt.cm.ScalarMappable(
-                        norm=plt.Normalize(
-                            vmin=magnitudes.min(), vmax=magnitudes.max()
-                        ),
-                        cmap="viridis",
-                    ),
-                    ax=ax,
-                    shrink=0.5,
-                    label="B-Field Magnitude",
-                )
-            else:
-                ax.quiver(
-                    X,
-                    Y,
-                    Z,
-                    U,
-                    V,
-                    W,
-                    length=scale,
-                    normalize=True,
-                    arrow_length_ratio=0.5,
-                )
-        else:
-            ax.quiver(
-                X, Y, Z, U, V, W, length=scale, normalize=True, arrow_length_ratio=0.5
-            )
-
-        ax.set_title(title)
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-        ax.axis("equal")
-        plt.show()
-
 
 if __name__ == "__main__":
     # --- Example Usage for Refactored Code ---
@@ -713,10 +650,6 @@ if __name__ == "__main__":
     print("Plotting the 3D magnetic field vectors...")
     bfield_num.plot_field_vectors_3d()
 
-    # Plot the field on the y=0 plane
-    print("\nPlotting the magnetic field magnitude on the y=0 plane...")
-    bfield_num.plot_field_on_plane(normal_vector=[0, 1, 0], offset=0.0)
-
     # 2. Create dummy data with mtflib (if available)
     if _MTFLIB_AVAILABLE:
         print("\nCreating a Bfield object with a NumPy array of MTF objects...")
@@ -748,10 +681,3 @@ if __name__ == "__main__":
 
         print("Plotting the 3D magnetic field vectors from the MTF data...")
         bfield_mtf.plot_field_vectors_3d(title="3D B-Field from MTF points")
-
-        print(
-            "\nPlotting the magnetic field magnitude from MTF data on the y=0 plane..."
-        )
-        bfield_mtf.plot_field_on_plane(
-            normal_vector=[0, 1, 0], offset=0.0, title="B-Field from MTF on Plane"
-        )
