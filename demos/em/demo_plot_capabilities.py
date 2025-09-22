@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from em_app import RingCoil, Coil
+from em_app import RingCoil
 from mtflib import mtf
 # import matplotlib
 # matplotlib.use('Qt5Agg') # Or 'Qt5Agg' if TkAgg doesn't work.
+
 
 def main():
     """
@@ -21,17 +21,17 @@ def main():
         axis_direction=np.array([0, 0, 1]),
     )
 
-#    # 1. Plot the coil itself
-#     print("Plotting the coil geometry...")
-#     fig_coil = plt.figure()
-#     ax_coil = fig_coil.add_subplot(111, projection="3d")
-#     ring_coil.plot(ax=ax_coil, num_interpolation_points=10)
-#     ax_coil.set_title("Ring Coil Geometry")
-#     ax_coil.set_xlabel("X-axis")
-#     ax_coil.set_ylabel("Y-axis")
-#     ax_coil.set_zlabel("Z-axis")
-#     plt.tight_layout()
-#     plt.savefig("ring_coil_geometry.png")
+    #    # 1. Plot the coil itself
+    #     print("Plotting the coil geometry...")
+    #     fig_coil = plt.figure()
+    #     ax_coil = fig_coil.add_subplot(111, projection="3d")
+    #     ring_coil.plot(ax=ax_coil, num_interpolation_points=10)
+    #     ax_coil.set_title("Ring Coil Geometry")
+    #     ax_coil.set_xlabel("X-axis")
+    #     ax_coil.set_ylabel("Y-axis")
+    #     ax_coil.set_zlabel("Z-axis")
+    #     plt.tight_layout()
+    #     plt.savefig("ring_coil_geometry.png")
 
     # # 2. Plot the 1D field component along the z-axis
     # print("Plotting 1D B-field component (Bz) along the Z-axis...")
@@ -47,12 +47,12 @@ def main():
     # plt.tight_layout()
     # plt.savefig("1d_b_field_bz.png")
 
-   # 3. Plot the 2D field using a quiver plot on the XZ-plane
+    # 3. Plot the 2D field using a quiver plot on the XZ-plane
     print("Plotting 2D B-field vectors on the XZ-plane...")
     fig_2d, ax_2d = plt.subplots()
     ring_coil.plot_2d_field(
-        field_component='Bnorm',
-        plane='xz',
+        field_component="Bnorm",
+        plane="xz",
         num_points_a=5,
         num_points_b=5,
         ax=ax_2d,
@@ -61,15 +61,14 @@ def main():
     plt.tight_layout()
     plt.savefig("2d_b_field_xz.png")
 
-
     # # 4. Plot the 3D magnetic field vectors
     # print("Plotting 3D magnetic field vectors...")
     # fig_3d = plt.figure(figsize=(10, 8))
     # ax_3d = fig_3d.add_subplot(111, projection="3d")
-    
+
     # # Plot the coil first for visual context
     # ring_coil.plot(ax=ax_3d, color='r')
-    
+
     # # Plot the field vectors
     # Coil.plot_field_vectors_3d(
     #     num_points_a=7,
@@ -83,6 +82,7 @@ def main():
 
     # Show all plots
     plt.show()
+
 
 if __name__ == "__main__":
     main()

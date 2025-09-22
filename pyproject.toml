@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
 "numpy",
-"mtflib",
+"mtflib @ git+https://github.com/shashi-manikonda/MTFLibrary.git@main",
 ]
 
 [project.optional-dependencies]

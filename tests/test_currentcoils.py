@@ -1,9 +1,7 @@
 import numpy as np
 import pytest
 from em_app.currentcoils import RingCoil, RectangularCoil
-from em_app.magneticfield import Bvec
-from em_app.biot_savart import mu_0_4pi
-from mtflib import mtf, ComplexMultivariateTaylorFunction
+from mtflib import mtf
 
 # Global settings for tests
 MAX_ORDER = 5
@@ -42,7 +40,14 @@ def test_ring_coil_segment_generation():
     assert np.allclose(coil.segment_lengths, expected_length)
 
     # Check if the segment centers are at the correct distance from the center
-    centers_numerical = np.array([np.array([x.extract_coefficient(tuple([0] * x.dimension)).item() for x in c]) for c in coil.segment_centers])
+    centers_numerical = np.array(
+        [
+            np.array(
+                [x.extract_coefficient(tuple([0] * x.dimension)).item() for x in c]
+            )
+            for c in coil.segment_centers
+        ]
+    )
     dist_from_center = np.linalg.norm(centers_numerical - center, axis=1)
     assert np.allclose(dist_from_center, radius)
 
@@ -58,7 +63,9 @@ def test_rectangular_coil_segment_generation():
     p4 = np.array([0, 2, 0])
     num_segments_per_side = 5
 
-    coil = RectangularCoil(current, p1, p2, p4, num_segments_per_side)
+    coil = RectangularCoil(
+        current, p1, p2, p4, num_segments_per_side, use_mtf_for_segments=False
+    )
 
     # A rectangular coil has 4 sides
     expected_total_segments = 4 * num_segments_per_side

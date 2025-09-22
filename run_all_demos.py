@@ -259,7 +259,7 @@ def move_temp_files_to_output(script_path, wrapper_script, demo_output_dir, demo
                 os.remove(script_path)
             if wrapper_script and os.path.exists(wrapper_script):
                 os.remove(wrapper_script)
-        except:
+        except Exception:
             pass  # Ignore cleanup errors
 
 

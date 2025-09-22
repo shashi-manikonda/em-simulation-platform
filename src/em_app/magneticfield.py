@@ -14,8 +14,6 @@ The core components are:
 """
 
 import numpy as np
-import warnings
-import matplotlib.pyplot as plt
 
 # Try to import mtflib. The code will still function with numerical data
 # even if this import fails.
@@ -41,6 +39,7 @@ class Vector:
     This class handles standard vector operations like addition, subtraction,
     scalar multiplication/division, dot product, and cross product.
     """
+
     def __init__(self, *components):
         """
         Initializes the vector.
@@ -54,30 +53,32 @@ class Vector:
             *components (tuple): A tuple containing the components in one of the
                                   formats listed above.
         """
-        if len(components) == 1 and isinstance(components[0], (list, tuple, np.ndarray)):
+        if len(components) == 1 and isinstance(
+            components[0], (list, tuple, np.ndarray)
+        ):
             components = components[0]
-        
+
         if len(components) != 3:
-            raise ValueError(f"Vector initialization requires 3 components, but {len(components)} were given.")
-            
+            raise ValueError(
+                f"Vector initialization requires 3 components, but {len(components)} were given."
+            )
+
         self.x, self.y, self.z = components
 
     @classmethod
     def from_array_of_vectors(cls, array):
         """
         Creates a NumPy array of Vector objects from a 2D NumPy array.
-        
+
         Args:
             array (np.ndarray): A NumPy array of shape (N, 3), where N is the
                                 number of vectors.
-                                
+
         Returns:
             np.ndarray: A NumPy array of Vector objects.
         """
         if not isinstance(array, np.ndarray) or array.ndim != 2 or array.shape[1] != 3:
-            raise TypeError(
-                "Input must be a 2D NumPy array with a shape of (N, 3)."
-            )
+            raise TypeError("Input must be a 2D NumPy array with a shape of (N, 3).")
         return np.array([cls(row) for row in array])
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -92,32 +93,42 @@ class Vector:
         for inp in inputs:
             if isinstance(inp, Vector):
                 out_inputs.append(inp.to_numpy_array())
-            elif isinstance(inp, np.ndarray) and inp.dtype == object and all(isinstance(v, Vector) for v in inp.flat):
+            elif (
+                isinstance(inp, np.ndarray)
+                and inp.dtype == object
+                and all(isinstance(v, Vector) for v in inp.flat)
+            ):
                 # Convert a NumPy array of Vector objects to a 2D numerical array
-                out_inputs.append(np.array([v.to_numpy_array() for v in inp.flatten()]).reshape(inp.shape + (3,)))
+                out_inputs.append(
+                    np.array([v.to_numpy_array() for v in inp.flatten()]).reshape(
+                        inp.shape + (3,)
+                    )
+                )
             else:
                 out_inputs.append(inp)
-        
+
         # Check if the method is supported
-        if method == '__call__':
+        if method == "__call__":
             # Apply the ufunc to the components
             result = ufunc(*out_inputs, **kwargs)
-            
+
             # Handle the various possible result types
             if isinstance(result, np.ndarray):
                 if result.ndim == 1 and result.shape[0] == 3:
                     return Vector(result)
                 elif result.ndim > 1 and result.shape[-1] == 3:
                     # Return an array of Vector objects by reshaping the result
-                    return np.array([Vector(row) for row in result.reshape(-1, 3)]).reshape(result.shape[:-1])
+                    return np.array(
+                        [Vector(row) for row in result.reshape(-1, 3)]
+                    ).reshape(result.shape[:-1])
                 # If result is not a 3-element array or a (...,3) array, return as is
                 return result
             # If the result is not a NumPy array, return it as-is (e.g., a scalar from a reduction)
             return result
-        
+
         # Defer to NumPy's default behavior for other methods like 'reduce'
         return NotImplemented
-    
+
     def __add__(self, other):
         """
         Adds another Vector object to this one.
@@ -130,7 +141,11 @@ class Vector:
         """
         if isinstance(other, Vector):
             return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
-        raise TypeError("unsupported operand type(s) for +: 'Vector' and '{}'".format(type(other).__name__))
+        raise TypeError(
+            "unsupported operand type(s) for +: 'Vector' and '{}'".format(
+                type(other).__name__
+            )
+        )
 
     def __sub__(self, other):
         """
@@ -144,7 +159,11 @@ class Vector:
         """
         if isinstance(other, Vector):
             return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
-        raise TypeError("unsupported operand type(s) for -: 'Vector' and '{}'".format(type(other).__name__))
+        raise TypeError(
+            "unsupported operand type(s) for -: 'Vector' and '{}'".format(
+                type(other).__name__
+            )
+        )
 
     def __mul__(self, other):
         """
@@ -158,7 +177,11 @@ class Vector:
         """
         if isinstance(other, (float, int)):
             return Vector(self.x * other, self.y * other, self.z * other)
-        raise TypeError("unsupported operand type(s) for *: 'Vector' and '{}'".format(type(other).__name__))
+        raise TypeError(
+            "unsupported operand type(s) for *: 'Vector' and '{}'".format(
+                type(other).__name__
+            )
+        )
 
     def __rmul__(self, other):
         """
@@ -177,7 +200,11 @@ class Vector:
             Vector: A new Vector object with scaled components.
         """
         if not isinstance(other, (float, int)):
-            raise TypeError("unsupported operand type(s) for /: 'Vector' and '{}'".format(type(other).__name__))
+            raise TypeError(
+                "unsupported operand type(s) for /: 'Vector' and '{}'".format(
+                    type(other).__name__
+                )
+            )
         if other == 0:
             raise ZeroDivisionError("cannot divide a Vector by zero")
         return self.__mul__(1.0 / other)
@@ -194,7 +221,11 @@ class Vector:
                 dot product.
         """
         if not isinstance(other, Vector):
-            raise TypeError("unsupported operand type(s) for dot product: 'Vector' and '{}'".format(type(other).__name__))
+            raise TypeError(
+                "unsupported operand type(s) for dot product: 'Vector' and '{}'".format(
+                    type(other).__name__
+                )
+            )
 
         return self.x * other.x + self.y * other.y + self.z * other.z
 
@@ -209,7 +240,11 @@ class Vector:
             Vector: A new Vector object representing the resulting vector.
         """
         if not isinstance(other, Vector):
-            raise TypeError("unsupported operand type(s) for cross product: 'Vector' and '{}'".format(type(other).__name__))
+            raise TypeError(
+                "unsupported operand type(s) for cross product: 'Vector' and '{}'".format(
+                    type(other).__name__
+                )
+            )
 
         x_component = self.y * other.z - self.z * other.y
         y_component = self.z * other.x - self.x * other.z
@@ -249,16 +284,12 @@ class Vector:
         Multivariate Taylor Function (MTF) objects. For MTFs, it extracts the
         constant part of the function.
         """
-        comps = []
-        for comp in [self.x, self.y, self.z]:
-            if _MTFLIB_AVAILABLE and isinstance(comp, mtf):
-                # If it's an MTF, get its constant part
-                comps.append(comp.get_constant())
-            else:
-                # Otherwise, assume it's a number
-                comps.append(comp)
+        comps = [
+            comp.get_constant() if _MTFLIB_AVAILABLE and isinstance(comp, mtf) else comp
+            for comp in [self.x, self.y, self.z]
+        ]
         return np.array(comps, dtype=float)
-    
+
     def to_dataframe(self, column_names):
         """
         Converts the Vector components into a pandas DataFrame.
@@ -280,7 +311,7 @@ class Vector:
             data = {
                 column_names[0]: [self.x],
                 column_names[1]: [self.y],
-                column_names[2]: [self.z]
+                column_names[2]: [self.z],
             }
             return pd.DataFrame(data)
 
@@ -292,13 +323,23 @@ class Vector:
 
                 # Handle the case where the function is zero.
                 if df.empty:
-                    df = pd.DataFrame([{'Order': 0, 'Exponents': tuple([0] * component.dimension), 'Coefficient': 0.0}])
+                    df = pd.DataFrame(
+                        [
+                            {
+                                "Order": 0,
+                                "Exponents": tuple([0] * component.dimension),
+                                "Coefficient": 0.0,
+                            }
+                        ]
+                    )
 
-                df.rename(columns={'Coefficient': name}, inplace=True)
-                df = df.sort_values(by=['Order', 'Exponents']).reset_index(drop=True)
+                df.rename(columns={"Coefficient": name}, inplace=True)
+                df = df.sort_values(by=["Order", "Exponents"]).reset_index(drop=True)
                 dfs[name] = df
             else:
-                df = pd.DataFrame([{'Order': 0, 'Exponents': (0,0,0), name: component}])
+                df = pd.DataFrame(
+                    [{"Order": 0, "Exponents": (0, 0, 0), name: component}]
+                )
                 dfs[name] = df
 
         # Merge the dataframes
@@ -310,14 +351,16 @@ class Vector:
                 if merged_df.empty:
                     merged_df = dfs[name]
                 else:
-                    merged_df = pd.merge(merged_df, dfs[name], on=['Order', 'Exponents'], how='outer')
+                    merged_df = pd.merge(
+                        merged_df, dfs[name], on=["Order", "Exponents"], how="outer"
+                    )
 
         # Fill NaN values with 0.0 for a cleaner table
         merged_df = merged_df.fillna(0.0)
 
         # Reorder columns to place 'Order' and 'Exponents' at the end
-        cols = [col for col in merged_df.columns if col not in ['Order', 'Exponents']]
-        reordered_cols = cols + ['Order', 'Exponents']
+        cols = [col for col in merged_df.columns if col not in ["Order", "Exponents"]]
+        reordered_cols = cols + ["Order", "Exponents"]
         merged_df = merged_df[reordered_cols]
 
         return merged_df
@@ -333,7 +376,6 @@ class Vector:
         Provides a developer-friendly representation of the object.
         """
         return f"Vector(x={self.x}, y={self.y}, z={self.z})"
-
 
 
 class Bvec(Vector):
@@ -392,9 +434,11 @@ class Bvec(Vector):
             elif _MTFLIB_AVAILABLE and isinstance(comp, mtf):
                 comps.append(comp.get_constant())
             else:
-                raise TypeError("Components must be numerical or MTF objects to convert to a NumPy array.")
+                raise TypeError(
+                    "Components must be numerical or MTF objects to convert to a NumPy array."
+                )
         return np.array(comps, dtype=float)
-    
+
     def curl(self):
         """
         Calculates the curl of the B-field vector, which is a new B-field vector.
@@ -470,11 +514,12 @@ class Bvec(Vector):
             return super().__str__()
 
         import pandas as pd
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', 1000)
 
-        df = self.to_dataframe(['Bx', 'By', 'Bz'])
+        pd.set_option("display.max_rows", None)
+        pd.set_option("display.max_columns", None)
+        pd.set_option("display.width", 1000)
+
+        df = self.to_dataframe(["Bx", "By", "Bz"])
         return df.to_string()
 
     def __repr__(self):
@@ -504,7 +549,10 @@ class Bfield:
                                                  an (N, 3) NumPy array of MTF objects.
                                                  Defaults to None.
         """
-        if isinstance(b_vectors[0], Bvec):
+        if len(b_vectors) == 0:
+            self._b_vectors_numerical = np.array([])
+            self._b_vectors_mtf = None
+        elif isinstance(b_vectors[0], Bvec):
             # Case for MTF-based Bvec objects
             if not isinstance(b_vectors, np.ndarray) or b_vectors.ndim != 1:
                 raise TypeError("b_vectors must be a 1D NumPy array of Bvec objects.")
@@ -513,6 +561,11 @@ class Bfield:
 
             self._b_vectors_mtf = b_vectors
             self._b_vectors_numerical = None
+        elif isinstance(b_vectors[0], Vector):
+            self._b_vectors_numerical = np.array(
+                [v.to_numpy_array() for v in b_vectors]
+            )
+            self._b_vectors_mtf = None
         else:
             # Case for numerical B-field vectors
             self._b_vectors_numerical = np.array(b_vectors)
@@ -547,9 +600,9 @@ class Bfield:
             b_vectors_numerical = np.array(
                 [
                     [
-                        v.Bx.extract_coefficient(tuple([0] * v.Bx.dimension)).item(),
-                        v.By.extract_coefficient(tuple([0] * v.By.dimension)).item(),
-                        v.Bz.extract_coefficient(tuple([0] * v.Bz.dimension)).item(),
+                        v.Bx.get_constant().item(),
+                        v.By.get_constant().item(),
+                        v.Bz.get_constant().item(),
                     ]
                     for v in self._b_vectors_mtf
                 ]
@@ -561,15 +614,9 @@ class Bfield:
                     numerical_points = np.array(
                         [
                             [
-                                p[0]
-                                .extract_coefficient(tuple([0] * p[0].dimension))
-                                .item(),
-                                p[1]
-                                .extract_coefficient(tuple([0] * p[1].dimension))
-                                .item(),
-                                p[2]
-                                .extract_coefficient(tuple([0] * p[2].dimension))
-                                .item(),
+                                p[0].get_constant().item(),
+                                p[1].get_constant().item(),
+                                p[2].get_constant().item(),
                             ]
                             for p in self.field_points
                         ]
@@ -602,13 +649,10 @@ class Bfield:
                     raise RuntimeError(
                         "mtflib is required to get magnitude of Bvec objects."
                     )
-                magnitudes = []
-                for v in self._b_vectors_mtf:
-                    norm = v.norm()
-                    if v.is_mtf():
-                        magnitudes.append(norm.extract_coefficient(tuple([0] * v.Bx.dimension)).item())
-                    else:
-                        magnitudes.append(norm)
+                magnitudes = [
+                    v.norm().get_constant().item() if v.is_mtf() else v.norm()
+                    for v in self._b_vectors_mtf
+                ]
                 self._magnitude = np.array(magnitudes)
         return self._magnitude
 

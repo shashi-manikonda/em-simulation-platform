@@ -24,20 +24,15 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
     r_squared = np.sum(r_vectors**2, axis=2)
 
     # Avoid division by zero at the source point location
-    for i in range(r_squared.shape[0]):
-        for j in range(r_squared.shape[1]):
-            if isinstance(r_squared[i, j], MultivariateTaylorFunction):
-                if (
-                    abs(
-                        r_squared[i, j].extract_coefficient(
-                            tuple([0] * r_squared[i, j].dimension)
-                        )
-                    )
-                    < 1e-18
-                ):
+    if r_squared.dtype == object:
+        # Handle MTF objects
+        for i in range(r_squared.shape[0]):
+            for j in range(r_squared.shape[1]):
+                if abs(r_squared[i, j].get_constant()) < 1e-18:
                     r_squared[i, j] += 1e-18
-            elif r_squared[i, j] == 0:
-                r_squared[i, j] = 1e-18
+    else:
+        # Handle numerical arrays
+        r_squared = np.where(r_squared == 0, 1e-18, r_squared)
 
     dl_vectors_reshaped = dl_vectors[:, np.newaxis, :]
     cross_products = np.cross(dl_vectors_reshaped, r_vectors, axis=2)
@@ -53,10 +48,12 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
 
     # If an order is specified, truncate each MTF in the result
     if order is not None:
-        for i in range(B_field.shape[0]):
-            for j in range(B_field.shape[1]):
-                if isinstance(B_field[i, j], MultivariateTaylorFunction):
-                    B_field[i, j] = B_field[i, j].truncate(order)
+        truncate_mtf = np.vectorize(
+            lambda m: m.truncate(order)
+            if isinstance(m, MultivariateTaylorFunction)
+            else m
+        )
+        B_field = truncate_mtf(B_field)
     return B_field
 
 

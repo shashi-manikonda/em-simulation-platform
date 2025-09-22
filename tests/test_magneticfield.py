@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from em_app.magneticfield import Bvec, Bfield
+from em_app.magneticfield import Bvec, Bfield, Vector
 from mtflib import mtf
 
 # Global settings for tests
@@ -18,6 +18,7 @@ def setup_function():
     yield global_dim, exponent_zero
     mtf._INITIALIZED = False
 
+
 def test_bvec_initialization():
     """
     Test that Bvec objects are initialized correctly for both numerical
@@ -32,6 +33,7 @@ def test_bvec_initialization():
     # Test with MTF data
     try:
         from mtflib import mtf
+
         bx_mtf = mtf.var(1)
         by_mtf = mtf.var(2)
         bz_mtf = mtf.var(3)
@@ -64,17 +66,29 @@ def test_bfield_magnitude():
 
     assert np.allclose(magnitudes, expected_magnitudes)
 
+
 def test_bfield_initialization_numerical():
     """
     Test Bfield initialization with numerical data.
     """
     field_points = np.array([[0, 0, 0], [1, 0, 0]])
-    b_vectors = np.array([[0, 0, 1], [0, 0, 2]])
-    bfield = Bfield(b_vectors, field_points)
+    b_vectors_np = np.array([[0, 0, 1], [0, 0, 2]])
 
-    points, vectors = bfield._get_numerical_data()
+    # Test with NumPy array
+    bfield_np = Bfield(b_vectors_np, field_points)
+    points_np, vectors_np = bfield_np._get_numerical_data()
 
-    assert isinstance(vectors, np.ndarray)
-    assert len(vectors) == 2
-    assert np.allclose(vectors, b_vectors)
-    assert np.allclose(points, field_points)
+    assert isinstance(vectors_np, np.ndarray)
+    assert len(vectors_np) == 2
+    assert np.allclose(vectors_np, b_vectors_np)
+    assert np.allclose(points_np, field_points)
+
+    # Test with a list of Vector objects
+    b_vectors_list = [Vector(v) for v in b_vectors_np]
+    bfield_list = Bfield(b_vectors_list, field_points)
+    points_list, vectors_list = bfield_list._get_numerical_data()
+
+    assert isinstance(vectors_list, np.ndarray)
+    assert len(vectors_list) == 2
+    assert np.allclose(vectors_list, b_vectors_np)
+    assert np.allclose(points_list, field_points)
