@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from em_app.currentcoils import RingCoil, RectangularCoil
+from em_app.sources import RingCoil, RectangularCoil
 from em_app.magneticfield import Bvec
-from em_app.biot_savart import mu_0_4pi
+from em_app.solvers import mu_0_4pi
 from mtflib import mtf, ComplexMultivariateTaylorFunction
 
 # Global settings for tests

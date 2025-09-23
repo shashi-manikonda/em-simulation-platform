@@ -156,7 +156,7 @@ class Vector:
         Returns:
             Vector: A new Vector object with scaled components.
         """
-        if isinstance(other, (float, int)):
+        if isinstance(other, (float, int)) or (_MTFLIB_AVAILABLE and isinstance(other, mtf)):
             return Vector(self.x * other, self.y * other, self.z * other)
         raise TypeError("unsupported operand type(s) for *: 'Vector' and '{}'".format(type(other).__name__))
 
@@ -253,11 +253,11 @@ class Vector:
         for comp in [self.x, self.y, self.z]:
             if _MTFLIB_AVAILABLE and isinstance(comp, mtf):
                 # If it's an MTF, get its constant part
-                comps.append(comp.get_constant())
+                comps.append(comp.extract_coefficient(tuple([0] * comp.dimension)).item())
             else:
                 # Otherwise, assume it's a number
                 comps.append(comp)
-        return np.array(comps, dtype=float)
+        return np.array(comps, dtype=np.complex128)
     
     def to_dataframe(self, column_names):
         """
@@ -390,10 +390,10 @@ class Bvec(Vector):
             if isinstance(comp, (int, float)):
                 comps.append(comp)
             elif _MTFLIB_AVAILABLE and isinstance(comp, mtf):
-                comps.append(comp.get_constant())
+                comps.append(comp.extract_coefficient(tuple([0] * comp.dimension)).item())
             else:
                 raise TypeError("Components must be numerical or MTF objects to convert to a NumPy array.")
-        return np.array(comps, dtype=float)
+        return np.array(comps, dtype=np.complex128)
     
     def curl(self):
         """

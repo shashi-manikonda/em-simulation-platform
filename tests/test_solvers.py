@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from em_app.currentcoils import RingCoil
+from em_app.sources import RingCoil
 from em_app.magneticfield import Bvec
-from em_app.biot_savart import mu_0_4pi
+from em_app.solvers import mu_0_4pi, calculate_b_field
 from mtflib import mtf, ComplexMultivariateTaylorFunction
 
 # Global settings for tests
@@ -44,7 +44,8 @@ def test_biot_savart_ring_on_axis():
     field_points = np.array([[0, 0, z] for z in z_points])
 
     # Calculate the magnetic field using the module
-    b_vectors_objects = ring_coil.biot_savart(field_points)
+    b_field = calculate_b_field(ring_coil, field_points)
+    b_vectors_objects = b_field._b_vectors_mtf
 
     # Convert the list of Bvec objects to a single numerical NumPy array
     # This will preserve the complex parts if they exist
@@ -90,7 +91,8 @@ def test_biot_savart_with_mtf():
     ring_coil = RingCoil(current_mtf, radius, num_segments, center, axis)
 
     # Calculate the B-field
-    b_vectors_mtf = ring_coil.biot_savart(field_point)
+    b_field = calculate_b_field(ring_coil, field_point)
+    b_vectors_mtf = b_field._b_vectors_mtf
 
     # Check if the result is an array of Bvec objects
     assert len(b_vectors_mtf) == 1

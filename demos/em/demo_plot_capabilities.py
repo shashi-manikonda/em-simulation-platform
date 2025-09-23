@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from em_app import RingCoil, Coil
+from em_app.sources import RingCoil
+from em_app.plotting import plot_1d_field, plot_2d_field, plot_field_vectors_3d
+from em_app.solvers import calculate_b_field
 from mtflib import mtf
 # import matplotlib
 # matplotlib.use('Qt5Agg') # Or 'Qt5Agg' if TkAgg doesn't work.
@@ -36,7 +38,8 @@ def main():
     # # 2. Plot the 1D field component along the z-axis
     # print("Plotting 1D B-field component (Bz) along the Z-axis...")
     # fig_1d, ax_1d = plt.subplots()
-    # ring_coil.plot_1d_field(
+    # plot_1d_field(
+    #     ring_coil,
     #     field_component='Bz',
     #     axis='z',
     #     num_points=50,
@@ -50,7 +53,8 @@ def main():
    # 3. Plot the 2D field using a quiver plot on the XZ-plane
     print("Plotting 2D B-field vectors on the XZ-plane...")
     fig_2d, ax_2d = plt.subplots()
-    ring_coil.plot_2d_field(
+    plot_2d_field(
+        ring_coil,
         field_component='Bnorm',
         plane='xz',
         num_points_a=5,
@@ -71,7 +75,8 @@ def main():
     # ring_coil.plot(ax=ax_3d, color='r')
     
     # # Plot the field vectors
-    # Coil.plot_field_vectors_3d(
+    # plot_field_vectors_3d(
+    #     ring_coil,
     #     num_points_a=7,
     #     num_points_b=7,
     #     num_points_c=7,
