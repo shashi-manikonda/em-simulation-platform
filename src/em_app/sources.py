@@ -144,7 +144,6 @@ class Coil(object):
             return np.zeros(3)
 
         # Convert MTF objects to NumPy arrays for calculation
-        print(type(self.segment_centers[0]))
         centers_numerical = np.array([c.to_numpy_array() for c in self.segment_centers])
         directions_numerical = np.array([d.to_numpy_array() for d in self.segment_directions])
 
@@ -230,7 +229,6 @@ class Coil(object):
             centers = np.array([c.to_numpy_array() for c in self.segment_centers])
             directions = np.array([d.to_numpy_array() for d in self.segment_directions])
             lengths = self.segment_lengths
-            
             for i in range(len(centers)):
                 start_point = centers[i] - directions[i] * lengths[i] / 2
                 end_point = centers[i] + directions[i] * lengths[i] / 2
@@ -447,7 +445,6 @@ class RectangularCoil(Coil):
             raise ValueError("Number of segments per side must be a positive integer.")
         
         super().__init__(current, use_mtf_for_segments, wire_thickness)
-
         self.segment_centers, self.segment_lengths, self.segment_directions = \
             self.generate_geometry(p1, p2, p4, num_segments_per_side, use_mtf_for_segments)
 
