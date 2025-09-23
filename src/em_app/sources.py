@@ -144,8 +144,9 @@ class Coil(object):
             return np.zeros(3)
 
         # Convert MTF objects to NumPy arrays for calculation
-        centers_numerical = np.array([np.array([x.get_constant() for x in center_vec]) for center_vec in self.segment_centers])
-        directions_numerical = np.array([np.array([d.get_constant() for d in dir_vec]) for dir_vec in self.segment_directions])
+        print(type(self.segment_centers[0]))
+        centers_numerical = np.array([c.to_numpy_array() for c in self.segment_centers])
+        directions_numerical = np.array([d.to_numpy_array() for d in self.segment_directions])
 
         # Calculate max and min coordinates
         all_coords = np.vstack(
@@ -172,7 +173,12 @@ class Coil(object):
         """
         if self.segment_centers is None:
             return np.zeros(3)
-        centers_numerical = np.array([np.array([x.get_constant() for x in center_vec]) for center_vec in self.segment_centers])
+
+        if isinstance(self.segment_centers[0], Vector):
+            centers_numerical = np.array([c.to_numpy_array() for c in self.segment_centers])
+        else:
+            centers_numerical = self.segment_centers
+
         return np.mean(centers_numerical, axis=0)
 
     def plot(self, ax=None, color="#B87333", num_interpolation_points=2, wire_thickness=None, show_axis=False):
@@ -221,8 +227,8 @@ class Coil(object):
             if not self.use_mtf_for_segments and num_interpolation_points > 2:
                 warnings.warn("Ignoring `num_interpolation_points` because `use_mtf_for_segments` is False.")
             # Fallback to the original behavior
-            centers = np.array([np.array([x.get_constant() for x in c]) for c in self.segment_centers])
-            directions = np.array([np.array([d.get_constant() for d in c]) for c in self.segment_directions])
+            centers = np.array([c.to_numpy_array() for c in self.segment_centers])
+            directions = np.array([d.to_numpy_array() for d in self.segment_directions])
             lengths = self.segment_lengths
             
             for i in range(len(centers)):
@@ -387,7 +393,7 @@ class RingCoil(Coil):
             center_point = np.array([x_center, y_center, z_center], dtype=object)
             center_point_rotated = np.dot(rotation_align_z_axis, center_point)
             center_point_translated = center_point_rotated + ring_center_point_mtf
-            segment_mtfs_ring.append(center_point_translated)
+            segment_mtfs_ring.append(Vector(center_point_translated))
 
             element_lengths_ring.append(ring_radius * d_phi)
 
@@ -405,7 +411,7 @@ class RingCoil(Coil):
             direction_normalized_mtf = [
                 direction_rotated[i] / norm_mtf for i in range(3)
             ]
-            direction_vectors_ring.append(direction_normalized_mtf)
+            direction_vectors_ring.append(Vector(direction_normalized_mtf))
 
         return (
             np.array(segment_mtfs_ring, dtype=object),

@@ -22,7 +22,7 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
         Bfield: A Bfield object containing the field points and the
                 calculated Bvec objects.
     """
-    from .magneticfield import Bfield, Bvec
+    from .magneticfield import Bfield, Bvec, Vector
     from mtflib import mtf
 
     # Input validation for field_points and backend
@@ -35,31 +35,38 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
     if coil_instance.segment_centers is None:
         raise RuntimeError("Coil segments have not been generated.")
 
+    if coil_instance.use_mtf_for_segments:
+        element_centers_np = np.array([[v.x, v.y, v.z] for v in coil_instance.segment_centers])
+        element_directions_np = np.array([[v.x, v.y, v.z] for v in coil_instance.segment_directions])
+    else:
+        element_centers_np = np.array([c.to_numpy_array() for c in coil_instance.segment_centers])
+        element_directions_np = np.array([d.to_numpy_array() for d in coil_instance.segment_directions])
+
     if backend == "mpi":
         if not mpi_installed:
             raise ImportError(
                 "The 'mpi' backend requires the 'mpi4py' library to be installed."
             )
         b_field_vectors = mpi_biot_savart(
-            element_centers=coil_instance.segment_centers,
+            element_centers=element_centers_np,
             element_lengths=coil_instance.segment_lengths,
-            element_directions=coil_instance.segment_directions,
+            element_directions=element_directions_np,
             field_points=field_points,
         )
     else:
         b_field_vectors = serial_biot_savart(
-            element_centers=coil_instance.segment_centers,
+            element_centers=element_centers_np,
             element_lengths=coil_instance.segment_lengths,
-            element_directions=coil_instance.segment_directions,
+            element_directions=element_directions_np,
             field_points=field_points,
             backend=backend,
         )
 
-    # Apply the current scaling
-    if isinstance(coil_instance.current, mtf):
-        b_field_vectors = np.array([Bvec(coil_instance.current * vec[0], coil_instance.current * vec[1], coil_instance.current * vec[2]) for vec in b_field_vectors], dtype=object)
-    else:
-        b_field_vectors *= coil_instance.current
+    # Apply the current scaling and create Bvec objects
+    b_vec_objects = []
+    for vec in b_field_vectors:
+        b_vec_objects.append(Bvec(coil_instance.current * vec[0], coil_instance.current * vec[1], coil_instance.current * vec[2]))
+    b_field_vectors = np.array(b_vec_objects, dtype=object)
 
     # Apply post-processing based on use_mtf_for_segments flag for all coils
     for i, vec in enumerate(b_field_vectors):

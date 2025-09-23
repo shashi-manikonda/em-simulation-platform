@@ -93,7 +93,7 @@ def plot_1d_field(
 
     # Evaluate the components if they are MTFs
     if isinstance(field_values[0], mtf):
-        field_values = np.array([val.get_constant() for val in field_values])
+            field_values = np.array([val.extract_coefficient(tuple([0] * val.dimension)).item() for val in field_values])
 
     # Plot the data
     if ax is None:
@@ -121,6 +121,57 @@ def plot_1d_field(
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.grid(True)
+
+    if ax is None:
+        plt.show()
+
+
+def plot_field_vectors_3d(
+    coil_instance,
+    num_points_a: int = 10,
+    num_points_b: int = 10,
+    num_points_c: int = 10,
+    title: str = '',
+    ax=None,
+    **kwargs
+):
+    """
+    Generates a 3D quiver plot of the magnetic field vectors on a grid
+    around the coil.
+    """
+    from .solvers import calculate_b_field
+
+    max_size = coil_instance.get_max_size()
+    center = coil_instance.get_center_point()
+
+    x_range = np.linspace(center[0] - 1.25 * max_size[0] / 2, center[0] + 1.25 * max_size[0] / 2, num_points_a)
+    y_range = np.linspace(center[1] - 1.25 * max_size[1] / 2, center[1] + 1.25 * max_size[1] / 2, num_points_b)
+    z_range = np.linspace(center[2] - 1.25 * max_size[2] / 2, center[2] + 1.25 * max_size[2] / 2, num_points_c)
+
+    X, Y, Z = np.meshgrid(x_range, y_range, z_range)
+    field_points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
+
+    bfield = calculate_b_field(coil_instance, field_points)
+    b_vectors = np.array([b.to_numpy_array() for b in bfield._b_vectors_mtf])
+    U, V, W = b_vectors[:, 0], b_vectors[:, 1], b_vectors[:, 2]
+
+    U = U.reshape(X.shape)
+    V = V.reshape(Y.shape)
+    W = W.reshape(Z.shape)
+
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+
+    ax.quiver(X, Y, Z, U, V, W, **kwargs)
+
+    if not title:
+        title = f"3D Magnetic Field Vectors from {coil_instance.__class__.__name__}"
+    ax.set_title(title)
+    ax.set_xlabel("X-axis")
+    ax.set_ylabel("Y-axis")
+    ax.set_zlabel("Z-axis")
+    ax.set_aspect('equal', 'box')
 
     if ax is None:
         plt.show()
@@ -257,11 +308,11 @@ def plot_2d_field(
         if field_component == 'Bnorm':
             field_data = bfield.get_magnitude()
         elif field_component == 'Bx':
-            field_data = np.array([b.Bx.get_constant() for b in bfield._b_vectors_mtf], dtype=float)
+                field_data = np.array([b.Bx.extract_coefficient(tuple([0] * b.Bx.dimension)).item() for b in bfield._b_vectors_mtf], dtype=float)
         elif field_component == 'By':
-            field_data = np.array([b.By.get_constant() for b in bfield._b_vectors_mtf], dtype=float)
+                field_data = np.array([b.By.extract_coefficient(tuple([0] * b.By.dimension)).item() for b in bfield._b_vectors_mtf], dtype=float)
         else: # Bz
-            field_data = np.array([b.Bz.get_constant() for b in bfield._b_vectors_mtf], dtype=float)
+                field_data = np.array([b.Bz.extract_coefficient(tuple([0] * b.Bz.dimension)).item() for b in bfield._b_vectors_mtf], dtype=float)
         field_data = np.real(field_data)
         c = ax.pcolormesh(A, B, field_data.reshape(A.shape), **kwargs)
         plt.colorbar(c, ax=ax)
