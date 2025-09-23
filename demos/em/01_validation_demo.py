@@ -27,7 +27,7 @@ def main():
     # Numerical calculation
     observation_point = np.array([[0.1, 0, 0]])
     b_field = calculate_b_field(wire, observation_point)
-    b_field_numerical = b_field._b_vectors_mtf[0].to_numpy_array()
+    b_field_numerical = b_field._vectors_mtf[0].to_numpy_array()
     print(f"Numerical B-field at {observation_point[0]}: {b_field_numerical}")
 
     # Analytical calculation

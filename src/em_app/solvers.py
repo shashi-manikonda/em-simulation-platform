@@ -22,7 +22,7 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
         Bfield: A Bfield object containing the field points and the
                 calculated Bvec objects.
     """
-    from .magneticfield import Bfield, Bvec, Vector
+    from .vectors_and_fields import VectorField, FieldVector, Vector
     from mtflib import mtf
 
     # Input validation for field_points and backend
@@ -62,11 +62,11 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
             backend=backend,
         )
 
-    # Apply the current scaling and create Bvec objects
-    b_vec_objects = []
+    # Apply the current scaling and create FieldVector objects
+    vec_objects = []
     for vec in b_field_vectors:
-        b_vec_objects.append(Bvec(coil_instance.current * vec[0], coil_instance.current * vec[1], coil_instance.current * vec[2]))
-    b_field_vectors = np.array(b_vec_objects, dtype=object)
+        vec_objects.append(FieldVector(coil_instance.current * vec[0], coil_instance.current * vec[1], coil_instance.current * vec[2]))
+    b_field_vectors = np.array(vec_objects, dtype=object)
 
     # Apply post-processing based on use_mtf_for_segments flag for all coils
     for i, vec in enumerate(b_field_vectors):
@@ -74,9 +74,9 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
             # When using MTF, a proper numerical integration is performed
             # over the segment, which is represented by a variable `u` in
             # the range [-1, 1].
-            vec.Bx = vec.Bx.integrate(4, -1, 1)
-            vec.By = vec.By.integrate(4, -1, 1)
-            vec.Bz = vec.Bz.integrate(4, -1, 1)
+            vec.x = vec.x.integrate(4, -1, 1)
+            vec.y = vec.y.integrate(4, -1, 1)
+            vec.z = vec.z.integrate(4, -1, 1)
         else:
             # When not using MTF, the field is calculated at a single point
             # (the center of the segment). The result is then multiplied by 2
@@ -84,7 +84,7 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
             # of the segment's length.
             vec = 2 * vec
         b_field_vectors[i] = vec
-    return Bfield(field_points=field_points, b_vectors=b_field_vectors)
+    return VectorField(field_points=field_points, vectors=b_field_vectors)
 from mtflib.backends.cpp import mtf_cpp
 from mtflib.backends.c import mtf_c_backend
 

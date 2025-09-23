@@ -6,7 +6,7 @@ from mtflib import mtf
 mtf.initialize_mtf(max_order=6, max_dimension=4)
 from em_app.plotting import plot_1d_field, plot_2d_field, plot_field_vectors_3d
 from em_app.solvers import calculate_b_field
-from em_app.magneticfield import Bfield
+from em_app.vectors_and_fields import VectorField
 
 class HelmholtzCoil(Coil):
     def __init__(self, current, radius, num_segments, center_point, axis_direction):
@@ -59,16 +59,16 @@ def main():
     # 1D Plot
     print("\n--- 1D Field Plot ---")
     fig3, ax3 = plt.subplots()
-    plot_1d_field(helmholtz_coil, 'Bz', axis='z', num_points=50, ax=ax3)
-    ax3.set_title("Bz along the z-axis of a Helmholtz Coil")
+    plot_1d_field(helmholtz_coil, 'z', axis='z', num_points=50, ax=ax3)
+    ax3.set_title("Z-component along the z-axis of a Helmholtz Coil")
     plt.savefig("03_helmholtz_1d_plot.png")
     plt.show()
 
     # 2D Plot
     print("\n--- 2D Field Plot ---")
     fig4, ax4 = plt.subplots()
-    plot_2d_field(helmholtz_coil, 'Bnorm', plane='xz', num_points_a=10, num_points_b=10, ax=ax4)
-    ax4.set_title("B-field Heatmap on the XZ-plane of a Helmholtz Coil")
+    plot_2d_field(helmholtz_coil, 'norm', plane='xz', num_points_a=10, num_points_b=10, ax=ax4)
+    ax4.set_title("Vector Field Heatmap on the XZ-plane of a Helmholtz Coil")
     plt.savefig("03_helmholtz_2d_plot.png")
     plt.show()
 

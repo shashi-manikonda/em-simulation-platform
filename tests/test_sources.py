@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from em_app.sources import RingCoil, RectangularCoil
-from em_app.magneticfield import Bvec
+from em_app.vectors_and_fields import FieldVector
 from em_app.solvers import mu_0_4pi
 from mtflib import mtf, ComplexMultivariateTaylorFunction
 
@@ -42,7 +42,7 @@ def test_ring_coil_segment_generation():
     assert np.allclose(coil.segment_lengths, expected_length)
 
     # Check if the segment centers are at the correct distance from the center
-    centers_numerical = np.array([np.array([x.extract_coefficient(tuple([0] * x.dimension)).item() for x in c]) for c in coil.segment_centers])
+    centers_numerical = np.array([c.to_numpy_array() for c in coil.segment_centers])
     dist_from_center = np.linalg.norm(centers_numerical - center, axis=1)
     assert np.allclose(dist_from_center, radius)
 

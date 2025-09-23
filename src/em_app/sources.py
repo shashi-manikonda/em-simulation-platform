@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 # Import the mtflib and biot_savart libraries
 from mtflib import mtf
 from .solvers import serial_biot_savart, mpi_biot_savart, mpi_installed
-from .magneticfield import Bvec, Vector, Bfield
+from .vectors_and_fields import FieldVector, Vector, VectorField
 
 def _rotation_matrix(axis, angle):
     """
