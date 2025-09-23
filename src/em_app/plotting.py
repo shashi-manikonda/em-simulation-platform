@@ -5,7 +5,7 @@ This module contains functions for plotting magnetic field data.
 import numpy as np
 import matplotlib.pyplot as plt
 from mtflib import mtf
-from .vectors_and_fields import VectorField
+from .vector_fields import VectorField
 from .sources import Coil
 from .solvers import calculate_b_field
 

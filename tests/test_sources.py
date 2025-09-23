@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from em_app.sources import RingCoil, RectangularCoil
-from em_app.vectors_and_fields import FieldVector
+from em_app.vector_fields import FieldVector
 from em_app.solvers import mu_0_4pi
 from mtflib import mtf, ComplexMultivariateTaylorFunction
 

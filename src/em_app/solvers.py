@@ -22,7 +22,7 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
         Bfield: A Bfield object containing the field points and the
                 calculated Bvec objects.
     """
-    from .vectors_and_fields import VectorField, FieldVector, Vector
+    from .vector_fields import VectorField, FieldVector, Vector
     from mtflib import mtf
 
     # Input validation for field_points and backend
