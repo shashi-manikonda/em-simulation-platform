@@ -167,3 +167,22 @@ A class to store a collection of `Bvec` objects.
 | `max` | Returns the maximum magnitude of the B-field vectors. | `None` | `float`: The maximum magnitude. |
 | `min` | Returns the minimum magnitude of the B-field vectors. | `None` | `float`: The minimum magnitude. |
 | `to_dataframe` | Exports the field points and vector components to a pandas DataFrame. | `None` | `pandas.DataFrame`: A DataFrame with columns ['x', 'y', 'z', 'Bx', 'By', 'Bz']. |
+
+### `BfieldGrid` Class
+
+A subclass of `Bfield` for data on a structured 1D, 2D, or 3D grid.
+
+**Attributes**
+
+| Attribute | Type | Description |
+| :--- | :--- | :--- |
+| `grid_shape` | `tuple` | The shape of the grid (e.g., (50, 50) for a 2D grid). |
+| `grid_axes` | `tuple` | The axes of the grid (e.g., ('x', 'y')). |
+
+**Methods**
+
+| Method | Description | Arguments | Returns |
+| :--- | :--- | :--- | :--- |
+| `__init__` | Initializes the BfieldGrid container. | `b_vectors` (np.ndarray): A NumPy array of `Bvec` objects or an (N, 3) NumPy array of B-field vectors.<br>`field_points` (np.ndarray): A corresponding (N, 3) NumPy array of numerical points or MTF objects.<br>`grid_shape` (tuple): The shape of the grid.<br>`grid_axes` (tuple): The axes of the grid. | `None` |
+| `get_grid_points` | Returns the field points reshaped into the grid dimensions. | `None` | `np.ndarray`: The field points as a grid. The shape will be (*grid_shape, 3). |
+| `get_grid_vectors` | Returns the B-field vectors reshaped into the grid dimensions. | `None` | `np.ndarray`: The B-field vectors as a grid. The shape will be (*grid_shape, 3). |
