@@ -162,7 +162,7 @@ A class to store a collection of `Bvec` objects.
 | :--- | :--- | :--- | :--- |
 | `__init__` | Initializes the Bfield container. | `b_vectors` (np.ndarray): A NumPy array of `Bvec` objects or an (N, 3) NumPy array of B-field vectors.<br>`field_points` (np.ndarray, optional): A corresponding (N, 3) NumPy array of numerical points or MTF objects. | `None` |
 | `get_magnitude` | Calculates and returns the magnitude of each B-vector in the field. | `None` | `np.ndarray`: A 1D NumPy array of the magnitudes. |
-| `scatter` | Creates a 2D scatter plot of the magnetic field with direction arrows on a specified plane. | `plane` (str, optional): The plane to plot on ('xy', 'yz', 'xz').<br>`value` (float, optional): The value of the coordinate held constant.<br>`title` (str, optional): The plot title.<br>`ax` (matplotlib.axes.Axes, optional): An existing Axes object to plot on. | `None` |
+| `scatter` | Creates a 3D scatter plot of the magnetic field with direction arrows. The color and length of the arrows represent the magnitude of the field. | `title` (str, optional): The plot title.<br>`ax` (matplotlib.axes.Axes, optional): An existing 3D Axes object to plot on. | `None` |
 | `quiver` | Creates a 3D quiver plot of the magnetic field. | `title` (str, optional): The plot title.<br>`ax` (matplotlib.axes.Axes, optional): An existing 3D Axes object to plot on. | `None` |
 | `max` | Returns the maximum magnitude of the B-field vectors. | `None` | `float`: The maximum magnitude. |
 | `min` | Returns the minimum magnitude of the B-field vectors. | `None` | `float`: The minimum magnitude. |

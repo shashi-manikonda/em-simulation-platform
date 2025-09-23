@@ -612,67 +612,53 @@ class Bfield:
                 self._magnitude = np.array(magnitudes)
         return self._magnitude
 
-    def scatter(self, plane='xy', value=0.0, title="B-field Scatter Plot", ax=None, **kwargs):
+    def scatter(self, title="B-field Scatter Plot", ax=None, **kwargs):
         """
-        Creates a 2D scatter plot of the magnetic field with direction arrows
-        on a specified plane.
-
-        This method visualizes the B-field vectors that lie on a given
-        2D slice of the 3D space. The direction and magnitude of the
-        vectors are shown using arrows.
+        Creates a 3D scatter plot of the magnetic field with direction arrows.
+        The color and length of the arrows represent the magnitude of the field.
+        This method provides a way to visualize the raw vector field, where
+        arrow lengths are proportional to the field strength.
 
         Args:
-            plane (str, optional): The plane on which to plot the data.
-                                   Options are 'xy', 'yz', 'xz'.
-                                   Defaults to 'xy'.
-            value (float, optional): The value of the coordinate that is
-                                     held constant to define the plane.
-                                     Defaults to 0.0.
             title (str, optional): The title of the plot.
-            ax (matplotlib.axes.Axes, optional): An existing Axes object
-                                                 to plot on. If None, a new
-                                                 figure and axes are created.
-            **kwargs: Additional keyword arguments passed to `plt.quiver`.
+            ax (matplotlib.axes.Axes, optional): An existing 3D Axes
+                                                 object to plot on.
+            **kwargs: Additional keyword arguments passed to `ax.quiver`.
         """
         numerical_points, numerical_vectors = self._get_numerical_data()
         magnitudes = self.get_magnitude()
 
-        plane_axes = {'xy': (0, 1), 'yz': (1, 2), 'xz': (0, 2)}
-        const_axis = {'xy': 2, 'yz': 0, 'xz': 1}
-
-        if plane not in plane_axes:
-            raise ValueError("Plane must be one of 'xy', 'yz', or 'xz'.")
-
-        idx1, idx2 = plane_axes[plane]
-        const_idx = const_axis[plane]
-
-        # Filter points that are close to the specified plane value
-        tolerance = 1e-5
-        mask = np.abs(numerical_points[:, const_idx] - value) < tolerance
-
-        points_on_plane = numerical_points[mask]
-        vectors_on_plane = numerical_vectors[mask]
-        magnitudes_on_plane = magnitudes[mask]
-
-        if len(points_on_plane) == 0:
-            warnings.warn(f"No points found on the plane {plane}={value}.")
-            return
-
-        x_coords = points_on_plane[:, idx1]
-        y_coords = points_on_plane[:, idx2]
-        u_comps = vectors_on_plane[:, idx1]
-        v_comps = vectors_on_plane[:, idx2]
-
         if ax is None:
-            fig, ax = plt.subplots()
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
 
-        # A scatter plot with direction arrows is effectively a quiver plot
-        ax.quiver(x_coords, y_coords, u_comps, v_comps, magnitudes_on_plane, **kwargs)
+        x = numerical_points[:, 0]
+        y = numerical_points[:, 1]
+        z = numerical_points[:, 2]
+        u = numerical_vectors[:, 0]
+        v = numerical_vectors[:, 1]
+        w = numerical_vectors[:, 2]
 
+        import matplotlib.cm as cm
+        import matplotlib.colors as colors
+
+        norm = colors.Normalize(vmin=magnitudes.min(), vmax=magnitudes.max())
+        cmap = kwargs.pop('cmap', plt.cm.viridis)
+
+        rgba_colors = cmap(norm(magnitudes))
+
+        ax.quiver(x, y, z, u, v, w, colors=rgba_colors, **kwargs)
+
+        fig = plt.gcf()
+        sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        cbar = fig.colorbar(sm, ax=ax)
+        cbar.set_label('B-field Magnitude')
+
+        ax.set_xlabel('X-axis')
+        ax.set_ylabel('Y-axis')
+        ax.set_zlabel('Z-axis')
         ax.set_title(title)
-        ax.set_xlabel(f"{'xyz'[idx1]}-axis")
-        ax.set_ylabel(f"{'xyz'[idx2]}-axis")
-        ax.set_aspect('equal', adjustable='box')
 
         if 'show' not in kwargs or kwargs['show']:
             plt.show()
@@ -794,9 +780,9 @@ if __name__ == "__main__":
     print("Plotting the 3D magnetic field vectors using quiver()...")
     bfield_num.quiver(title="3D B-field Quiver Plot")
 
-    # Plot a 2D slice of the vector field using the new scatter method
-    print("Plotting a 2D slice of the B-field using scatter()...")
-    bfield_num.scatter(plane='xy', value=0.0, title="B-field on XY plane (z=0)")
+    # Plot the 3D vector field using the new scatter method
+    print("Plotting the 3D B-field using scatter()...")
+    bfield_num.scatter(title="3D B-field Scatter Plot")
 
     # 2. Create dummy data with mtflib (if available)
     if _MTFLIB_AVAILABLE:
