@@ -743,6 +743,61 @@ class Bfield:
         return pd.DataFrame(data)
 
 
+class BfieldGrid(Bfield):
+    """
+    A subclass of Bfield for data on a structured 1D, 2D, or 3D grid.
+
+    This class is designed to hold magnetic field data that is arranged on a
+    structured grid. It stores grid metadata (shape and axes) to allow for
+    easy reshaping of the data for grid-based analysis and plotting.
+    """
+    def __init__(self, b_vectors, field_points, grid_shape, grid_axes):
+        """
+        Initializes the BfieldGrid container.
+
+        Args:
+            b_vectors (np.ndarray): A NumPy array of Bvec objects or an
+                                    (N, 3) NumPy array of B-field vectors.
+            field_points (np.ndarray): A corresponding (N, 3) NumPy array of
+                                       numerical points or MTF objects.
+            grid_shape (tuple): The shape of the grid (e.g., (50, 50) for a
+                                2D grid).
+            grid_axes (tuple): The axes of the grid (e.g., ('x', 'y')).
+        """
+        super().__init__(b_vectors, field_points)
+        self.grid_shape = grid_shape
+        self.grid_axes = grid_axes
+
+        # Validate that the number of points matches the grid shape
+        if np.prod(grid_shape) != len(self.field_points):
+            raise ValueError(
+                "The number of field points must match the product of the "
+                "grid dimensions."
+            )
+
+    def get_grid_points(self):
+        """
+        Returns the field points reshaped into the grid dimensions.
+
+        Returns:
+            np.ndarray: The field points as a grid. The shape will be
+                        (*grid_shape, 3).
+        """
+        numerical_points, _ = self._get_numerical_data()
+        return numerical_points.reshape(*self.grid_shape, 3)
+
+    def get_grid_vectors(self):
+        """
+        Returns the B-field vectors reshaped into the grid dimensions.
+
+        Returns:
+            np.ndarray: The B-field vectors as a grid. The shape will be
+                        (*grid_shape, 3).
+        """
+        _, numerical_vectors = self._get_numerical_data()
+        return numerical_vectors.reshape(*self.grid_shape, 3)
+
+
 if __name__ == "__main__":
     # --- Example Usage for Refactored Code ---
     # This block demonstrates how the new, refactored classes work.
@@ -823,3 +878,28 @@ if __name__ == "__main__":
     df = bfield_num.to_dataframe()
     print("B-field data as a pandas DataFrame:")
     print(df.head())
+
+    # 4. Test BfieldGrid
+    print("\nTesting BfieldGrid class...")
+    grid_shape = (5, 5, 5)
+    x, y, z = np.meshgrid(
+        np.linspace(-1, 1, grid_shape[0]),
+        np.linspace(-1, 1, grid_shape[1]),
+        np.linspace(-1, 1, grid_shape[2])
+    )
+    field_points_grid = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
+
+    # Create some dummy B-field vectors for the grid
+    b_vectors_grid = np.random.rand(*field_points_grid.shape)
+
+    bfield_grid = BfieldGrid(
+        b_vectors=b_vectors_grid,
+        field_points=field_points_grid,
+        grid_shape=grid_shape,
+        grid_axes=('x', 'y', 'z')
+    )
+    grid_points = bfield_grid.get_grid_points()
+    grid_vectors = bfield_grid.get_grid_vectors()
+    print(f"BfieldGrid grid_shape: {bfield_grid.grid_shape}")
+    print(f"Reshaped grid points shape: {grid_points.shape}")
+    print(f"Reshaped grid vectors shape: {grid_vectors.shape}")
