@@ -612,6 +612,150 @@ class Bfield:
                 self._magnitude = np.array(magnitudes)
         return self._magnitude
 
+    def scatter(self, plane='xy', value=0.0, title="B-field Scatter Plot", ax=None, **kwargs):
+        """
+        Creates a 2D scatter plot of the magnetic field with direction arrows
+        on a specified plane.
+
+        This method visualizes the B-field vectors that lie on a given
+        2D slice of the 3D space. The direction and magnitude of the
+        vectors are shown using arrows.
+
+        Args:
+            plane (str, optional): The plane on which to plot the data.
+                                   Options are 'xy', 'yz', 'xz'.
+                                   Defaults to 'xy'.
+            value (float, optional): The value of the coordinate that is
+                                     held constant to define the plane.
+                                     Defaults to 0.0.
+            title (str, optional): The title of the plot.
+            ax (matplotlib.axes.Axes, optional): An existing Axes object
+                                                 to plot on. If None, a new
+                                                 figure and axes are created.
+            **kwargs: Additional keyword arguments passed to `plt.quiver`.
+        """
+        numerical_points, numerical_vectors = self._get_numerical_data()
+        magnitudes = self.get_magnitude()
+
+        plane_axes = {'xy': (0, 1), 'yz': (1, 2), 'xz': (0, 2)}
+        const_axis = {'xy': 2, 'yz': 0, 'xz': 1}
+
+        if plane not in plane_axes:
+            raise ValueError("Plane must be one of 'xy', 'yz', or 'xz'.")
+
+        idx1, idx2 = plane_axes[plane]
+        const_idx = const_axis[plane]
+
+        # Filter points that are close to the specified plane value
+        tolerance = 1e-5
+        mask = np.abs(numerical_points[:, const_idx] - value) < tolerance
+
+        points_on_plane = numerical_points[mask]
+        vectors_on_plane = numerical_vectors[mask]
+        magnitudes_on_plane = magnitudes[mask]
+
+        if len(points_on_plane) == 0:
+            warnings.warn(f"No points found on the plane {plane}={value}.")
+            return
+
+        x_coords = points_on_plane[:, idx1]
+        y_coords = points_on_plane[:, idx2]
+        u_comps = vectors_on_plane[:, idx1]
+        v_comps = vectors_on_plane[:, idx2]
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        # A scatter plot with direction arrows is effectively a quiver plot
+        ax.quiver(x_coords, y_coords, u_comps, v_comps, magnitudes_on_plane, **kwargs)
+
+        ax.set_title(title)
+        ax.set_xlabel(f"{'xyz'[idx1]}-axis")
+        ax.set_ylabel(f"{'xyz'[idx2]}-axis")
+        ax.set_aspect('equal', adjustable='box')
+
+        if 'show' not in kwargs or kwargs['show']:
+            plt.show()
+
+    def quiver(self, dimension=3, title="B-field Quiver Plot", ax=None, **kwargs):
+        """
+        Creates a 3D quiver plot of the magnetic field.
+
+        Args:
+            title (str, optional): The title of the plot.
+            ax (matplotlib.axes.Axes, optional): An existing 3D Axes
+                                                 object to plot on.
+            **kwargs: Additional keyword arguments passed to `ax.quiver`.
+        """
+        numerical_points, numerical_vectors = self._get_numerical_data()
+
+        if dimension != 3:
+            raise NotImplementedError("Only 3D quiver plots are currently supported.")
+
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+
+        x = numerical_points[:, 0]
+        y = numerical_points[:, 1]
+        z = numerical_points[:, 2]
+        u = numerical_vectors[:, 0]
+        v = numerical_vectors[:, 1]
+        w = numerical_vectors[:, 2]
+
+        # Default length=0.1 and normalize=True for better visualization
+        length = kwargs.pop('length', 0.1)
+        normalize = kwargs.pop('normalize', True)
+
+        ax.quiver(x, y, z, u, v, w, length=length, normalize=normalize, **kwargs)
+        ax.set_xlabel('X-axis')
+        ax.set_ylabel('Y-axis')
+        ax.set_zlabel('Z-axis')
+        ax.set_title(title)
+
+        if 'show' not in kwargs or kwargs['show']:
+            plt.show()
+
+    def max(self):
+        """
+        Returns the maximum magnitude of the B-field vectors.
+        """
+        magnitudes = self.get_magnitude()
+        if isinstance(magnitudes[0], mtf):
+            return max(m.get_constant() for m in magnitudes)
+        return np.max(magnitudes)
+
+    def min(self):
+        """
+        Returns the minimum magnitude of the B-field vectors.
+        """
+        magnitudes = self.get_magnitude()
+        if isinstance(magnitudes[0], mtf):
+            return min(m.get_constant() for m in magnitudes)
+        return np.min(magnitudes)
+
+    def to_dataframe(self):
+        """
+        Exports the field points and vector components to a pandas DataFrame.
+
+        Returns:
+            pandas.DataFrame: A DataFrame with columns
+                              ['x', 'y', 'z', 'Bx', 'By', 'Bz'].
+        """
+        import pandas as pd
+        numerical_points, numerical_vectors = self._get_numerical_data()
+
+        data = {
+            'x': numerical_points[:, 0],
+            'y': numerical_points[:, 1],
+            'z': numerical_points[:, 2],
+            'Bx': numerical_vectors[:, 0],
+            'By': numerical_vectors[:, 1],
+            'Bz': numerical_vectors[:, 2],
+        }
+
+        return pd.DataFrame(data)
+
 
 if __name__ == "__main__":
     # --- Example Usage for Refactored Code ---
@@ -646,9 +790,13 @@ if __name__ == "__main__":
         field_points=field_points_numerical, b_vectors=b_vectors_numerical
     )
 
-    # Plot the 3D vector field
-    print("Plotting the 3D magnetic field vectors...")
-    bfield_num.plot_field_vectors_3d()
+    # Plot the 3D vector field using the new quiver method
+    print("Plotting the 3D magnetic field vectors using quiver()...")
+    bfield_num.quiver(title="3D B-field Quiver Plot")
+
+    # Plot a 2D slice of the vector field using the new scatter method
+    print("Plotting a 2D slice of the B-field using scatter()...")
+    bfield_num.scatter(plane='xy', value=0.0, title="B-field on XY plane (z=0)")
 
     # 2. Create dummy data with mtflib (if available)
     if _MTFLIB_AVAILABLE:
@@ -680,4 +828,12 @@ if __name__ == "__main__":
         bfield_mtf = Bfield(field_points=field_points_mtf, b_vectors=b_vectors_mtf)
 
         print("Plotting the 3D magnetic field vectors from the MTF data...")
-        bfield_mtf.plot_field_vectors_3d(title="3D B-Field from MTF points")
+        bfield_mtf.quiver(title="3D B-Field from MTF points")
+
+    # 3. Test max, min, and to_dataframe
+    print("\nTesting max, min, and to_dataframe methods...")
+    print(f"Max B-field magnitude: {bfield_num.max()}")
+    print(f"Min B-field magnitude: {bfield_num.min()}")
+    df = bfield_num.to_dataframe()
+    print("B-field data as a pandas DataFrame:")
+    print(df.head())
