@@ -6,7 +6,7 @@ from mtflib import mtf
 mtf.initialize_mtf(max_order=6, max_dimension=4)
 from em_app.plotting import plot_1d_field, plot_2d_field, plot_field_vectors_3d
 from em_app.solvers import calculate_b_field
-from em_app.vectors_and_fields import VectorField
+from em_app.vector_fields import VectorField
 
 class HelmholtzCoil(Coil):
     def __init__(self, current, radius, num_segments, center_point, axis_direction):
