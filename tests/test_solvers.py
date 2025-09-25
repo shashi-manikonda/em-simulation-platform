@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from em_app.currentcoils import RingCoil
-from em_app.magneticfield import Bvec
-from em_app.biot_savart import mu_0_4pi
+from em_app.sources import RingCoil
+from em_app.vector_fields import FieldVector
+from em_app.solvers import mu_0_4pi, calculate_b_field
 from mtflib import mtf, ComplexMultivariateTaylorFunction
 
 # Global settings for tests
@@ -44,7 +44,8 @@ def test_biot_savart_ring_on_axis():
     field_points = np.array([[0, 0, z] for z in z_points])
 
     # Calculate the magnetic field using the module
-    b_vectors_objects = ring_coil.biot_savart(field_points)
+    b_field = calculate_b_field(ring_coil, field_points)
+    b_vectors_objects = b_field._vectors_mtf
 
     # Convert the list of Bvec objects to a single numerical NumPy array
     # This will preserve the complex parts if they exist
@@ -90,19 +91,20 @@ def test_biot_savart_with_mtf():
     ring_coil = RingCoil(current_mtf, radius, num_segments, center, axis)
 
     # Calculate the B-field
-    b_vectors_mtf = ring_coil.biot_savart(field_point)
+    b_field = calculate_b_field(ring_coil, field_point)
+    b_vectors_mtf = b_field._vectors_mtf
 
-    # Check if the result is an array of Bvec objects
+    # Check if the result is an array of FieldVector objects
     assert len(b_vectors_mtf) == 1
-    assert isinstance(b_vectors_mtf[0], Bvec)
+    assert isinstance(b_vectors_mtf[0], FieldVector)
 
-    # Check that the components of the returned Bvec are MTFs
+    # Check that the components of the returned FieldVector are MTFs
     assert b_vectors_mtf[0].is_mtf()
 
     # The result should be a ComplexMultivariateTaylorFunction, as the current is a variable
-    assert isinstance(b_vectors_mtf[0].Bx, mtf)
-    assert isinstance(b_vectors_mtf[0].By, mtf)
-    assert isinstance(b_vectors_mtf[0].Bz, mtf)
+    assert isinstance(b_vectors_mtf[0].x, mtf)
+    assert isinstance(b_vectors_mtf[0].y, mtf)
+    assert isinstance(b_vectors_mtf[0].z, mtf)
 
     # Check that the numerical values (zeroth-order coefficients) of the result
     # match the analytical solution for a current of 1.0
@@ -112,6 +114,6 @@ def test_biot_savart_with_mtf():
         mu_0 * 1.0 * radius**2
     ) / (2 * (radius**2 + z**2) ** 1.5)
 
-    assert np.isclose(b_vectors_mtf[0].Bz.extract_coefficient(tuple([0] * b_vectors_mtf[0].Bz.dimension)).item(), b_z_analytical)
-    assert np.isclose(b_vectors_mtf[0].Bx.extract_coefficient(tuple([0] * b_vectors_mtf[0].Bx.dimension)).item(), 0)
-    assert np.isclose(b_vectors_mtf[0].By.extract_coefficient(tuple([0] * b_vectors_mtf[0].By.dimension)).item(), 0)
+    assert np.isclose(b_vectors_mtf[0].z.extract_coefficient(tuple([0] * b_vectors_mtf[0].z.dimension)).item(), b_z_analytical)
+    assert np.isclose(b_vectors_mtf[0].x.extract_coefficient(tuple([0] * b_vectors_mtf[0].x.dimension)).item(), 0)
+    assert np.isclose(b_vectors_mtf[0].y.extract_coefficient(tuple([0] * b_vectors_mtf[0].y.dimension)).item(), 0)

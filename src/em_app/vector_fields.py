@@ -156,7 +156,7 @@ class Vector:
         Returns:
             Vector: A new Vector object with scaled components.
         """
-        if isinstance(other, (float, int)):
+        if isinstance(other, (float, int)) or (_MTFLIB_AVAILABLE and isinstance(other, mtf)):
             return Vector(self.x * other, self.y * other, self.z * other)
         raise TypeError("unsupported operand type(s) for *: 'Vector' and '{}'".format(type(other).__name__))
 
@@ -253,11 +253,11 @@ class Vector:
         for comp in [self.x, self.y, self.z]:
             if _MTFLIB_AVAILABLE and isinstance(comp, mtf):
                 # If it's an MTF, get its constant part
-                comps.append(comp.get_constant())
+                comps.append(comp.extract_coefficient(tuple([0] * comp.dimension)).item())
             else:
                 # Otherwise, assume it's a number
                 comps.append(comp)
-        return np.array(comps, dtype=float)
+        return np.array(comps, dtype=np.complex128)
     
     def to_dataframe(self, column_names):
         """
@@ -336,49 +336,23 @@ class Vector:
 
 
 
-class Bvec(Vector):
+class FieldVector(Vector):
     """
-    Represents the magnetic field vector at a point as a set of
+    Represents a vector at a point in a field, with components that can be
     Multivariate Taylor Functions (MTFs).
     """
 
-    def __init__(self, Bx, By, Bz):
+    def __init__(self, x, y, z):
         """
-        Initializes the B-field vector.
+        Initializes the field vector.
 
         Args:
-            Bx (mtf.MultivariateTaylorFunction or float): The x-component of
-                the field vector. Can be a numerical value or an MTF.
-            By (mtf.MultivariateTaylorFunction or float): The y-component of
-                the field vector. Can be a numerical value or an MTF.
-            Bz (mtf.MultivariateTaylorFunction or float): The z-component of
-                the field vector. Can be a numerical value or an MTF.
+            x (mtf.MultivariateTaylorFunction or float): The x-component.
+            y (mtf.MultivariateTaylorFunction or float): The y-component.
+            z (mtf.MultivariateTaylorFunction or float): The z-component.
         """
-        super().__init__(Bx, By, Bz)
+        super().__init__(x, y, z)
 
-    @property
-    def Bx(self):
-        return self.x
-
-    @Bx.setter
-    def Bx(self, value):
-        self.x = value
-
-    @property
-    def By(self):
-        return self.y
-
-    @By.setter
-    def By(self, value):
-        self.y = value
-
-    @property
-    def Bz(self):
-        return self.z
-
-    @Bz.setter
-    def Bz(self, value):
-        self.z = value
 
     def to_numpy_array(self):
         """
@@ -386,14 +360,14 @@ class Bvec(Vector):
         each component.
         """
         comps = []
-        for comp in [self.Bx, self.By, self.Bz]:
+        for comp in [self.x, self.y, self.z]:
             if isinstance(comp, (int, float)):
                 comps.append(comp)
             elif _MTFLIB_AVAILABLE and isinstance(comp, mtf):
-                comps.append(comp.get_constant())
+                comps.append(comp.extract_coefficient(tuple([0] * comp.dimension)).item())
             else:
                 raise TypeError("Components must be numerical or MTF objects to convert to a NumPy array.")
-        return np.array(comps, dtype=float)
+        return np.array(comps, dtype=np.complex128)
     
     def curl(self):
         """
@@ -406,15 +380,15 @@ class Bvec(Vector):
         partial derivatives.
 
         Returns:
-            Bvec: A new Bvec object representing the curl of the field.
+            FieldVector: A new FieldVector object representing the curl of the field.
         """
         # The variables of the MTF are assumed to be (x, y, z) corresponding to
         # dimensions 1, 2, 3
-        curl_x = self.Bz.derivative(2) - self.By.derivative(3)
-        curl_y = self.Bx.derivative(3) - self.Bz.derivative(1)
-        curl_z = self.By.derivative(1) - self.Bx.derivative(2)
+        curl_x = self.z.derivative(2) - self.y.derivative(3)
+        curl_y = self.x.derivative(3) - self.z.derivative(1)
+        curl_z = self.y.derivative(1) - self.x.derivative(2)
 
-        return Bvec(curl_x, curl_y, curl_z)
+        return FieldVector(curl_x, curl_y, curl_z)
 
     def divergence(self):
         """
@@ -430,9 +404,9 @@ class Bvec(Vector):
             mtf.MultivariateTaylorFunction: A single MTF representing the
                                             scalar divergence of the field.
         """
-        div_Bx = self.Bx.derivative(1)
-        div_By = self.By.derivative(2)
-        div_Bz = self.Bz.derivative(3)
+        div_Bx = self.x.derivative(1)
+        div_By = self.y.derivative(2)
+        div_Bz = self.z.derivative(3)
         return div_Bx + div_By + div_Bz
 
     def gradient(self):
@@ -447,13 +421,13 @@ class Bvec(Vector):
             np.ndarray: A 3x3 array of MTFs representing the Jacobian matrix.
         """
         grad_Bx = np.array(
-            [self.Bx.derivative(1), self.Bx.derivative(2), self.Bx.derivative(3)]
+            [self.x.derivative(1), self.x.derivative(2), self.x.derivative(3)]
         )
         grad_By = np.array(
-            [self.By.derivative(1), self.By.derivative(2), self.By.derivative(3)]
+            [self.y.derivative(1), self.y.derivative(2), self.y.derivative(3)]
         )
         grad_Bz = np.array(
-            [self.Bz.derivative(1), self.Bz.derivative(2), self.Bz.derivative(3)]
+            [self.z.derivative(1), self.z.derivative(2), self.z.derivative(3)]
         )
 
         return np.vstack([grad_Bx, grad_By, grad_Bz])
@@ -474,49 +448,49 @@ class Bvec(Vector):
         pd.set_option('display.max_columns', None)
         pd.set_option('display.width', 1000)
 
-        df = self.to_dataframe(['Bx', 'By', 'Bz'])
+        df = self.to_dataframe(['x', 'y', 'z'])
         return df.to_string()
 
     def __repr__(self):
         """
         Provides a developer-friendly representation of the object.
         """
-        return f"Bvec(Bx={self.Bx}, By={self.By}, Bz={self.Bz})"
+        return f"FieldVector(x={self.x}, y={self.y}, z={self.z})"
 
 
-class Bfield:
+class VectorField:
     """
-    A class to store a collection of Bvec objects, representing the magnetic
+    A class to store a collection of FieldVector objects, representing a vector
     field at a set of discrete points in space.
 
     This class can handle both numerical and MTF-based field data.
     """
 
-    def __init__(self, b_vectors, field_points=None):
+    def __init__(self, vectors, field_points=None):
         """
-        Initializes the Bfield container.
+        Initializes the VectorField container.
 
         Args:
-            b_vectors (np.ndarray): A NumPy array of Bvec objects (if using MTF)
-                                    or an (N, 3) NumPy array of B-field vectors.
+            vectors (np.ndarray): A NumPy array of FieldVector objects (if using MTF)
+                                    or an (N, 3) NumPy array of vectors.
             field_points (np.ndarray, optional): A corresponding (N, 3)
                                                  NumPy array of numerical points or
                                                  an (N, 3) NumPy array of MTF objects.
                                                  Defaults to None.
         """
-        if isinstance(b_vectors[0], Bvec):
-            # Case for MTF-based Bvec objects
-            if not isinstance(b_vectors, np.ndarray) or b_vectors.ndim != 1:
-                raise TypeError("b_vectors must be a 1D NumPy array of Bvec objects.")
-            if not np.all(isinstance(v, Bvec) for v in b_vectors):
-                raise TypeError("All elements in b_vectors must be Bvec objects.")
+        if isinstance(vectors[0], FieldVector):
+            # Case for MTF-based FieldVector objects
+            if not isinstance(vectors, np.ndarray) or vectors.ndim != 1:
+                raise TypeError("vectors must be a 1D NumPy array of FieldVector objects.")
+            if not np.all(isinstance(v, FieldVector) for v in vectors):
+                raise TypeError("All elements in vectors must be FieldVector objects.")
 
-            self._b_vectors_mtf = b_vectors
-            self._b_vectors_numerical = None
+            self._vectors_mtf = vectors
+            self._vectors_numerical = None
         else:
             # Case for numerical B-field vectors
-            self._b_vectors_numerical = np.array(b_vectors)
-            self._b_vectors_mtf = None
+            self._vectors_numerical = np.array(vectors)
+            self._vectors_mtf = None
 
         if field_points is not None:
             field_points = np.array(field_points, dtype=object)
@@ -531,27 +505,27 @@ class Bfield:
         Returns:
             tuple: A tuple containing (numerical_points, numerical_vectors).
         """
-        if self._b_vectors_numerical is not None:
+        if self._vectors_numerical is not None:
             # Data is already numerical
             if not isinstance(self.field_points, np.ndarray):
                 raise TypeError(
-                    "Numerical B-field data requires numerical field_points."
+                    "Numerical vector field data requires numerical field_points."
                 )
-            return self.field_points, self._b_vectors_numerical
+            return self.field_points, self._vectors_numerical
 
-        elif self._b_vectors_mtf is not None:
+        elif self._vectors_mtf is not None:
             if not _MTFLIB_AVAILABLE:
-                raise RuntimeError("mtflib is required to evaluate Bvec objects.")
+                raise RuntimeError("mtflib is required to evaluate FieldVector objects.")
 
-            # Evaluate MTF Bvecs to get numerical vectors
-            b_vectors_numerical = np.array(
+            # Evaluate MTF FieldVectors to get numerical vectors
+            vectors_numerical = np.array(
                 [
                     [
-                        v.Bx.extract_coefficient(tuple([0] * v.Bx.dimension)).item(),
-                        v.By.extract_coefficient(tuple([0] * v.By.dimension)).item(),
-                        v.Bz.extract_coefficient(tuple([0] * v.Bz.dimension)).item(),
+                        v.x.extract_coefficient(tuple([0] * v.x.dimension)).item(),
+                        v.y.extract_coefficient(tuple([0] * v.y.dimension)).item(),
+                        v.z.extract_coefficient(tuple([0] * v.z.dimension)).item(),
                     ]
-                    for v in self._b_vectors_mtf
+                    for v in self._vectors_mtf
                 ]
             )
 
@@ -595,29 +569,29 @@ class Bfield:
             np.ndarray: A 1D NumPy array of the magnitudes.
         """
         if self._magnitude is None:
-            if self._b_vectors_numerical is not None:
-                self._magnitude = np.linalg.norm(self._b_vectors_numerical, axis=1)
-            elif self._b_vectors_mtf is not None:
-                if not _MTFLIB_AVAILABLE:
-                    raise RuntimeError(
-                        "mtflib is required to get magnitude of Bvec objects."
-                    )
-                magnitudes = []
-                for v in self._b_vectors_mtf:
-                    norm = v.norm()
-                    if v.is_mtf():
-                        magnitudes.append(norm.extract_coefficient(tuple([0] * v.Bx.dimension)).item())
-                    else:
-                        magnitudes.append(norm)
-                self._magnitude = np.array(magnitudes)
+            if self._vectors_numerical is not None:
+                self._magnitude = np.linalg.norm(self._vectors_numerical, axis=1)
+            elif self._vectors_mtf is not None:
+                    if not _MTFLIB_AVAILABLE:
+                        raise RuntimeError(
+                        "mtflib is required to get magnitude of FieldVector objects."
+                        )
+                    magnitudes = []
+                    for v in self._vectors_mtf:
+                        norm = v.norm()
+                        if v.is_mtf():
+                            magnitudes.append(norm.extract_coefficient(tuple([0] * v.x.dimension)).item())
+                        else:
+                            magnitudes.append(norm)
+                    self._magnitude = np.array(magnitudes)
         return self._magnitude
 
-    def scatter(self, title="B-field Scatter Plot", ax=None, **kwargs):
+    def scatter(self, title="Vector Field Scatter Plot", ax=None, **kwargs):
         """
-        Creates a 3D scatter plot of the magnetic field with direction arrows.
-        The color and length of the arrows represent the magnitude of the field.
+        Creates a 3D scatter plot of the vector field with direction arrows.
+        The color and length of the arrows represent the magnitude of the vectors.
         This method provides a way to visualize the raw vector field, where
-        arrow lengths are proportional to the field strength.
+        arrow lengths are proportional to the vector strength.
 
         Args:
             title (str, optional): The title of the plot.
@@ -663,9 +637,9 @@ class Bfield:
         if 'show' not in kwargs or kwargs['show']:
             plt.show()
 
-    def quiver(self, dimension=3, title="B-field Quiver Plot", ax=None, **kwargs):
+    def quiver(self, dimension=3, title="Vector Field Quiver Plot", ax=None, **kwargs):
         """
-        Creates a 3D quiver plot of the magnetic field.
+        Creates a 3D quiver plot of the vector field.
 
         Args:
             title (str, optional): The title of the plot.
@@ -726,7 +700,7 @@ class Bfield:
 
         Returns:
             pandas.DataFrame: A DataFrame with columns
-                              ['x', 'y', 'z', 'Bx', 'By', 'Bz'].
+                              ['x', 'y', 'z', 'vx', 'vy', 'vz'].
         """
         import pandas as pd
         numerical_points, numerical_vectors = self._get_numerical_data()
@@ -735,36 +709,36 @@ class Bfield:
             'x': numerical_points[:, 0],
             'y': numerical_points[:, 1],
             'z': numerical_points[:, 2],
-            'Bx': numerical_vectors[:, 0],
-            'By': numerical_vectors[:, 1],
-            'Bz': numerical_vectors[:, 2],
+            'vx': numerical_vectors[:, 0],
+            'vy': numerical_vectors[:, 1],
+            'vz': numerical_vectors[:, 2],
         }
 
         return pd.DataFrame(data)
 
 
-class BfieldGrid(Bfield):
+class VectorFieldGrid(VectorField):
     """
-    A subclass of Bfield for data on a structured 1D, 2D, or 3D grid.
+    A subclass of VectorField for data on a structured 1D, 2D, or 3D grid.
 
-    This class is designed to hold magnetic field data that is arranged on a
+    This class is designed to hold vector field data that is arranged on a
     structured grid. It stores grid metadata (shape and axes) to allow for
     easy reshaping of the data for grid-based analysis and plotting.
     """
-    def __init__(self, b_vectors, field_points, grid_shape, grid_axes):
+    def __init__(self, vectors, field_points, grid_shape, grid_axes):
         """
-        Initializes the BfieldGrid container.
+        Initializes the VectorFieldGrid container.
 
         Args:
-            b_vectors (np.ndarray): A NumPy array of Bvec objects or an
-                                    (N, 3) NumPy array of B-field vectors.
+            vectors (np.ndarray): A NumPy array of FieldVector objects or an
+                                    (N, 3) NumPy array of vectors.
             field_points (np.ndarray): A corresponding (N, 3) NumPy array of
                                        numerical points or MTF objects.
             grid_shape (tuple): The shape of the grid (e.g., (50, 50) for a
                                 2D grid).
             grid_axes (tuple): The axes of the grid (e.g., ('x', 'y')).
         """
-        super().__init__(b_vectors, field_points)
+        super().__init__(vectors, field_points)
         self.grid_shape = grid_shape
         self.grid_axes = grid_axes
 
