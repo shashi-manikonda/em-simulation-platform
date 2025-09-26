@@ -6,10 +6,9 @@ import argparse
 import time
 import matplotlib.pyplot as plt
 
-from mtflib import MultivariateTaylorFunction
-from applications.em.current_ring import current_ring
-from applications.em.biot_savart import serial_biot_savart, mpi_biot_savart
-from applications.em.plotting import Coil, _plot_coil_geometry
+from mtflib.taylor_function import MultivariateTaylorFunction
+from em_app.sources import RingCoil
+from em_app.solvers import serial_biot_savart, mpi_biot_savart
 
 # --- MPI Setup ---
 try:
@@ -27,7 +26,7 @@ PROFILER_OUTPUT_DIR = os.path.join(script_dir, "profiling_results")
 os.makedirs(PROFILER_OUTPUT_DIR, exist_ok=True)
 
 
-def setup_helmholtz_coil(num_segments=20):
+def setup_helmholtz_coil(num_segments=20, use_mtf=False):
     """
     Sets up a Helmholtz coil configuration.
     """
@@ -36,16 +35,24 @@ def setup_helmholtz_coil(num_segments=20):
     current = 1.0
 
     center1 = np.array([0, 0, -separation / 2])
-    segments1, lengths1, dirs1 = current_ring(
-        radius, num_segments, center1, np.array([0, 0, 1])
+    coil1 = RingCoil(
+        current=current,
+        radius=radius,
+        num_segments=num_segments,
+        center_point=center1,
+        axis_direction=np.array([0, 0, 1]),
+        use_mtf_for_segments=use_mtf,
     )
-    coil1 = Coil(segments1, lengths1, dirs1, current=current)
 
     center2 = np.array([0, 0, separation / 2])
-    segments2, lengths2, dirs2 = current_ring(
-        radius, num_segments, center2, np.array([0, 0, 1])
+    coil2 = RingCoil(
+        current=current,
+        radius=radius,
+        num_segments=num_segments,
+        center_point=center2,
+        axis_direction=np.array([0, 0, 1]),
+        use_mtf_for_segments=use_mtf,
     )
-    coil2 = Coil(segments2, lengths2, dirs2, current=current)
 
     return [coil1, coil2]
 
@@ -56,10 +63,10 @@ def get_aggregated_coil_parts(coils):
     all_lengths = []
     all_dirs = []
     for coil in coils:
-        all_segments.extend(coil.segment_mtfs)
-        all_lengths.extend(coil.element_lengths)
-        all_dirs.extend(coil.direction_vectors)
-    return all_segments, all_lengths, all_dirs
+        all_segments.extend([c.to_numpy_array() for c in coil.segment_centers])
+        all_lengths.extend(coil.segment_lengths)
+        all_dirs.extend([d.to_numpy_array() for d in coil.segment_directions])
+    return np.array(all_segments), np.array(all_lengths), np.array(all_dirs)
 
 
 def profile_serial_calculation(coils, field_points, backend_name):
@@ -67,11 +74,14 @@ def profile_serial_calculation(coils, field_points, backend_name):
     Profiles the serial Biot-Savart calculation.
     """
     print(f"--- Profiling SERIAL calculation with '{backend_name}' backend ---")
+    backend = "cpp" if backend_name == "compiled" else "python"
     all_segments, all_lengths, all_dirs = get_aggregated_coil_parts(coils)
 
     profiler = cProfile.Profile()
     profiler.enable()
-    _ = serial_biot_savart(all_segments, all_lengths, all_dirs, field_points)
+    _ = serial_biot_savart(
+        all_segments, all_lengths, all_dirs, field_points, backend=backend
+    )
     profiler.disable()
 
     output_filename = os.path.join(
@@ -108,6 +118,8 @@ def profile_mpi_calculation(coils, field_points, backend_name):
 
     profiler = cProfile.Profile()
     profiler.enable()
+    # Note: mpi_biot_savart currently doesn't support backend selection,
+    # it defaults to the python backend for the serial calculation on each process.
     _ = mpi_biot_savart(all_segments, all_lengths, all_dirs, field_points)
     profiler.disable()
 
@@ -133,6 +145,7 @@ def profile_plotting(coils, field_points, backend_name):
     Profiles the plotting functions, separating calculation from drawing.
     """
     print(f"--- Profiling PLOTTING with '{backend_name}' backend ---")
+    backend = "cpp" if backend_name == "compiled" else "python"
     all_segments, all_lengths, all_dirs = get_aggregated_coil_parts(coils)
 
     # 1. Calculation Phase (not profiled)
@@ -142,7 +155,7 @@ def profile_plotting(coils, field_points, backend_name):
     B_vectors = np.zeros((len(field_points), 3))
     for i, point in enumerate(field_points):
         B_contrib_mtf = serial_biot_savart(
-            all_segments, all_lengths, all_dirs, np.array([point]), order=0
+            all_segments, all_lengths, all_dirs, np.array([point]), order=0, backend=backend
         )
         # Use the safe way to extract the constant coefficient (order 0 value) and convert to scalar
         B_vectors[i] = np.array(
@@ -163,7 +176,8 @@ def profile_plotting(coils, field_points, backend_name):
     profiler.enable()
 
     # Profile the actual matplotlib calls
-    _plot_coil_geometry(ax, coils, refine_level=1)
+    for coil in coils:
+        coil.plot(ax=ax)
     ax.plot(field_points[:, 0], field_points[:, 1], field_points[:, 2], "r--")
 
     # A simplified quiver plot for profiling purposes
@@ -232,11 +246,13 @@ def main():
     MultivariateTaylorFunction.initialize_mtf(max_order=6, max_dimension=4)
 
     # In MPI, ensure all processes wait for file changes before proceeding
-    if "OMPI_COMM_WORLD_RANK" in os.environ:
+    if mpi_installed and "OMPI_COMM_WORLD_RANK" in os.environ:
         MPI.COMM_WORLD.Barrier()
 
     # --- Setup Geometry ---
-    coils = setup_helmholtz_coil(num_segments=args.num_segments)
+    # For plotting, we need MTF objects to be used for the calculation.
+    use_mtf = args.command == "plot"
+    coils = setup_helmholtz_coil(num_segments=args.num_segments, use_mtf=use_mtf)
     field_points = np.linspace([0, 0, -1], [0, 0, 1], args.num_points)
 
     # --- Execute Command ---

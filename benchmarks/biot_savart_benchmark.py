@@ -1,13 +1,9 @@
 import numpy as np
 import time
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from mtflib.taylor_function import MultivariateTaylorFunction
-from src.applications.em.biot_savart import serial_biot_savart
-from src.applications.em.current_ring import current_ring
+from em_app.solvers import serial_biot_savart
+from em_app.sources import RingCoil
 
 
 def run_biot_savart_benchmark(num_source_points, num_field_points, order=0):
@@ -23,9 +19,15 @@ def run_biot_savart_benchmark(num_source_points, num_field_points, order=0):
     ring_center = np.array([0, 0, 0])
     ring_axis = np.array([0, 0, 1])
 
-    segments_np, lengths_np, directions_np = current_ring(
-        ring_radius, num_source_points, ring_center, ring_axis, return_mtf=False
+    segments, lengths_np, directions = RingCoil.generate_geometry(
+        ring_radius=ring_radius,
+        num_segments_ring=num_source_points,
+        ring_center_point=ring_center,
+        ring_axis_direction=ring_axis,
+        use_mtf_for_segments=False,
     )
+    segments_np = np.array([s.to_numpy_array() for s in segments])
+    directions_np = np.array([d.to_numpy_array() for d in directions])
 
     field_points = np.linspace([-1, -1, -1], [1, 1, 1], num_field_points)
 
