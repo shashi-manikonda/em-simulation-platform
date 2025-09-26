@@ -7,18 +7,15 @@ import time
 import matplotlib.pyplot as plt
 
 from mtflib import MultivariateTaylorFunction
-from applications.em.current_ring import current_ring
-from applications.em.biot_savart import serial_biot_savart, mpi_biot_savart
-from applications.em.plotting import Coil, _plot_coil_geometry
+from em_app.sources import RingCoil, Coil
+from em_app.solvers import serial_biot_savart, mpi_biot_savart, mpi_installed
+
 
 # --- MPI Setup ---
-try:
+if mpi_installed:
     from mpi4py import MPI
-
-    mpi_installed = True
-except ImportError:
+else:
     MPI = None
-    mpi_installed = False
 
 # --- Global Settings ---
 # Get the directory where the script is located
@@ -36,16 +33,22 @@ def setup_helmholtz_coil(num_segments=20):
     current = 1.0
 
     center1 = np.array([0, 0, -separation / 2])
-    segments1, lengths1, dirs1 = current_ring(
-        radius, num_segments, center1, np.array([0, 0, 1])
+    coil1 = RingCoil(
+        current=current,
+        radius=radius,
+        num_segments=num_segments,
+        center_point=center1,
+        axis_direction=np.array([0, 0, 1]),
     )
-    coil1 = Coil(segments1, lengths1, dirs1, current=current)
 
     center2 = np.array([0, 0, separation / 2])
-    segments2, lengths2, dirs2 = current_ring(
-        radius, num_segments, center2, np.array([0, 0, 1])
+    coil2 = RingCoil(
+        current=current,
+        radius=radius,
+        num_segments=num_segments,
+        center_point=center2,
+        axis_direction=np.array([0, 0, 1]),
     )
-    coil2 = Coil(segments2, lengths2, dirs2, current=current)
 
     return [coil1, coil2]
 
@@ -56,9 +59,11 @@ def get_aggregated_coil_parts(coils):
     all_lengths = []
     all_dirs = []
     for coil in coils:
-        all_segments.extend(coil.segment_mtfs)
-        all_lengths.extend(coil.element_lengths)
-        all_dirs.extend(coil.direction_vectors)
+        centers_np = np.array([c.to_numpy_array() for c in coil.segment_centers])
+        dirs_np = np.array([d.to_numpy_array() for d in coil.segment_directions])
+        all_segments.extend(centers_np)
+        all_lengths.extend(coil.segment_lengths)
+        all_dirs.extend(dirs_np)
     return all_segments, all_lengths, all_dirs
 
 
@@ -71,7 +76,9 @@ def profile_serial_calculation(coils, field_points, backend_name):
 
     profiler = cProfile.Profile()
     profiler.enable()
-    _ = serial_biot_savart(all_segments, all_lengths, all_dirs, field_points)
+    _ = serial_biot_savart(
+        all_segments, all_lengths, all_dirs, field_points, backend=backend_name
+    )
     profiler.disable()
 
     output_filename = os.path.join(
@@ -87,7 +94,7 @@ def profile_serial_calculation(coils, field_points, backend_name):
     print(f"Profiling data saved to {output_filename} and {stats_filename}")
 
 
-def profile_mpi_calculation(coils, field_points, backend_name):
+def profile_mpi_calculation(coils, field_points):
     """
     Profiles the MPI Biot-Savart calculation.
     """
@@ -99,7 +106,7 @@ def profile_mpi_calculation(coils, field_points, backend_name):
     rank = comm.Get_rank()
 
     if rank == 0:
-        print(f"--- Profiling MPI calculation with '{backend_name}' backend ---")
+        print(f"--- Profiling MPI calculation (backend is not configurable) ---")
 
     all_segments, all_lengths, all_dirs = get_aggregated_coil_parts(coils)
 
@@ -114,10 +121,10 @@ def profile_mpi_calculation(coils, field_points, backend_name):
     # Gather profiling stats on rank 0
     # Note: This profiles each process, but for the report we focus on rank 0's view
     output_filename = os.path.join(
-        PROFILER_OUTPUT_DIR, f"calc_mpi_{backend_name}_rank_{rank}.prof"
+        PROFILER_OUTPUT_DIR, f"calc_mpi_rank_{rank}.prof"
     )
     stats_filename = os.path.join(
-        PROFILER_OUTPUT_DIR, f"calc_mpi_{backend_name}_rank_{rank}.txt"
+        PROFILER_OUTPUT_DIR, f"calc_mpi_rank_{rank}.txt"
     )
     profiler.dump_stats(output_filename)
 
@@ -142,7 +149,12 @@ def profile_plotting(coils, field_points, backend_name):
     B_vectors = np.zeros((len(field_points), 3))
     for i, point in enumerate(field_points):
         B_contrib_mtf = serial_biot_savart(
-            all_segments, all_lengths, all_dirs, np.array([point]), order=0
+            all_segments,
+            all_lengths,
+            all_dirs,
+            np.array([point]),
+            order=0,
+            backend=backend_name,
         )
         # Use the safe way to extract the constant coefficient (order 0 value) and convert to scalar
         B_vectors[i] = np.array(
@@ -163,7 +175,8 @@ def profile_plotting(coils, field_points, backend_name):
     profiler.enable()
 
     # Profile the actual matplotlib calls
-    _plot_coil_geometry(ax, coils, refine_level=1)
+    for coil in coils:
+        coil.plot(ax)
     ax.plot(field_points[:, 0], field_points[:, 1], field_points[:, 2], "r--")
 
     # A simplified quiver plot for profiling purposes
@@ -201,7 +214,10 @@ def main():
         "calc-serial", help="Profile the serial calculation."
     )
     parser_calc_serial.add_argument(
-        "--backend", type=str, choices=["python", "compiled"], required=True
+        "--backend",
+        type=str,
+        choices=["python", "cpp", "c", "cpp_v2"],
+        required=True,
     )
     parser_calc_serial.add_argument("--num_points", type=int, default=100)
     parser_calc_serial.add_argument("--num_segments", type=int, default=20)
@@ -210,16 +226,16 @@ def main():
     parser_calc_mpi = subparsers.add_parser(
         "calc-mpi", help="Profile the MPI calculation."
     )
-    parser_calc_mpi.add_argument(
-        "--backend", type=str, choices=["python", "compiled"], required=True
-    )
     parser_calc_mpi.add_argument("--num_points", type=int, default=100)
     parser_calc_mpi.add_argument("--num_segments", type=int, default=20)
 
     # --- Plotting Parser ---
     parser_plot = subparsers.add_parser("plot", help="Profile the plotting functions.")
     parser_plot.add_argument(
-        "--backend", type=str, choices=["python", "compiled"], required=True
+        "--backend",
+        type=str,
+        choices=["python", "cpp", "c", "cpp_v2"],
+        required=True,
     )
     parser_plot.add_argument(
         "--num_points", type=int, default=50
@@ -232,7 +248,7 @@ def main():
     MultivariateTaylorFunction.initialize_mtf(max_order=6, max_dimension=4)
 
     # In MPI, ensure all processes wait for file changes before proceeding
-    if "OMPI_COMM_WORLD_RANK" in os.environ:
+    if mpi_installed and "OMPI_COMM_WORLD_RANK" in os.environ:
         MPI.COMM_WORLD.Barrier()
 
     # --- Setup Geometry ---
@@ -243,7 +259,7 @@ def main():
     if args.command == "calc-serial":
         profile_serial_calculation(coils, field_points, args.backend)
     elif args.command == "calc-mpi":
-        profile_mpi_calculation(coils, field_points, args.backend)
+        profile_mpi_calculation(coils, field_points)
     elif args.command == "plot":
         profile_plotting(coils, field_points, args.backend)
 
