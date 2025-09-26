@@ -5,9 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "em-app"
 version = "0.1.0"
-authors = [
-{ name="Shashikant Manikonda", email="manikonda@outlook.com" },
-]
 description = "A package for Electromagnetic applications using MTFLibrary."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -23,7 +20,7 @@ classifiers = [
 ]
 dependencies = [
 "numpy",
-"mtflib",
+"mtflib @ git+https://github.com/shashi-manikonda/MTFLibrary.git@main",
 ]
 
 [project.optional-dependencies]
@@ -39,3 +36,6 @@ dev = [
 [project.urls]
 "Homepage" = "https://github.com/shashi-manikonda/MTFLibrary"
 "Bug Tracker" = "https://github.com/shashi-manikonda/MTFLibrary/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
