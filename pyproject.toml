@@ -4,11 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "em-app"
-version = "0.1.0"
+version = "0.2.0"
 description = "A package for Electromagnetic applications using MTFLibrary."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
+authors = [
+    { name="Shashikant Manikonda", email="manikonda@outlook.com" },
+]
 classifiers = [
 "Development Status :: 4 - Beta",
 "Intended Audience :: Developers",
@@ -25,15 +28,21 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-"pytest",
-"matplotlib",
-"pandas",
-"jupytext",
-"nbconvert",
-"ipykernel",
-"sphinx",
-"furo",
+    "ruff",
+    "matplotlib",
+    "pandas",
+    "jupytext",
+    "nbconvert",
+    "ipykernel",
 ]
+test = [
+    "pytest",
+]
+docs = [
+    "sphinx",
+    "furo",
+]
+
 
 [project.urls]
 "Homepage" = "https://github.com/shashi-manikonda/MTFLibrary"
@@ -41,3 +50,12 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.format]
+preview = true
