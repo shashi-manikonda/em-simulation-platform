@@ -1,0 +1,29 @@
+Metadata-Version: 2.4
+Name: em-app
+Version: 0.1.0
+Summary: A package for Electromagnetic applications using MTFLibrary.
+Project-URL: Homepage, https://github.com/shashi-manikonda/MTFLibrary
+Project-URL: Bug Tracker, https://github.com/shashi-manikonda/MTFLibrary/issues
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Software Development :: Libraries
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: mtflib@ git+https://github.com/shashi-manikonda/MTFLibrary.git@main
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: matplotlib; extra == "dev"
+Requires-Dist: pandas; extra == "dev"
+Requires-Dist: jupytext; extra == "dev"
+Requires-Dist: nbconvert; extra == "dev"
+Requires-Dist: ipykernel; extra == "dev"
+Requires-Dist: sphinx; extra == "dev"
+Requires-Dist: furo; extra == "dev"
+
+# em-simulation-platform
+EM simulation tools

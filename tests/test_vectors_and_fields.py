@@ -78,3 +78,39 @@ def test_vectorfield_initialization_numerical():
     assert len(vectors) == 2
     assert np.allclose(vectors, initial_vectors)
     assert np.allclose(points, field_points)
+
+
+def test_fieldvector_calculus():
+    """
+    Test the curl, divergence, and gradient methods of the FieldVector class.
+    """
+    try:
+        from mtflib import mtf
+        x, y, z = mtf.var(1), mtf.var(2), mtf.var(3)
+
+        # Define a simple vector field B = [2x, 3y, 4z]
+        b_field = FieldVector(2 * x, 3 * y, 4 * z)
+
+        # Test divergence: div(B) = 2 + 3 + 4 = 9
+        divergence = b_field.divergence()
+        assert isinstance(divergence, mtf)
+        assert np.isclose(divergence.get_constant(), 9.0)
+
+        # Test curl: curl(B) should be zero for this field
+        curl = b_field.curl()
+        assert np.allclose(curl.to_numpy_array(), [0, 0, 0])
+
+        # Test gradient: grad(B) should be a diagonal matrix
+        gradient = b_field.gradient()
+        expected_gradient = np.diag([2, 3, 4])
+
+        # Convert the MTF gradient matrix to a numerical one
+        numerical_gradient = np.zeros_like(expected_gradient, dtype=float)
+        for i in range(3):
+            for j in range(3):
+                numerical_gradient[i, j] = gradient[i, j].get_constant()
+
+        assert np.allclose(numerical_gradient, expected_gradient)
+
+    except ImportError:
+        pytest.skip("mtflib not installed, skipping MTF test.")

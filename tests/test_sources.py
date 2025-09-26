@@ -76,3 +76,16 @@ def test_invalid_rectangular_coil_creation():
 
     with pytest.raises(ValueError, match="Side vectors from p1 must be orthogonal."):
         RectangularCoil(current, p1, p2, p4, num_segments_per_side=5)
+
+
+def test_straight_wire_segment_generation():
+    """
+    Test if StraightWire correctly generates the specified number of segments.
+    """
+    current = 1.0
+    start_point = np.array([0, 0, 0])
+    end_point = np.array([0, 0, 10])
+    num_segments = 10
+
+    wire = StraightWire(current=current, start_point=start_point, end_point=end_point, num_segments=num_segments)
+    assert len(wire.segment_centers) == num_segments

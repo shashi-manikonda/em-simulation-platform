@@ -1,0 +1,12 @@
+numpy
+mtflib@ git+https://github.com/shashi-manikonda/MTFLibrary.git@main
+
+[dev]
+pytest
+matplotlib
+pandas
+jupytext
+nbconvert
+ipykernel
+sphinx
+furo
