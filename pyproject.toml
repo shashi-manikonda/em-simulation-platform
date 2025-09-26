@@ -31,6 +31,8 @@ dev = [
 "jupytext",
 "nbconvert",
 "ipykernel",
+"sphinx",
+"furo",
 ]
 
 [project.urls]

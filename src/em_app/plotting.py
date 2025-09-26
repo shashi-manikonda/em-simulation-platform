@@ -43,6 +43,9 @@ def plot_1d_field(
 ):
     """
     Plots a vector field component along a 1D line.
+
+    Args:
+        coil_instance (:class:`~em_app.sources.Coil`): An instance of a Coil subclass.
     """
     if field_component not in ['x', 'y', 'z', 'norm']:
         raise ValueError(f"field_component must be 'x', 'y', 'z', or 'norm'.")
@@ -144,6 +147,9 @@ def plot_2d_field(
 ):
     """
     Plots a vector field on a 2D plane.
+
+    Args:
+        coil_instance (:class:`~em_app.sources.Coil`): An instance of a Coil subclass.
     """
     if field_component not in ['x', 'y', 'z', 'norm']:
         raise ValueError(f"field_component must be 'x', 'y', 'z', or 'norm'.")
@@ -305,7 +311,7 @@ def plot_field_vectors_3d(
     vectors at these points.
 
     Args:
-        coil_instance (Coil): An instance of a Coil subclass.
+        coil_instance (:class:`~em_app.sources.Coil`): An instance of a Coil subclass.
         num_points_a (int): Number of grid points along the x-dimension.
         num_points_b (int): Number of grid points along the y-dimension.
         num_points_c (int): Number of grid points along the z-dimension.

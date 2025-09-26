@@ -1,16 +1,19 @@
 """
-magneticfield: A library for magnetic field calculations and visualization.
+Vector Fields Module
+====================
 
-This module defines classes and functions for working with magnetic fields,
-with a focus on using Multivariate Taylor Functions (MTFs) from the mtflib
-library.
+This module defines classes for representing and manipulating 3D vectors and
+vector fields, with a focus on supporting Multivariate Taylor Functions (MTFs)
+from the ``mtflib`` library for advanced mathematical operations.
 
 The core components are:
-- Bvec: A representation of a magnetic field vector at a single point,
-        using MTFs for each component.
-- Bfield: A container class for a collection of Bvec objects, providing
-          methods for analysis and visualization, such as plotting the field
-          on a plane or in 3D.
+- :class:`Vector`: A generic 3D vector class with standard operations.
+- :class:`FieldVector`: A subclass of ``Vector`` representing a vector at a
+  point in a field, with components that can be MTFs.
+- :class:`VectorField`: A container for a collection of ``FieldVector``
+  objects, representing a field at discrete points.
+- :class:`VectorFieldGrid`: A subclass of ``VectorField`` for data on a
+  structured grid.
 """
 
 import numpy as np
@@ -356,8 +359,8 @@ class FieldVector(Vector):
 
     def to_numpy_array(self):
         """
-        Converts the Bvec to a NumPy array by extracting the constant part of
-        each component.
+        Converts the FieldVector to a NumPy array by extracting the constant
+        part of each component.
         """
         comps = []
         for comp in [self.x, self.y, self.z]:
@@ -370,11 +373,13 @@ class FieldVector(Vector):
         return np.array(comps, dtype=np.complex128)
     
     def curl(self):
-        """
-        Calculates the curl of the B-field vector, which is a new B-field vector.
+        r"""
+        Calculates the curl of the field vector.
 
-        The curl of the B-field is given by the formula:
-        $\nabla \times \mathbf{B} = (\frac{\partial B_z}{\partial y} - \frac{\partial B_y}{\partial z}) \mathbf{i} + (\frac{\partial B_x}{\partial z} - \frac{\partial B_z}{\partial x}) \mathbf{j} + (\frac{\partial B_y}{\partial x} - \frac{\partial B_x}{\partial y}) \mathbf{k}$
+        The curl of a vector field :math:`\mathbf{B}` is given by the formula:
+
+        .. math::
+           \nabla \times \mathbf{B} = \left(\frac{\partial B_z}{\partial y} - \frac{\partial B_y}{\partial z}\right) \mathbf{i} + \left(\frac{\partial B_x}{\partial z} - \frac{\partial B_z}{\partial x}\right) \mathbf{j} + \left(\frac{\partial B_y}{\partial x} - \frac{\partial B_x}{\partial y}\right) \mathbf{k}
 
         This method uses the `derivative` method from `mtflib` to compute the
         partial derivatives.
@@ -391,18 +396,20 @@ class FieldVector(Vector):
         return FieldVector(curl_x, curl_y, curl_z)
 
     def divergence(self):
-        """
-        Calculates the divergence of the B-field.
+        r"""
+        Calculates the divergence of the field vector.
 
-        The divergence of a vector field is a scalar value given by the formula:
-        $\nabla \cdot \mathbf{B} = \frac{\partial B_x}{\partial x} + \frac{\partial B_y}{\partial y} + \frac{\partial B_z}{\partial z}$
+        The divergence of a vector field :math:`\mathbf{B}` is a scalar value
+        given by the formula:
+
+        .. math::
+           \nabla \cdot \mathbf{B} = \frac{\partial B_x}{\partial x} + \frac{\partial B_y}{\partial y} + \frac{\partial B_z}{\partial z}
 
         This method uses the `derivative` method from `mtflib` to compute the
         partial derivatives and then sums the resulting MTF objects.
 
         Returns:
-            mtf.MultivariateTaylorFunction: A single MTF representing the
-                                            scalar divergence of the field.
+            mtflib.mtf: A single MTF representing the scalar divergence of the field.
         """
         div_Bx = self.x.derivative(1)
         div_By = self.y.derivative(2)
@@ -755,7 +762,7 @@ class VectorFieldGrid(VectorField):
 
         Returns:
             np.ndarray: The field points as a grid. The shape will be
-                        (*grid_shape, 3).
+                        ``(*grid_shape, 3)``.
         """
         numerical_points, _ = self._get_numerical_data()
         return numerical_points.reshape(*self.grid_shape, 3)
@@ -766,7 +773,7 @@ class VectorFieldGrid(VectorField):
 
         Returns:
             np.ndarray: The B-field vectors as a grid. The shape will be
-                        (*grid_shape, 3).
+                        ``(*grid_shape, 3)``.
         """
         _, numerical_vectors = self._get_numerical_data()
         return numerical_vectors.reshape(*self.grid_shape, 3)
@@ -801,8 +808,8 @@ if __name__ == "__main__":
     b_vectors_numerical = b_vectors_numerical[valid_indices]
 
     # Initialize the Bfield object with the numerical data
-    bfield_num = Bfield(
-        field_points=field_points_numerical, b_vectors=b_vectors_numerical
+    bfield_num = VectorField(
+        field_points=field_points_numerical, vectors=b_vectors_numerical
     )
 
     # Plot the 3D vector field using the new quiver method
@@ -836,11 +843,11 @@ if __name__ == "__main__":
         # that is a function of the spatial variables, and then we create an array
         # of these objects for the Bfield container.
         x_mtf, y_mtf, z_mtf = mtf.var(1), mtf.var(2), mtf.var(3)
-        bvec_mtf_object = Bvec(2 * x_mtf, 3 * y_mtf, 4 * z_mtf)
+        bvec_mtf_object = FieldVector(2 * x_mtf, 3 * y_mtf, 4 * z_mtf)
         b_vectors_mtf = np.array([bvec_mtf_object] * len(field_points_mtf))
 
         # Initialize the Bfield object with MTF objects
-        bfield_mtf = Bfield(field_points=field_points_mtf, b_vectors=b_vectors_mtf)
+        bfield_mtf = VectorField(field_points=field_points_mtf, vectors=b_vectors_mtf)
 
         print("Plotting the 3D magnetic field vectors from the MTF data...")
         bfield_mtf.quiver(title="3D B-Field from MTF points")
@@ -866,8 +873,8 @@ if __name__ == "__main__":
     # Create some dummy B-field vectors for the grid
     b_vectors_grid = np.random.rand(*field_points_grid.shape)
 
-    bfield_grid = BfieldGrid(
-        b_vectors=b_vectors_grid,
+    bfield_grid = VectorFieldGrid(
+        vectors=b_vectors_grid,
         field_points=field_points_grid,
         grid_shape=grid_shape,
         grid_axes=('x', 'y', 'z')

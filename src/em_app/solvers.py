@@ -8,7 +8,7 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
     field points using the Biot-Savart law.
 
     Args:
-        coil_instance (Coil): An instance of a Coil subclass.
+        coil_instance (:class:`~em_app.sources.Coil`): An instance of a Coil subclass.
         field_points (np.ndarray or np.ndarray of
                       mtf.MultivariateTaylorFunction):
             The points (x, y, z) where the magnetic field should be
