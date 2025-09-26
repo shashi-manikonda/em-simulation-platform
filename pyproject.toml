@@ -35,6 +35,10 @@ dev = [
 "nbconvert",
 "ipykernel",
 ]
+benchmark = [
+"matplotlib",
+"mpi4py",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/shashi-manikonda/em-simulation-platform"

@@ -129,7 +129,7 @@ class Vector:
             Vector: A new Vector object representing the sum.
         """
         if isinstance(other, Vector):
-            return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
+            return type(self)(self.x + other.x, self.y + other.y, self.z + other.z)
         raise TypeError("unsupported operand type(s) for +: 'Vector' and '{}'".format(type(other).__name__))
 
     def __sub__(self, other):
