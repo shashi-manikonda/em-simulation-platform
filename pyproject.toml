@@ -43,8 +43,11 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.ruff] line-length = 88
+[tool.ruff] 
+line-length = 88
 
-[tool.ruff.lint] select = ["E", "F", "I"]
+[tool.ruff.lint]
+select = ["E", "F", "I"]
 
-[tool.ruff.format] preview = true
+[tool.ruff.format]
+preview = true
