@@ -45,8 +45,8 @@ docs = [
 
 
 [project.urls]
-"Homepage" = "https://github.com/shashi-manikonda/MTFLibrary"
-"Bug Tracker" = "https://github.com/shashi-manikonda/MTFLibrary/issues"
+"Homepage" = "https://github.com/shashi-manikonda/em-simulation-platform"
+"Bug Tracker" = "https://github.com/shashi-manikonda/em-simulation-platform/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
