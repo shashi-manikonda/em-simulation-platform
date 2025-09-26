@@ -16,12 +16,12 @@ def run_demos():
     src_path = os.path.join(project_root, "src")
     demos_dir = os.path.join(project_root, "demos")
 
-    # --- Demo Files - Predefined Order ---
-    demo_files = [
-        "em/01_validation_demo.py",
-        "em/02_dipole_approximation_demo.py",
-        "em/03_plotting_capabilities_demo.py",
-    ]
+    # --- Demo Files - Automatically Generated ---
+    em_demo_dir = os.path.join(demos_dir, "em")
+    demo_files = []
+    for fname in sorted(os.listdir(em_demo_dir)):
+        if fname.endswith(".py") or fname.endswith(".ipynb"):
+            demo_files.append(f"em/{fname}")
 
     # Create runoutput directory
     runoutput_dir = os.path.join(demos_dir, "runoutput")
