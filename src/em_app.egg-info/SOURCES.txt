@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/em_app/__init__.py
+src/em_app/plotting.py
+src/em_app/solvers.py
+src/em_app/sources.py
+src/em_app/vector_fields.py
+src/em_app.egg-info/PKG-INFO
+src/em_app.egg-info/SOURCES.txt
+src/em_app.egg-info/dependency_links.txt
+src/em_app.egg-info/requires.txt
+src/em_app.egg-info/top_level.txt
+tests/test_solvers.py
+tests/test_sources.py
+tests/test_vectors_and_fields.py
