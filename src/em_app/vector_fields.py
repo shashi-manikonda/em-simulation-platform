@@ -370,7 +370,7 @@ class FieldVector(Vector):
         return np.array(comps, dtype=np.complex128)
     
     def curl(self):
-        """
+        r"""
         Calculates the curl of the B-field vector, which is a new B-field vector.
 
         The curl of the B-field is given by the formula:
@@ -391,7 +391,7 @@ class FieldVector(Vector):
         return FieldVector(curl_x, curl_y, curl_z)
 
     def divergence(self):
-        """
+        r"""
         Calculates the divergence of the B-field.
 
         The divergence of a vector field is a scalar value given by the formula:

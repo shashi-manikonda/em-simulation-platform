@@ -4,7 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "em-app"
-version = "0.1.0"
+version = "0.2.0"
+authors = [
+    { name="Shashikant Manikonda", email="manikonda@outlook.com" },
+]
 description = "A package for Electromagnetic applications using MTFLibrary."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -34,8 +37,14 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/shashi-manikonda/MTFLibrary"
-"Bug Tracker" = "https://github.com/shashi-manikonda/MTFLibrary/issues"
+"Homepage" = "https://github.com/shashi-manikonda/em-simulation-platform"
+"Bug Tracker" = "https://github.com/shashi-manikonda/em-simulation-platform/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff] line-length = 88
+
+[tool.ruff.lint] select = ["E", "F", "I"]
+
+[tool.ruff.format] preview = true
