@@ -25,7 +25,7 @@ This document outlines the steps to release a new version of the `em-app` packag
     ```
     (Replace `X.Y.Z` with the new version number).
 
-## 2. Publish to PyPI and Create a GitHub Release
+## 2. Trigger the Automated Release
 
 1.  **Tag the new version:**
     ```bash
@@ -39,17 +39,12 @@ This document outlines the steps to release a new version of the `em-app` packag
     git push origin vX.Y.Z
     ```
 
-3.  **Automatic PyPI Publication:**
+3.  **Automatic Release:**
     - Pushing a new tag that starts with `v` (e.g., `v1.2.3`) will automatically trigger the `publish.yml` GitHub Actions workflow.
-    - This workflow builds the package and publishes it to PyPI.
+    - This workflow handles the entire release process:
+        - It builds the package.
+        - It publishes the package to PyPI.
+        - It creates a new GitHub Release, using the notes from `CHANGELOG.md` and attaching the built package files as assets.
     - You can monitor the progress of the workflow on the "Actions" tab of the GitHub repository.
-
-4.  **Create a GitHub Release:**
-    - Once the workflow has successfully completed, navigate to the "Releases" page in the GitHub repository.
-    - Click "Draft a new release."
-    - Select the tag you just pushed (e.g., `vX.Y.Z`).
-    - For the release title, enter `vX.Y.Z`.
-    - Copy the release notes from `CHANGELOG.md` into the description.
-    - Click "Publish release."
 
 This completes the release process.
