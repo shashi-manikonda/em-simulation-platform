@@ -1,6 +1,6 @@
 # em-simulation-platform
 
-[![Documentation Status](https://readthedocs.org/projects/em-simulation-platform/badge/?version=latest)](https://em-simulation-platform.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/em-app/badge/?version=latest)](https://em-app.readthedocs.io/en/latest/?badge=latest)
 
 EM simulation tools for electromagnetic field analysis, visualization, and benchmarking.
 
