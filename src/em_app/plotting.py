@@ -299,17 +299,17 @@ def plot_2d_field(
             field_data = np.array([
                 b.x.extract_coefficient(tuple([0] * b.x.dimension)).item()
                 for b in vector_field._vectors_mtf
-            ], dtype=float)
+            ])
         elif field_component == "y":
             field_data = np.array([
                 b.y.extract_coefficient(tuple([0] * b.y.dimension)).item()
                 for b in vector_field._vectors_mtf
-            ], dtype=float)
+            ])
         else:  # z
             field_data = np.array([
                 b.z.extract_coefficient(tuple([0] * b.z.dimension)).item()
                 for b in vector_field._vectors_mtf
-            ], dtype=float)
+            ])
         field_data = np.real(field_data)
         c = ax.pcolormesh(A, B, field_data.reshape(A.shape), **kwargs)
         plt.colorbar(c, ax=ax)

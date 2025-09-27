@@ -30,3 +30,16 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
+
+    - name: Get Release Notes
+      id: changelog_reader
+      uses: mindsers/changelog-reader-action@v2
+      with:
+        version: ${{ github.ref_name }}
+        path: ./CHANGELOG.md
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body: ${{ steps.changelog_reader.outputs.changes }}
+        files: dist/*

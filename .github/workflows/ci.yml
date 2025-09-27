@@ -31,9 +31,15 @@ jobs:
         pip install ruff
         ruff check . --exclude "runoutput/*,benchmarks/*"
 
-    - name: Test with pytest
+    - name: Run tests and generate coverage report
       run: |
-        pytest
+        pytest --cov=src --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+        fail_ci_if_error: true
 
     - name: Build documentation
       run: |
