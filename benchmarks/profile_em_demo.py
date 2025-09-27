@@ -1,15 +1,15 @@
-import numpy as np
-import cProfile
-import pstats
-import os
 import argparse
+import cProfile
+import os
+import pstats
 import time
+
 import matplotlib.pyplot as plt
-
+import numpy as np
 from mtflib import MultivariateTaylorFunction
-from em_app.sources import RingCoil, Coil
-from em_app.solvers import serial_biot_savart, mpi_biot_savart, mpi_installed
 
+from em_app.solvers import mpi_biot_savart, mpi_installed, serial_biot_savart
+from em_app.sources import RingCoil
 
 # --- MPI Setup ---
 if mpi_installed:
@@ -106,7 +106,7 @@ def profile_mpi_calculation(coils, field_points):
     rank = comm.Get_rank()
 
     if rank == 0:
-        print(f"--- Profiling MPI calculation (backend is not configurable) ---")
+        print("--- Profiling MPI calculation (backend is not configurable) ---")
 
     all_segments, all_lengths, all_dirs = get_aggregated_coil_parts(coils)
 
@@ -120,12 +120,8 @@ def profile_mpi_calculation(coils, field_points):
 
     # Gather profiling stats on rank 0
     # Note: This profiles each process, but for the report we focus on rank 0's view
-    output_filename = os.path.join(
-        PROFILER_OUTPUT_DIR, f"calc_mpi_rank_{rank}.prof"
-    )
-    stats_filename = os.path.join(
-        PROFILER_OUTPUT_DIR, f"calc_mpi_rank_{rank}.txt"
-    )
+    output_filename = os.path.join(PROFILER_OUTPUT_DIR, f"calc_mpi_rank_{rank}.prof")
+    stats_filename = os.path.join(PROFILER_OUTPUT_DIR, f"calc_mpi_rank_{rank}.txt")
     profiler.dump_stats(output_filename)
 
     if rank == 0:
@@ -157,12 +153,10 @@ def profile_plotting(coils, field_points, backend_name):
             backend=backend_name,
         )
         # Use the safe way to extract the constant coefficient (order 0 value) and convert to scalar
-        B_vectors[i] = np.array(
-            [
-                b.extract_coefficient(tuple([0] * b.dimension)).item()
-                for b in B_contrib_mtf[0]
-            ]
-        )
+        B_vectors[i] = np.array([
+            b.extract_coefficient(tuple([0] * b.dimension)).item()
+            for b in B_contrib_mtf[0]
+        ])
     calc_time = time.time() - start_time
     print(f"Calculation finished in {calc_time:.4f} seconds.")
 

@@ -1,11 +1,10 @@
-import numpy as np
 import time
-import os
-import sys
+
+import numpy as np
+from mtflib import MultivariateTaylorFunction
 
 from em_app.solvers import serial_biot_savart
 from em_app.sources import current_ring
-from mtflib import MultivariateTaylorFunction
 
 
 def run_biot_savart_benchmark(num_source_points, num_field_points, order=0):

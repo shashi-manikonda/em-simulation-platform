@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
+from mtflib import mtf
+
+from em_app.solvers import calculate_b_field, mu_0_4pi
 from em_app.sources import RingCoil
 from em_app.vector_fields import FieldVector
-from em_app.solvers import mu_0_4pi, calculate_b_field
-from mtflib import mtf, ComplexMultivariateTaylorFunction
 
 # Global settings for tests
 MAX_ORDER = 5
@@ -54,9 +55,9 @@ def test_biot_savart_ring_on_axis():
     # Analytical solution for the B-field on the axis of a circular loop
     # $B_{z} = \frac{\mu_0 I R^2}{2 (R^2 + z^2)^{3/2}}$
     mu_0 = mu_0_4pi * 4 * np.pi
-    b_z_analytical = (
-        mu_0 * current * radius**2
-    ) / (2 * (radius**2 + z_points**2) ** 1.5)
+    b_z_analytical = (mu_0 * current * radius**2) / (
+        2 * (radius**2 + z_points**2) ** 1.5
+    )
     print("Numerical B-field (z-component):", np.real(b_vectors_numerical[:, 2]))
     print("Analytical B-field (z-component):", b_z_analytical)
 
@@ -66,16 +67,18 @@ def test_biot_savart_ring_on_axis():
     # Check that the imaginary part of the z-component is negligible
     assert np.allclose(np.imag(b_vectors_numerical[:, 2]), 0, atol=1e-12)
 
-    # Check that both the real and imaginary parts of the x and y components are negligible
+    # Check that both the real and imaginary parts of the x and y components
+    # are negligible
     assert np.allclose(b_vectors_numerical[:, 0], 0, atol=1e-12)
     assert np.allclose(b_vectors_numerical[:, 1], 0, atol=1e-12)
 
 
 def test_biot_savart_with_mtf():
     """
-    Test the Biot-Savart calculation when a current is a Multivariate Taylor Function.
-    This is a basic check for functionality and to ensure the correct return type
-    when complex coefficients are expected.
+    Test the Biot-Savart calculation when a current is a MTF.
+
+    This is a basic check for functionality and to ensure the correct return
+    type when complex coefficients are expected.
     """
     # Define coil parameters
     radius = 1.0
@@ -85,7 +88,7 @@ def test_biot_savart_with_mtf():
     field_point = np.array([[0, 0, 0.5]])
 
     # Initialize a MTF variable for the current
-    current_mtf = 1.0+mtf.var(1)
+    current_mtf = 1.0 + mtf.var(1)
 
     # Create a coil with an MTF current
     ring_coil = RingCoil(current_mtf, radius, num_segments, center, axis)
@@ -101,7 +104,7 @@ def test_biot_savart_with_mtf():
     # Check that the components of the returned FieldVector are MTFs
     assert b_vectors_mtf[0].is_mtf()
 
-    # The result should be a ComplexMultivariateTaylorFunction, as the current is a variable
+    # The result should be a MTF, as the current is a variable
     assert isinstance(b_vectors_mtf[0].x, mtf)
     assert isinstance(b_vectors_mtf[0].y, mtf)
     assert isinstance(b_vectors_mtf[0].z, mtf)
@@ -110,10 +113,16 @@ def test_biot_savart_with_mtf():
     # match the analytical solution for a current of 1.0
     mu_0 = mu_0_4pi * 4 * np.pi
     z = field_point[0, 2]
-    b_z_analytical = (
-        mu_0 * 1.0 * radius**2
-    ) / (2 * (radius**2 + z**2) ** 1.5)
+    b_z_analytical = (mu_0 * 1.0 * radius**2) / (2 * (radius**2 + z**2) ** 1.5)
 
-    assert np.isclose(b_vectors_mtf[0].z.extract_coefficient(tuple([0] * b_vectors_mtf[0].z.dimension)).item(), b_z_analytical)
-    assert np.isclose(b_vectors_mtf[0].x.extract_coefficient(tuple([0] * b_vectors_mtf[0].x.dimension)).item(), 0)
-    assert np.isclose(b_vectors_mtf[0].y.extract_coefficient(tuple([0] * b_vectors_mtf[0].y.dimension)).item(), 0)
+    z_component = b_vectors_mtf[0].z
+    z_coeff = z_component.extract_coefficient(tuple([0] * z_component.dimension))
+    assert np.isclose(z_coeff.item(), b_z_analytical)
+
+    x_component = b_vectors_mtf[0].x
+    x_coeff = x_component.extract_coefficient(tuple([0] * x_component.dimension))
+    assert np.isclose(x_coeff.item(), 0)
+
+    y_component = b_vectors_mtf[0].y
+    y_coeff = y_component.extract_coefficient(tuple([0] * y_component.dimension))
+    assert np.isclose(y_coeff.item(), 0)

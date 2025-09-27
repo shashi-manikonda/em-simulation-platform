@@ -6,11 +6,12 @@
 # The key takeaway is that the dipole approximation becomes more accurate as the observation point moves farther away from the current loop.
 
 # %%
-import numpy as np
 import matplotlib.pyplot as plt
-from em_app.sources import RingCoil
-from em_app.solvers import calculate_b_field
+import numpy as np
 from mtflib import mtf
+
+from em_app.solvers import calculate_b_field
+from em_app.sources import RingCoil
 
 # %%
 mtf.initialize_mtf(max_order=6, max_dimension=4)
@@ -24,6 +25,7 @@ mtf.initialize_mtf(max_order=6, max_dimension=4)
 # $$ \vec{B}_{dipole} = \frac{\mu_0}{4 \pi r^3} (3(\vec{m} \cdot \hat{r})\hat{r} - \vec{m}) $$
 #
 # where the magnetic moment **m** for a current loop is given by **m** = I * **A**, with **A** being the vector area of the loop.
+
 
 # %%
 def magnetic_dipole_b_field(magnetic_moment, r_vec):
@@ -50,14 +52,20 @@ def magnetic_dipole_b_field(magnetic_moment, r_vec):
 # --- Setup ---
 current = 1.0
 radius = 0.1
-ring_coil = RingCoil(current, radius, num_segments=20, center_point=np.array([0,0,0]), axis_direction=np.array([0,0,1]))
+ring_coil = RingCoil(
+    current,
+    radius,
+    num_segments=20,
+    center_point=np.array([0, 0, 0]),
+    axis_direction=np.array([0, 0, 1]),
+)
 
 # Magnetic moment of the ring coil
 area = np.pi * radius**2
 magnetic_moment = current * area * np.array([0, 0, 1])
 
 # --- Calculation ---
-distances = np.logspace(0, 3, 20) * radius # from 1 to 1000 radii
+distances = np.logspace(0, 3, 20) * radius  # from 1 to 1000 radii
 errors = []
 
 for d in distances:
@@ -71,7 +79,9 @@ for d in distances:
     b_field_dipole = magnetic_dipole_b_field(magnetic_moment, observation_point[0])
 
     # Calculate relative error
-    error = np.linalg.norm(b_field_numerical - b_field_dipole) / np.linalg.norm(b_field_numerical)
+    error = np.linalg.norm(b_field_numerical - b_field_dipole) / np.linalg.norm(
+        b_field_numerical
+    )
     errors.append(error)
 
 # %% [markdown]
@@ -81,7 +91,7 @@ for d in distances:
 
 # %%
 plt.figure(figsize=(8, 6))
-plt.loglog(distances / radius, errors, 'b-o')
+plt.loglog(distances / radius, errors, "b-o")
 plt.title("Dipole Approximation Error vs. Distance")
 plt.xlabel("Distance from coil (in radii)")
 plt.ylabel("Relative Error")

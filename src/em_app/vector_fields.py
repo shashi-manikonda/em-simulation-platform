@@ -6,9 +6,9 @@ with support for numerical data and `mtflib` Multivariate Taylor Functions (MTFs
 It includes classes like Vector, FieldVector, VectorField, and VectorFieldGrid.
 """
 
-import numpy as np
-import warnings
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Try to import mtflib. The code will still function with numerical data
 # even if this import fails.
@@ -34,6 +34,7 @@ class Vector:
     This class handles standard vector operations like addition, subtraction,
     scalar multiplication/division, dot product, and cross product.
     """
+
     def __init__(self, *components):
         """
         Initializes the vector.
@@ -47,30 +48,32 @@ class Vector:
             *components (tuple): A tuple containing the components in one of the
                                   formats listed above.
         """
-        if len(components) == 1 and isinstance(components[0], (list, tuple, np.ndarray)):
+        if len(components) == 1 and isinstance(
+            components[0], (list, tuple, np.ndarray)
+        ):
             components = components[0]
-        
+
         if len(components) != 3:
-            raise ValueError(f"Vector initialization requires 3 components, but {len(components)} were given.")
-            
+            raise ValueError(
+                f"Vector initialization requires 3 components, but {len(components)} were given."
+            )
+
         self.x, self.y, self.z = components
 
     @classmethod
     def from_array_of_vectors(cls, array):
         """
         Creates a NumPy array of Vector objects from a 2D NumPy array.
-        
+
         Args:
             array (np.ndarray): A NumPy array of shape (N, 3), where N is the
                                 number of vectors.
-                                
+
         Returns:
             np.ndarray: A NumPy array of Vector objects.
         """
         if not isinstance(array, np.ndarray) or array.ndim != 2 or array.shape[1] != 3:
-            raise TypeError(
-                "Input must be a 2D NumPy array with a shape of (N, 3)."
-            )
+            raise TypeError("Input must be a 2D NumPy array with a shape of (N, 3).")
         return np.array([cls(row) for row in array])
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -85,32 +88,42 @@ class Vector:
         for inp in inputs:
             if isinstance(inp, Vector):
                 out_inputs.append(inp.to_numpy_array())
-            elif isinstance(inp, np.ndarray) and inp.dtype == object and all(isinstance(v, Vector) for v in inp.flat):
+            elif (
+                isinstance(inp, np.ndarray)
+                and inp.dtype == object
+                and all(isinstance(v, Vector) for v in inp.flat)
+            ):
                 # Convert a NumPy array of Vector objects to a 2D numerical array
-                out_inputs.append(np.array([v.to_numpy_array() for v in inp.flatten()]).reshape(inp.shape + (3,)))
+                out_inputs.append(
+                    np.array([v.to_numpy_array() for v in inp.flatten()]).reshape(
+                        inp.shape + (3,)
+                    )
+                )
             else:
                 out_inputs.append(inp)
-        
+
         # Check if the method is supported
-        if method == '__call__':
+        if method == "__call__":
             # Apply the ufunc to the components
             result = ufunc(*out_inputs, **kwargs)
-            
+
             # Handle the various possible result types
             if isinstance(result, np.ndarray):
                 if result.ndim == 1 and result.shape[0] == 3:
                     return Vector(result)
                 elif result.ndim > 1 and result.shape[-1] == 3:
                     # Return an array of Vector objects by reshaping the result
-                    return np.array([Vector(row) for row in result.reshape(-1, 3)]).reshape(result.shape[:-1])
+                    return np.array([
+                        Vector(row) for row in result.reshape(-1, 3)
+                    ]).reshape(result.shape[:-1])
                 # If result is not a 3-element array or a (...,3) array, return as is
                 return result
             # If the result is not a NumPy array, return it as-is (e.g., a scalar from a reduction)
             return result
-        
+
         # Defer to NumPy's default behavior for other methods like 'reduce'
         return NotImplemented
-    
+
     def __add__(self, other):
         """
         Adds another Vector object to this one.
@@ -123,7 +136,11 @@ class Vector:
         """
         if isinstance(other, Vector):
             return type(self)(self.x + other.x, self.y + other.y, self.z + other.z)
-        raise TypeError("unsupported operand type(s) for +: 'Vector' and '{}'".format(type(other).__name__))
+        raise TypeError(
+            "unsupported operand type(s) for +: 'Vector' and '{}'".format(
+                type(other).__name__
+            )
+        )
 
     def __sub__(self, other):
         """
@@ -137,7 +154,11 @@ class Vector:
         """
         if isinstance(other, Vector):
             return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
-        raise TypeError("unsupported operand type(s) for -: 'Vector' and '{}'".format(type(other).__name__))
+        raise TypeError(
+            "unsupported operand type(s) for -: 'Vector' and '{}'".format(
+                type(other).__name__
+            )
+        )
 
     def __mul__(self, other):
         """
@@ -149,9 +170,15 @@ class Vector:
         Returns:
             Vector: A new Vector object with scaled components.
         """
-        if isinstance(other, (float, int)) or (_MTFLIB_AVAILABLE and isinstance(other, mtf)):
+        if isinstance(other, (float, int)) or (
+            _MTFLIB_AVAILABLE and isinstance(other, mtf)
+        ):
             return Vector(self.x * other, self.y * other, self.z * other)
-        raise TypeError("unsupported operand type(s) for *: 'Vector' and '{}'".format(type(other).__name__))
+        raise TypeError(
+            "unsupported operand type(s) for *: 'Vector' and '{}'".format(
+                type(other).__name__
+            )
+        )
 
     def __rmul__(self, other):
         """
@@ -170,7 +197,11 @@ class Vector:
             Vector: A new Vector object with scaled components.
         """
         if not isinstance(other, (float, int)):
-            raise TypeError("unsupported operand type(s) for /: 'Vector' and '{}'".format(type(other).__name__))
+            raise TypeError(
+                "unsupported operand type(s) for /: 'Vector' and '{}'".format(
+                    type(other).__name__
+                )
+            )
         if other == 0:
             raise ZeroDivisionError("cannot divide a Vector by zero")
         return self.__mul__(1.0 / other)
@@ -187,7 +218,11 @@ class Vector:
                 dot product.
         """
         if not isinstance(other, Vector):
-            raise TypeError("unsupported operand type(s) for dot product: 'Vector' and '{}'".format(type(other).__name__))
+            raise TypeError(
+                "unsupported operand type(s) for dot product: 'Vector' and '{}'".format(
+                    type(other).__name__
+                )
+            )
 
         return self.x * other.x + self.y * other.y + self.z * other.z
 
@@ -202,7 +237,11 @@ class Vector:
             Vector: A new Vector object representing the resulting vector.
         """
         if not isinstance(other, Vector):
-            raise TypeError("unsupported operand type(s) for cross product: 'Vector' and '{}'".format(type(other).__name__))
+            raise TypeError(
+                "unsupported operand type(s) for cross product: 'Vector' and '{}'".format(
+                    type(other).__name__
+                )
+            )
 
         x_component = self.y * other.z - self.z * other.y
         y_component = self.z * other.x - self.x * other.z
@@ -246,12 +285,14 @@ class Vector:
         for comp in [self.x, self.y, self.z]:
             if _MTFLIB_AVAILABLE and isinstance(comp, mtf):
                 # If it's an MTF, get its constant part
-                comps.append(comp.extract_coefficient(tuple([0] * comp.dimension)).item())
+                comps.append(
+                    comp.extract_coefficient(tuple([0] * comp.dimension)).item()
+                )
             else:
                 # Otherwise, assume it's a number
                 comps.append(comp)
         return np.array(comps, dtype=np.complex128)
-    
+
     def to_dataframe(self, column_names):
         """
         Converts the Vector components into a pandas DataFrame.
@@ -273,7 +314,7 @@ class Vector:
             data = {
                 column_names[0]: [self.x],
                 column_names[1]: [self.y],
-                column_names[2]: [self.z]
+                column_names[2]: [self.z],
             }
             return pd.DataFrame(data)
 
@@ -285,13 +326,21 @@ class Vector:
 
                 # Handle the case where the function is zero.
                 if df.empty:
-                    df = pd.DataFrame([{'Order': 0, 'Exponents': tuple([0] * component.dimension), 'Coefficient': 0.0}])
+                    df = pd.DataFrame([
+                        {
+                            "Order": 0,
+                            "Exponents": tuple([0] * component.dimension),
+                            "Coefficient": 0.0,
+                        }
+                    ])
 
-                df.rename(columns={'Coefficient': name}, inplace=True)
-                df = df.sort_values(by=['Order', 'Exponents']).reset_index(drop=True)
+                df.rename(columns={"Coefficient": name}, inplace=True)
+                df = df.sort_values(by=["Order", "Exponents"]).reset_index(drop=True)
                 dfs[name] = df
             else:
-                df = pd.DataFrame([{'Order': 0, 'Exponents': (0,0,0), name: component}])
+                df = pd.DataFrame([
+                    {"Order": 0, "Exponents": (0, 0, 0), name: component}
+                ])
                 dfs[name] = df
 
         # Merge the dataframes
@@ -303,14 +352,16 @@ class Vector:
                 if merged_df.empty:
                     merged_df = dfs[name]
                 else:
-                    merged_df = pd.merge(merged_df, dfs[name], on=['Order', 'Exponents'], how='outer')
+                    merged_df = pd.merge(
+                        merged_df, dfs[name], on=["Order", "Exponents"], how="outer"
+                    )
 
         # Fill NaN values with 0.0 for a cleaner table
         merged_df = merged_df.fillna(0.0)
 
         # Reorder columns to place 'Order' and 'Exponents' at the end
-        cols = [col for col in merged_df.columns if col not in ['Order', 'Exponents']]
-        reordered_cols = cols + ['Order', 'Exponents']
+        cols = [col for col in merged_df.columns if col not in ["Order", "Exponents"]]
+        reordered_cols = cols + ["Order", "Exponents"]
         merged_df = merged_df[reordered_cols]
 
         return merged_df
@@ -326,7 +377,6 @@ class Vector:
         Provides a developer-friendly representation of the object.
         """
         return f"Vector(x={self.x}, y={self.y}, z={self.z})"
-
 
 
 class FieldVector(Vector):
@@ -346,7 +396,6 @@ class FieldVector(Vector):
         """
         super().__init__(x, y, z)
 
-
     def to_numpy_array(self):
         """
         Converts the Bvec to a NumPy array by extracting the constant part of
@@ -357,11 +406,15 @@ class FieldVector(Vector):
             if isinstance(comp, (int, float)):
                 comps.append(comp)
             elif _MTFLIB_AVAILABLE and isinstance(comp, mtf):
-                comps.append(comp.extract_coefficient(tuple([0] * comp.dimension)).item())
+                comps.append(
+                    comp.extract_coefficient(tuple([0] * comp.dimension)).item()
+                )
             else:
-                raise TypeError("Components must be numerical or MTF objects to convert to a NumPy array.")
+                raise TypeError(
+                    "Components must be numerical or MTF objects to convert to a NumPy array."
+                )
         return np.array(comps, dtype=np.complex128)
-    
+
     def curl(self):
         r"""
         Calculates the curl of the B-field vector, which is a new B-field vector.
@@ -413,15 +466,21 @@ class FieldVector(Vector):
         Returns:
             np.ndarray: A 3x3 array of MTFs representing the Jacobian matrix.
         """
-        grad_Bx = np.array(
-            [self.x.derivative(1), self.x.derivative(2), self.x.derivative(3)]
-        )
-        grad_By = np.array(
-            [self.y.derivative(1), self.y.derivative(2), self.y.derivative(3)]
-        )
-        grad_Bz = np.array(
-            [self.z.derivative(1), self.z.derivative(2), self.z.derivative(3)]
-        )
+        grad_Bx = np.array([
+            self.x.derivative(1),
+            self.x.derivative(2),
+            self.x.derivative(3),
+        ])
+        grad_By = np.array([
+            self.y.derivative(1),
+            self.y.derivative(2),
+            self.y.derivative(3),
+        ])
+        grad_Bz = np.array([
+            self.z.derivative(1),
+            self.z.derivative(2),
+            self.z.derivative(3),
+        ])
 
         return np.vstack([grad_Bx, grad_By, grad_Bz])
 
@@ -437,11 +496,12 @@ class FieldVector(Vector):
             return super().__str__()
 
         import pandas as pd
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', 1000)
 
-        df = self.to_dataframe(['x', 'y', 'z'])
+        pd.set_option("display.max_rows", None)
+        pd.set_option("display.max_columns", None)
+        pd.set_option("display.width", 1000)
+
+        df = self.to_dataframe(["x", "y", "z"])
         return df.to_string()
 
     def __repr__(self):
@@ -474,7 +534,9 @@ class VectorField:
         if isinstance(vectors[0], FieldVector):
             # Case for MTF-based FieldVector objects
             if not isinstance(vectors, np.ndarray) or vectors.ndim != 1:
-                raise TypeError("vectors must be a 1D NumPy array of FieldVector objects.")
+                raise TypeError(
+                    "vectors must be a 1D NumPy array of FieldVector objects."
+                )
             if not np.all(isinstance(v, FieldVector) for v in vectors):
                 raise TypeError("All elements in vectors must be FieldVector objects.")
 
@@ -508,39 +570,37 @@ class VectorField:
 
         elif self._vectors_mtf is not None:
             if not _MTFLIB_AVAILABLE:
-                raise RuntimeError("mtflib is required to evaluate FieldVector objects.")
+                raise RuntimeError(
+                    "mtflib is required to evaluate FieldVector objects."
+                )
 
             # Evaluate MTF FieldVectors to get numerical vectors
-            vectors_numerical = np.array(
+            vectors_numerical = np.array([
                 [
-                    [
-                        v.x.extract_coefficient(tuple([0] * v.x.dimension)).item(),
-                        v.y.extract_coefficient(tuple([0] * v.y.dimension)).item(),
-                        v.z.extract_coefficient(tuple([0] * v.z.dimension)).item(),
-                    ]
-                    for v in self._vectors_mtf
+                    v.x.extract_coefficient(tuple([0] * v.x.dimension)).item(),
+                    v.y.extract_coefficient(tuple([0] * v.y.dimension)).item(),
+                    v.z.extract_coefficient(tuple([0] * v.z.dimension)).item(),
                 ]
-            )
+                for v in self._vectors_mtf
+            ])
 
             # Evaluate MTF field points to get numerical points
             if self.field_points is not None and self.field_points.size > 0:
                 if isinstance(self.field_points[0][0], mtf):
-                    numerical_points = np.array(
+                    numerical_points = np.array([
                         [
-                            [
-                                p[0]
-                                .extract_coefficient(tuple([0] * p[0].dimension))
-                                .item(),
-                                p[1]
-                                .extract_coefficient(tuple([0] * p[1].dimension))
-                                .item(),
-                                p[2]
-                                .extract_coefficient(tuple([0] * p[2].dimension))
-                                .item(),
-                            ]
-                            for p in self.field_points
+                            p[0]
+                            .extract_coefficient(tuple([0] * p[0].dimension))
+                            .item(),
+                            p[1]
+                            .extract_coefficient(tuple([0] * p[1].dimension))
+                            .item(),
+                            p[2]
+                            .extract_coefficient(tuple([0] * p[2].dimension))
+                            .item(),
                         ]
-                    )
+                        for p in self.field_points
+                    ])
                 elif isinstance(self.field_points, np.ndarray):
                     numerical_points = self.field_points
                 else:
@@ -550,7 +610,7 @@ class VectorField:
                     "Bfield object with MTF data must have corresponding field_points."
                 )
 
-            return numerical_points, b_vectors_numerical
+            return numerical_points, vectors_numerical
         else:
             raise ValueError("Bfield object does not contain any data.")
 
@@ -565,18 +625,20 @@ class VectorField:
             if self._vectors_numerical is not None:
                 self._magnitude = np.linalg.norm(self._vectors_numerical, axis=1)
             elif self._vectors_mtf is not None:
-                    if not _MTFLIB_AVAILABLE:
-                        raise RuntimeError(
+                if not _MTFLIB_AVAILABLE:
+                    raise RuntimeError(
                         "mtflib is required to get magnitude of FieldVector objects."
+                    )
+                magnitudes = []
+                for v in self._vectors_mtf:
+                    norm = v.norm()
+                    if v.is_mtf():
+                        magnitudes.append(
+                            norm.extract_coefficient(tuple([0] * v.x.dimension)).item()
                         )
-                    magnitudes = []
-                    for v in self._vectors_mtf:
-                        norm = v.norm()
-                        if v.is_mtf():
-                            magnitudes.append(norm.extract_coefficient(tuple([0] * v.x.dimension)).item())
-                        else:
-                            magnitudes.append(norm)
-                    self._magnitude = np.array(magnitudes)
+                    else:
+                        magnitudes.append(norm)
+                self._magnitude = np.array(magnitudes)
         return self._magnitude
 
     def scatter(self, title="Vector Field Scatter Plot", ax=None, **kwargs):
@@ -597,7 +659,7 @@ class VectorField:
 
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
         x = numerical_points[:, 0]
         y = numerical_points[:, 1]
@@ -610,7 +672,7 @@ class VectorField:
         import matplotlib.colors as colors
 
         norm = colors.Normalize(vmin=magnitudes.min(), vmax=magnitudes.max())
-        cmap = kwargs.pop('cmap', plt.cm.viridis)
+        cmap = kwargs.pop("cmap", plt.cm.viridis)
 
         rgba_colors = cmap(norm(magnitudes))
 
@@ -620,14 +682,14 @@ class VectorField:
         sm = cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
         cbar = fig.colorbar(sm, ax=ax)
-        cbar.set_label('B-field Magnitude')
+        cbar.set_label("B-field Magnitude")
 
-        ax.set_xlabel('X-axis')
-        ax.set_ylabel('Y-axis')
-        ax.set_zlabel('Z-axis')
+        ax.set_xlabel("X-axis")
+        ax.set_ylabel("Y-axis")
+        ax.set_zlabel("Z-axis")
         ax.set_title(title)
 
-        if 'show' not in kwargs or kwargs['show']:
+        if "show" not in kwargs or kwargs["show"]:
             plt.show()
 
     def quiver(self, dimension=3, title="Vector Field Quiver Plot", ax=None, **kwargs):
@@ -647,7 +709,7 @@ class VectorField:
 
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
         x = numerical_points[:, 0]
         y = numerical_points[:, 1]
@@ -657,16 +719,16 @@ class VectorField:
         w = numerical_vectors[:, 2]
 
         # Default length=0.1 and normalize=True for better visualization
-        length = kwargs.pop('length', 0.1)
-        normalize = kwargs.pop('normalize', True)
+        length = kwargs.pop("length", 0.1)
+        normalize = kwargs.pop("normalize", True)
 
         ax.quiver(x, y, z, u, v, w, length=length, normalize=normalize, **kwargs)
-        ax.set_xlabel('X-axis')
-        ax.set_ylabel('Y-axis')
-        ax.set_zlabel('Z-axis')
+        ax.set_xlabel("X-axis")
+        ax.set_ylabel("Y-axis")
+        ax.set_zlabel("Z-axis")
         ax.set_title(title)
 
-        if 'show' not in kwargs or kwargs['show']:
+        if "show" not in kwargs or kwargs["show"]:
             plt.show()
 
     def max(self):
@@ -696,15 +758,16 @@ class VectorField:
                               ['x', 'y', 'z', 'vx', 'vy', 'vz'].
         """
         import pandas as pd
+
         numerical_points, numerical_vectors = self._get_numerical_data()
 
         data = {
-            'x': numerical_points[:, 0],
-            'y': numerical_points[:, 1],
-            'z': numerical_points[:, 2],
-            'vx': numerical_vectors[:, 0],
-            'vy': numerical_vectors[:, 1],
-            'vz': numerical_vectors[:, 2],
+            "x": numerical_points[:, 0],
+            "y": numerical_points[:, 1],
+            "z": numerical_points[:, 2],
+            "vx": numerical_vectors[:, 0],
+            "vy": numerical_vectors[:, 1],
+            "vz": numerical_vectors[:, 2],
         }
 
         return pd.DataFrame(data)
@@ -718,6 +781,7 @@ class VectorFieldGrid(VectorField):
     structured grid. It stores grid metadata (shape and axes) to allow for
     easy reshaping of the data for grid-based analysis and plotting.
     """
+
     def __init__(self, vectors, field_points, grid_shape, grid_axes):
         """
         Initializes the VectorFieldGrid container.
@@ -793,80 +857,80 @@ if __name__ == "__main__":
     field_points_numerical = field_points_numerical[valid_indices]
     b_vectors_numerical = b_vectors_numerical[valid_indices]
 
-    # Initialize the Bfield object with the numerical data
-    bfield_num = Bfield(
-        field_points=field_points_numerical, b_vectors=b_vectors_numerical
+    # Initialize the VectorField object with the numerical data
+    vector_field_num = VectorField(
+        field_points=field_points_numerical, vectors=b_vectors_numerical
     )
 
     # Plot the 3D vector field using the new quiver method
     print("Plotting the 3D magnetic field vectors using quiver()...")
-    bfield_num.quiver(title="3D B-field Quiver Plot")
+    vector_field_num.quiver(title="3D B-field Quiver Plot")
 
     # Plot the 3D vector field using the new scatter method
     print("Plotting the 3D B-field using scatter()...")
-    bfield_num.scatter(title="3D B-field Scatter Plot")
+    vector_field_num.scatter(title="3D B-field Scatter Plot")
 
     # 2. Create dummy data with mtflib (if available)
     if _MTFLIB_AVAILABLE:
-        print("\nCreating a Bfield object with a NumPy array of MTF objects...")
+        print("\nCreating a VectorField object with a NumPy array of MTF objects...")
         mtf.initialize_mtf(max_order=2, max_dimension=3)
 
         # Create a grid of evaluation points using constant MTFs
         # Each point is a 3-element array of MTF objects
-        field_points_mtf = np.array(
+        field_points_mtf = np.array([
             [
-                [
-                    mtf.from_constant(p[0]),
-                    mtf.from_constant(p[1]),
-                    mtf.from_constant(p[2]),
-                ]
-                for p in field_points_numerical
+                mtf.from_constant(p[0]),
+                mtf.from_constant(p[1]),
+                mtf.from_constant(p[2]),
             ]
-        )
+            for p in field_points_numerical
+        ])
 
-        # Create a simple B-field as Bvec objects.
-        # This example assumes the B-field can be represented by a single Bvec object
+        # Create a simple B-field as FieldVector objects.
+        # This example assumes the B-field can be represented by a single FieldVector object
         # that is a function of the spatial variables, and then we create an array
-        # of these objects for the Bfield container.
+        # of these objects for the VectorField container.
         x_mtf, y_mtf, z_mtf = mtf.var(1), mtf.var(2), mtf.var(3)
-        bvec_mtf_object = Bvec(2 * x_mtf, 3 * y_mtf, 4 * z_mtf)
+        bvec_mtf_object = FieldVector(2 * x_mtf, 3 * y_mtf, 4 * z_mtf)
         b_vectors_mtf = np.array([bvec_mtf_object] * len(field_points_mtf))
 
-        # Initialize the Bfield object with MTF objects
-        bfield_mtf = Bfield(field_points=field_points_mtf, b_vectors=b_vectors_mtf)
+        # Initialize the VectorField object with MTF objects
+        vector_field_mtf = VectorField(
+            field_points=field_points_mtf, vectors=b_vectors_mtf
+        )
 
         print("Plotting the 3D magnetic field vectors from the MTF data...")
-        bfield_mtf.quiver(title="3D B-Field from MTF points")
+        vector_field_mtf.quiver(title="3D B-Field from MTF points")
 
     # 3. Test max, min, and to_dataframe
     print("\nTesting max, min, and to_dataframe methods...")
-    print(f"Max B-field magnitude: {bfield_num.max()}")
-    print(f"Min B-field magnitude: {bfield_num.min()}")
-    df = bfield_num.to_dataframe()
+    print(f"Max B-field magnitude: {vector_field_num.max()}")
+    print(f"Min B-field magnitude: {vector_field_num.min()}")
+    df = vector_field_num.to_dataframe()
     print("B-field data as a pandas DataFrame:")
     print(df.head())
 
-    # 4. Test BfieldGrid
-    print("\nTesting BfieldGrid class...")
+    # 4. Test VectorFieldGrid
+    print("\nTesting VectorFieldGrid class...")
     grid_shape = (5, 5, 5)
     x, y, z = np.meshgrid(
         np.linspace(-1, 1, grid_shape[0]),
         np.linspace(-1, 1, grid_shape[1]),
-        np.linspace(-1, 1, grid_shape[2])
+        np.linspace(-1, 1, grid_shape[2]),
     )
     field_points_grid = np.stack([x.flatten(), y.flatten(), z.flatten()], axis=1)
 
     # Create some dummy B-field vectors for the grid
     b_vectors_grid = np.random.rand(*field_points_grid.shape)
 
-    bfield_grid = BfieldGrid(
-        b_vectors=b_vectors_grid,
+    vector_field_grid = VectorFieldGrid(
+        vectors=b_vectors_grid,
         field_points=field_points_grid,
         grid_shape=grid_shape,
-        grid_axes=('x', 'y', 'z')
+        grid_axes=("x", "y", "z"),
     )
-    grid_points = bfield_grid.get_grid_points()
-    grid_vectors = bfield_grid.get_grid_vectors()
-    print(f"BfieldGrid grid_shape: {bfield_grid.grid_shape}")
+    grid_points = vector_field_grid.get_grid_points()
+    grid_vectors = vector_field_grid.get_grid_vectors()
+    print(f"VectorFieldGrid grid_shape: {vector_field_grid.grid_shape}")
     print(f"Reshaped grid points shape: {grid_points.shape}")
     print(f"Reshaped grid vectors shape: {grid_vectors.shape}")

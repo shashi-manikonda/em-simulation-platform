@@ -1,9 +1,10 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from em_app.sources import RingCoil
-from em_app.solvers import calculate_b_field
-from em_app.vector_fields import VectorField
+import numpy as np
 from mtflib import mtf
+
+from em_app.solvers import calculate_b_field
+from em_app.sources import RingCoil
+from em_app.vector_fields import VectorField
 
 # Initialize the MTF library
 # The 4th dimension is used for numerical integration along the segments.

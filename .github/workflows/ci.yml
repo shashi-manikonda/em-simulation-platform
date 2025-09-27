@@ -29,7 +29,7 @@ jobs:
     - name: Lint with ruff
       run: |
         pip install ruff
-        ruff check .
+        ruff check . --exclude "runoutput/*,benchmarks/*"
 
     - name: Test with pytest
       run: |
