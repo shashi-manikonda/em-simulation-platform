@@ -39,6 +39,10 @@ benchmark = [
 "matplotlib",
 "mpi4py",
 ]
+docs = [
+"sphinx",
+"sphinx_rtd_theme",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/shashi-manikonda/em-simulation-platform"

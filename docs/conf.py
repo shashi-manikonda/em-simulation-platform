@@ -27,6 +27,8 @@ extensions = [
     'sphinx_rtd_theme',
 ]
 
+autodoc_mock_imports = ["mpi4py"]
+
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
