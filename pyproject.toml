@@ -51,7 +51,8 @@ docs = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.ruff] 
+[tool.ruff]
+exclude = ["runoutput", "benchmarks"]
 line-length = 88
 
 [tool.ruff.lint]

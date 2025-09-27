@@ -55,7 +55,8 @@ class Vector:
 
         if len(components) != 3:
             raise ValueError(
-                f"Vector initialization requires 3 components, but {len(components)} were given."
+                "Vector initialization requires 3 components, but "
+                f"{len(components)} were given."
             )
 
         self.x, self.y, self.z = components
@@ -116,9 +117,11 @@ class Vector:
                     return np.array([
                         Vector(row) for row in result.reshape(-1, 3)
                     ]).reshape(result.shape[:-1])
-                # If result is not a 3-element array or a (...,3) array, return as is
+                # If result is not a 3-element array or a (...,3) array,
+                # return as is
                 return result
-            # If the result is not a NumPy array, return it as-is (e.g., a scalar from a reduction)
+            # If the result is not a NumPy array, return it as-is
+            # (e.g., a scalar from a reduction)
             return result
 
         # Defer to NumPy's default behavior for other methods like 'reduce'
@@ -137,9 +140,7 @@ class Vector:
         if isinstance(other, Vector):
             return type(self)(self.x + other.x, self.y + other.y, self.z + other.z)
         raise TypeError(
-            "unsupported operand type(s) for +: 'Vector' and '{}'".format(
-                type(other).__name__
-            )
+            f"unsupported operand type(s) for +: 'Vector' and '{type(other).__name__}'"
         )
 
     def __sub__(self, other):
@@ -155,9 +156,7 @@ class Vector:
         if isinstance(other, Vector):
             return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
         raise TypeError(
-            "unsupported operand type(s) for -: 'Vector' and '{}'".format(
-                type(other).__name__
-            )
+            f"unsupported operand type(s) for -: 'Vector' and '{type(other).__name__}'"
         )
 
     def __mul__(self, other):
@@ -175,9 +174,7 @@ class Vector:
         ):
             return Vector(self.x * other, self.y * other, self.z * other)
         raise TypeError(
-            "unsupported operand type(s) for *: 'Vector' and '{}'".format(
-                type(other).__name__
-            )
+            f"unsupported operand type(s) for *: 'Vector' and '{type(other).__name__}'"
         )
 
     def __rmul__(self, other):
@@ -198,9 +195,8 @@ class Vector:
         """
         if not isinstance(other, (float, int)):
             raise TypeError(
-                "unsupported operand type(s) for /: 'Vector' and '{}'".format(
-                    type(other).__name__
-                )
+                "unsupported operand type(s) for /: 'Vector' and "
+                f"'{type(other).__name__}'"
             )
         if other == 0:
             raise ZeroDivisionError("cannot divide a Vector by zero")
@@ -219,9 +215,8 @@ class Vector:
         """
         if not isinstance(other, Vector):
             raise TypeError(
-                "unsupported operand type(s) for dot product: 'Vector' and '{}'".format(
-                    type(other).__name__
-                )
+                "unsupported operand type(s) for dot product: 'Vector' and "
+                f"'{type(other).__name__}'"
             )
 
         return self.x * other.x + self.y * other.y + self.z * other.z
@@ -238,9 +233,8 @@ class Vector:
         """
         if not isinstance(other, Vector):
             raise TypeError(
-                "unsupported operand type(s) for cross product: 'Vector' and '{}'".format(
-                    type(other).__name__
-                )
+                "unsupported operand type(s) for cross product: 'Vector' and "
+                f"'{type(other).__name__}'"
             )
 
         x_component = self.y * other.z - self.z * other.y
@@ -326,13 +320,11 @@ class Vector:
 
                 # Handle the case where the function is zero.
                 if df.empty:
-                    df = pd.DataFrame([
-                        {
-                            "Order": 0,
-                            "Exponents": tuple([0] * component.dimension),
-                            "Coefficient": 0.0,
-                        }
-                    ])
+                    df = pd.DataFrame([{
+                        "Order": 0,
+                        "Exponents": tuple([0] * component.dimension),
+                        "Coefficient": 0.0,
+                    }])
 
                 df.rename(columns={"Coefficient": name}, inplace=True)
                 df = df.sort_values(by=["Order", "Exponents"]).reset_index(drop=True)
@@ -411,22 +403,28 @@ class FieldVector(Vector):
                 )
             else:
                 raise TypeError(
-                    "Components must be numerical or MTF objects to convert to a NumPy array."
+                    "Components must be numerical or MTF objects to convert to a "
+                    "NumPy array."
                 )
         return np.array(comps, dtype=np.complex128)
 
     def curl(self):
         r"""
-        Calculates the curl of the B-field vector, which is a new B-field vector.
+        Calculates the curl of the B-field vector.
 
         The curl of the B-field is given by the formula:
-        $\nabla \times \mathbf{B} = (\frac{\partial B_z}{\partial y} - \frac{\partial B_y}{\partial z}) \mathbf{i} + (\frac{\partial B_x}{\partial z} - \frac{\partial B_z}{\partial x}) \mathbf{j} + (\frac{\partial B_y}{\partial x} - \frac{\partial B_x}{\partial y}) \mathbf{k}$
+        $\nabla \times \mathbf{B} = (\frac{\partial B_z}{\partial y} -
+        \frac{\partial B_y}{\partial z}) \mathbf{i} +
+        (\frac{\partial B_x}{\partial z} - \frac{\partial B_z}{\partial x})
+        \mathbf{j} + (\frac{\partial B_y}{\partial x} -
+        \frac{\partial B_x}{\partial y}) \mathbf{k}$
 
         This method uses the `derivative` method from `mtflib` to compute the
         partial derivatives.
 
         Returns:
-            FieldVector: A new FieldVector object representing the curl of the field.
+            FieldVector: A new FieldVector object representing the curl of the
+                field.
         """
         # The variables of the MTF are assumed to be (x, y, z) corresponding to
         # dimensions 1, 2, 3
@@ -441,7 +439,8 @@ class FieldVector(Vector):
         Calculates the divergence of the B-field.
 
         The divergence of a vector field is a scalar value given by the formula:
-        $\nabla \cdot \mathbf{B} = \frac{\partial B_x}{\partial x} + \frac{\partial B_y}{\partial y} + \frac{\partial B_z}{\partial z}$
+        $\nabla \cdot \mathbf{B} = \frac{\partial B_x}{\partial x} +
+        \frac{\partial B_y}{\partial y} + \frac{\partial B_z}{\partial z}$
 
         This method uses the `derivative` method from `mtflib` to compute the
         partial derivatives and then sums the resulting MTF objects.
@@ -607,12 +606,13 @@ class VectorField:
                     raise TypeError("Unsupported type for field_points.")
             else:
                 raise ValueError(
-                    "Bfield object with MTF data must have corresponding field_points."
+                    "VectorField object with MTF data must have corresponding "
+                    "field_points."
                 )
 
             return numerical_points, vectors_numerical
         else:
-            raise ValueError("Bfield object does not contain any data.")
+            raise ValueError("VectorField object does not contain any data.")
 
     def get_magnitude(self):
         """
@@ -887,9 +887,10 @@ if __name__ == "__main__":
         ])
 
         # Create a simple B-field as FieldVector objects.
-        # This example assumes the B-field can be represented by a single FieldVector object
-        # that is a function of the spatial variables, and then we create an array
-        # of these objects for the VectorField container.
+        # This example assumes the B-field can be represented by a single
+        # FieldVector object that is a function of the spatial variables,
+        # and then we create an array of these objects for the VectorField
+        # container.
         x_mtf, y_mtf, z_mtf = mtf.var(1), mtf.var(2), mtf.var(3)
         bvec_mtf_object = FieldVector(2 * x_mtf, 3 * y_mtf, 4 * z_mtf)
         b_vectors_mtf = np.array([bvec_mtf_object] * len(field_points_mtf))

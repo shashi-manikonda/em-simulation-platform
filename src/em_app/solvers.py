@@ -3,6 +3,8 @@ from mtflib import MultivariateTaylorFunction
 from mtflib.backends.c import mtf_c_backend
 from mtflib.backends.cpp import mtf_cpp
 
+from .vector_fields import FieldVector, VectorField
+
 
 def calculate_b_field(coil_instance, field_points, backend="python"):
     """
@@ -24,9 +26,6 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
         VectorField: A VectorField object containing the field points and the
                 calculated FieldVector objects.
     """
-    from .vector_fields import FieldVector, Vector, VectorField
-    from mtflib import mtf
-
     # Input validation for field_points and backend
     if not isinstance(field_points, np.ndarray) or (
         field_points.ndim == 2 and field_points.shape[1] != 3
