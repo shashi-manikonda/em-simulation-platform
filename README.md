@@ -14,18 +14,22 @@ EM simulation tools for electromagnetic field analysis, visualization, and bench
 
 ## Installation
 
+This project uses ``pyproject.toml`` to manage dependencies. For development, it is recommended to install the package in "editable" mode along with the development extras.
+
 ```bash
 # Clone the repository
 git clone https://github.com/shashi-manikonda/em-simulation-platform.git
 cd em-simulation-platform
 
 # (Recommended) Create a virtual environment
-python3 -m venv .mtfvenv
-source .mtfvenv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install the package in editable mode with all development dependencies
+pip install -e .[dev,benchmark]
 ```
+
+The ``[dev]`` extra includes dependencies for running tests and building the documentation. The ``[benchmark]`` extra includes dependencies for running the benchmark scripts.
 
 ## Usage
 
@@ -35,8 +39,9 @@ python run_all_demos.py
 ```
 
 ### Run a specific demo
+To run a specific demo, you can execute the script directly. For notebooks, you can use a tool like `jupytext` to run it as a script:
 ```bash
-python demos/em/01_validation_demo.py
+jupytext --execute demos/em/01_validation_demo.ipynb
 ```
 
 ### Run tests
@@ -46,15 +51,7 @@ pytest
 
 ## Building the Documentation
 
-This project uses Sphinx to generate API documentation from the source code.
-
-### Prerequisites
-
-First, install the documentation-specific dependencies:
-
-```bash
-pip install -r docs/requirements.txt
-```
+This project uses Sphinx to generate API documentation from the source code. The necessary dependencies are included in the `[dev]` extra.
 
 ### Build Script
 

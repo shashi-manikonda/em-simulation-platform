@@ -24,13 +24,13 @@ classifiers = [
 dependencies = [
 "numpy",
 "mtflib",
+"matplotlib",
+"pandas",
 ]
 
 [project.optional-dependencies]
 dev = [
 "pytest",
-"matplotlib",
-"pandas",
 "jupytext",
 "nbconvert",
 "ipykernel",
