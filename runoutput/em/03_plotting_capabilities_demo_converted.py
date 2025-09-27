@@ -15,17 +15,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mtflib import mtf
 
+from em_app.plotting import plot_1d_field, plot_2d_field, plot_field_vectors_3d
 from em_app.sources import Coil, RingCoil
 
 # %%
 mtf.initialize_mtf(max_order=6, max_dimension=4)
-from em_app.plotting import plot_1d_field, plot_2d_field, plot_field_vectors_3d
+
 
 # %% [markdown]
 # ## The Helmholtz Coil
 #
 # A Helmholtz coil is a special arrangement of two identical circular coils placed symmetrically along a common axis. When the current flows in the same direction in both coils, they produce a region of very uniform magnetic field in the center. Here, we define a `HelmholtzCoil` class that inherits from the base `Coil` class for easy use with our plotting functions.
-
 
 # %%
 class HelmholtzCoil(Coil):

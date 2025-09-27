@@ -1,7 +1,7 @@
 Demo: em/02_dipole_approximation_demo.ipynb
-Execution Time: 5.90 seconds
+Execution Time: 5.60 seconds
 Return Code: 0
-Timestamp: 2025-09-27 15:40:39
+Timestamp: 2025-09-27 19:48:07
 ==================================================
 STDOUT:
 Initializing MTF globals with: _MAX_ORDER=6, _MAX_DIMENSION=4
