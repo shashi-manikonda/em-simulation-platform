@@ -1,16 +1,9 @@
 """
-magneticfield: A library for magnetic field calculations and visualization.
+Vector and Vector Field representations.
 
-This module defines classes and functions for working with magnetic fields,
-with a focus on using Multivariate Taylor Functions (MTFs) from the mtflib
-library.
-
-The core components are:
-- Bvec: A representation of a magnetic field vector at a single point,
-        using MTFs for each component.
-- Bfield: A container class for a collection of Bvec objects, providing
-          methods for analysis and visualization, such as plotting the field
-          on a plane or in 3D.
+This module provides classes for representing 3D vectors and vector fields,
+with support for numerical data and `mtflib` Multivariate Taylor Functions (MTFs).
+It includes classes like Vector, FieldVector, VectorField, and VectorFieldGrid.
 """
 
 import numpy as np
@@ -755,7 +748,7 @@ class VectorFieldGrid(VectorField):
 
         Returns:
             np.ndarray: The field points as a grid. The shape will be
-                        (*grid_shape, 3).
+                        ``(*grid_shape, 3)``.
         """
         numerical_points, _ = self._get_numerical_data()
         return numerical_points.reshape(*self.grid_shape, 3)
@@ -766,7 +759,7 @@ class VectorFieldGrid(VectorField):
 
         Returns:
             np.ndarray: The B-field vectors as a grid. The shape will be
-                        (*grid_shape, 3).
+                        ``(*grid_shape, 3)``.
         """
         _, numerical_vectors = self._get_numerical_data()
         return numerical_vectors.reshape(*self.grid_shape, 3)

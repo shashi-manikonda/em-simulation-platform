@@ -42,6 +42,32 @@ python demos/em/01_validation_demo.py
 pytest
 ```
 
+## Building the Documentation
+
+This project uses Sphinx to generate API documentation from the source code.
+
+### Prerequisites
+
+First, install the documentation-specific dependencies:
+
+```bash
+pip install -r docs/requirements.txt
+```
+
+### Build Script
+
+A helper script is provided to simplify the build process. To build the documentation, run the following command from the project root:
+
+```bash
+./docs/build_docs.sh
+```
+
+The script will clean the previous build and generate the HTML documentation in the `docs/_build/html` directory.
+
+### Viewing the Documentation
+
+To view the documentation, open the `docs/_build/html/index.html` file in your web browser.
+
 ## Example: Calculate and Plot Magnetic Field of a Dipole
 ```python
 from src.em_app.sources import Dipole
