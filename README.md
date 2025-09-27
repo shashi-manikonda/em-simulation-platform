@@ -1,5 +1,8 @@
 # em-simulation-platform
 
+[![Python CI](https://github.com/shashi-manikonda/em-simulation-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/shashi-manikonda/em-simulation-platform/actions/workflows/ci.yml)
+[![PyPI version](https://badge.fury.io/py/em-app.svg)](https://badge.fury.io/py/em-app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Documentation Status](https://readthedocs.org/projects/em-app/badge/?version=latest)](https://em-app.readthedocs.io/en/latest/?badge=latest)
 
 EM simulation tools for electromagnetic field analysis, visualization, and benchmarking.
