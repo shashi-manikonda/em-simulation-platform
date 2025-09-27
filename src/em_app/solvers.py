@@ -43,10 +43,6 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
         element_directions_np = np.array([d.to_numpy_array() for d in coil_instance.segment_directions])
 
     if backend == "mpi":
-        if not mpi_installed:
-            raise ImportError(
-                "The 'mpi' backend requires the 'mpi4py' library to be installed."
-            )
         b_field_vectors = mpi_biot_savart(
             element_centers=element_centers_np,
             element_lengths=coil_instance.segment_lengths,
@@ -88,12 +84,6 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
 from mtflib.backends.cpp import mtf_cpp
 from mtflib.backends.c import mtf_c_backend
 
-mpi_installed = True  # Assume MPI is installed initially
-try:
-    from mpi4py import MPI
-except ImportError:
-    mpi_installed = False
-    MPI = None  # Set MPI to None so we can check for it later
 
 mu_0_4pi = 1e-7  # Define mu_0_4pi if it's not already globally defined
 
@@ -287,7 +277,9 @@ def mpi_biot_savart(
         >>> if MPI.COMM_WORLD.Get_rank() == 0: # Only rank 0 has the full result
         >>>     print(B_field)
     """
-    if not mpi_installed:
+    try:
+        from mpi4py import MPI
+    except ImportError:
         raise ImportError("mpi4py is not installed, cannot run in MPI mode.")
 
     comm = MPI.COMM_WORLD
