@@ -91,7 +91,6 @@ ax.set_aspect("equal", "box")
 ax.view_init(elev=20.0, azim=-60)
 plt.grid(True)
 
-# Save the plot
-output_path = "demos/helmholtz_coil_demo.png"
-plt.savefig(output_path, dpi=300)
-print(f"Plot saved to {output_path}")
+# Show the plot
+plt.show()
+print("Plot generated.")
