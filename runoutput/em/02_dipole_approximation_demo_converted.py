@@ -26,7 +26,6 @@ mtf.initialize_mtf(max_order=6, max_dimension=4)
 #
 # where the magnetic moment **m** for a current loop is given by **m** = I * **A**, with **A** being the vector area of the loop.
 
-
 # %%
 def magnetic_dipole_b_field(magnetic_moment, r_vec):
     """

@@ -1,7 +1,7 @@
 Demo: em/03_plotting_capabilities_demo.ipynb
-Execution Time: 228.00 seconds
+Execution Time: 220.16 seconds
 Return Code: 0
-Timestamp: 2025-09-27 15:44:27
+Timestamp: 2025-09-27 19:51:47
 ==================================================
 STDOUT:
 Initializing MTF globals with: _MAX_ORDER=6, _MAX_DIMENSION=4

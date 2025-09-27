@@ -1,7 +1,7 @@
 Demo: em/04_helmholtz_coil_demo.py
-Execution Time: 43.97 seconds
+Execution Time: 39.26 seconds
 Return Code: 0
-Timestamp: 2025-09-27 15:45:11
+Timestamp: 2025-09-27 19:52:27
 ==================================================
 STDOUT:
 Initializing MTF globals with: _MAX_ORDER=1, _MAX_DIMENSION=4

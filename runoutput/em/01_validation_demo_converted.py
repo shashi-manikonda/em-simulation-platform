@@ -27,7 +27,6 @@ mtf.initialize_mtf(max_order=6, max_dimension=4)
 #
 # where `z1` and `z2` are the start and end points of the wire along the z-axis, and the observation point is at `(a, 0, z)`.
 
-
 # %%
 def analytical_b_field_straight_wire(current, a, z1, z2, z):
     """

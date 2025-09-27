@@ -2,7 +2,7 @@
 # A script to automate the Sphinx documentation build process.
 
 # Clean the previous build
-make -C /app/docs clean
+make -C docs clean
 
 # Build the HTML documentation
-make -C /app/docs html
+make -C docs html

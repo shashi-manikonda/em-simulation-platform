@@ -34,3 +34,12 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+
+    - name: Build documentation
+      run: |
+        sh docs/build_docs.sh
+
+    - name: Build package
+      run: |
+        pip install build
+        python -m build
