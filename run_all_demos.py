@@ -24,7 +24,7 @@ def run_demos():
             demo_files.append(f"em/{fname}")
 
     # Create runoutput directory
-    runoutput_dir = os.path.join(demos_dir, "runoutput")
+    runoutput_dir = os.path.join(project_root, "runoutput")
     os.makedirs(runoutput_dir, exist_ok=True)
 
     print(f"Demo Runner Started - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -53,7 +53,8 @@ def run_demos():
 
         # Create demo-specific output directory
         demo_name = os.path.splitext(file)[0]
-        demo_output_dir = os.path.join(runoutput_dir, demo_name)
+        demo_subdir = os.path.dirname(file_rel_path)
+        demo_output_dir = os.path.join(runoutput_dir, demo_subdir)
         os.makedirs(demo_output_dir, exist_ok=True)
 
         print(f"\n[{i+1}/{total_demos}] Running: {file_rel_path}")
