@@ -7,11 +7,12 @@
 # 2.  **Visualization:** It demonstrates how to plot the 3D geometry of various current-carrying sources, such as a `StraightWire` and a `RectangularCoil`.
 
 # %%
-import numpy as np
 import matplotlib.pyplot as plt
-from em_app.sources import StraightWire, RectangularCoil
-from em_app.solvers import calculate_b_field
+import numpy as np
 from mtflib import mtf
+
+from em_app.solvers import calculate_b_field
+from em_app.sources import RectangularCoil, StraightWire
 
 # %%
 mtf.initialize_mtf(max_order=6, max_dimension=4)
@@ -25,6 +26,7 @@ mtf.initialize_mtf(max_order=6, max_dimension=4)
 # $$ B_\phi = \frac{\mu_0 I}{4 \pi a} (\cos{\theta_1} - \cos{\theta_2}) $$
 #
 # where `z1` and `z2` are the start and end points of the wire along the z-axis, and the observation point is at `(a, 0, z)`.
+
 
 # %%
 def analytical_b_field_straight_wire(current, a, z1, z2, z):
@@ -74,7 +76,7 @@ print(f"Relative error: {error:.2%}")
 # %%
 # Plot straight wire
 fig = plt.figure(figsize=(12, 6))
-ax1 = fig.add_subplot(121, projection='3d')
+ax1 = fig.add_subplot(121, projection="3d")
 wire.plot(ax=ax1)
 ax1.set_title("Straight Wire Geometry")
 
@@ -83,7 +85,7 @@ p1 = np.array([0, 0, 0])
 p2 = np.array([1, 0, 0])
 p4 = np.array([0, 1, 0])
 rect_loop = RectangularCoil(1.0, p1, p2, p4, 20)
-ax2 = fig.add_subplot(122, projection='3d')
+ax2 = fig.add_subplot(122, projection="3d")
 rect_loop.plot(ax=ax2)
 ax2.set_title("Rectangular Loop Geometry")
 

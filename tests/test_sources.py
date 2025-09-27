@@ -1,9 +1,8 @@
 import numpy as np
 import pytest
-from em_app.sources import RingCoil, RectangularCoil
-from em_app.vector_fields import FieldVector
-from em_app.solvers import mu_0_4pi
-from mtflib import mtf, ComplexMultivariateTaylorFunction
+from mtflib import mtf
+
+from em_app.sources import RectangularCoil, RingCoil
 
 # Global settings for tests
 MAX_ORDER = 5

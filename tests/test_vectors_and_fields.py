@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
-from em_app.vector_fields import FieldVector, VectorField
 from mtflib import mtf
+
+from em_app.vector_fields import FieldVector, VectorField
 
 # Global settings for tests
 MAX_ORDER = 5
@@ -18,6 +19,7 @@ def setup_function():
     yield global_dim, exponent_zero
     mtf._INITIALIZED = False
 
+
 def test_fieldvector_initialization():
     """
     Test that FieldVector objects are initialized correctly for both numerical
@@ -31,7 +33,6 @@ def test_fieldvector_initialization():
 
     # Test with MTF data
     try:
-        from mtflib import mtf
         x_mtf = mtf.var(1)
         y_mtf = mtf.var(2)
         z_mtf = mtf.var(3)
@@ -63,6 +64,7 @@ def test_vectorfield_magnitude():
     expected_magnitudes = np.array([1.0, np.sqrt(2)])
 
     assert np.allclose(magnitudes, expected_magnitudes)
+
 
 def test_vectorfield_initialization_numerical():
     """

@@ -1,5 +1,9 @@
 import numpy as np
 from mtflib import MultivariateTaylorFunction
+from mtflib.backends.c import mtf_c_backend
+from mtflib.backends.cpp import mtf_cpp
+
+from .vector_fields import FieldVector, VectorField
 
 
 def calculate_b_field(coil_instance, field_points, backend="python"):
@@ -19,14 +23,13 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
             library.
 
     Returns:
-        Bfield: A Bfield object containing the field points and the
-                calculated Bvec objects.
+        VectorField: A VectorField object containing the field points and the
+                calculated FieldVector objects.
     """
-    from .vector_fields import VectorField, FieldVector, Vector
-    from mtflib import mtf
-
     # Input validation for field_points and backend
-    if not isinstance(field_points, np.ndarray) or (field_points.ndim == 2 and field_points.shape[1] != 3):
+    if not isinstance(field_points, np.ndarray) or (
+        field_points.ndim == 2 and field_points.shape[1] != 3
+    ):
         raise TypeError("field_points must be a NumPy array of shape (N, 3).")
     if backend not in ["python", "cpp", "c", "cpp_v2", "mpi"]:
         raise ValueError(f"Backend '{backend}' is not a valid option.")
@@ -36,11 +39,19 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
         raise RuntimeError("Coil segments have not been generated.")
 
     if coil_instance.use_mtf_for_segments:
-        element_centers_np = np.array([[v.x, v.y, v.z] for v in coil_instance.segment_centers])
-        element_directions_np = np.array([[v.x, v.y, v.z] for v in coil_instance.segment_directions])
+        element_centers_np = np.array(
+            [[v.x, v.y, v.z] for v in coil_instance.segment_centers]
+        )
+        element_directions_np = np.array(
+            [[v.x, v.y, v.z] for v in coil_instance.segment_directions]
+        )
     else:
-        element_centers_np = np.array([c.to_numpy_array() for c in coil_instance.segment_centers])
-        element_directions_np = np.array([d.to_numpy_array() for d in coil_instance.segment_directions])
+        element_centers_np = np.array(
+            [c.to_numpy_array() for c in coil_instance.segment_centers]
+        )
+        element_directions_np = np.array(
+            [d.to_numpy_array() for d in coil_instance.segment_directions]
+        )
 
     if backend == "mpi":
         b_field_vectors = mpi_biot_savart(
@@ -61,7 +72,13 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
     # Apply the current scaling and create FieldVector objects
     vec_objects = []
     for vec in b_field_vectors:
-        vec_objects.append(FieldVector(coil_instance.current * vec[0], coil_instance.current * vec[1], coil_instance.current * vec[2]))
+        vec_objects.append(
+            FieldVector(
+                coil_instance.current * vec[0],
+                coil_instance.current * vec[1],
+                coil_instance.current * vec[2],
+            )
+        )
     b_field_vectors = np.array(vec_objects, dtype=object)
 
     # Apply post-processing based on use_mtf_for_segments flag for all coils
@@ -81,8 +98,6 @@ def calculate_b_field(coil_instance, field_points, backend="python"):
             vec = 2 * vec
         b_field_vectors[i] = vec
     return VectorField(field_points=field_points, vectors=b_field_vectors)
-from mtflib.backends.cpp import mtf_cpp
-from mtflib.backends.c import mtf_c_backend
 
 
 mu_0_4pi = 1e-7  # Define mu_0_4pi if it's not already globally defined
@@ -177,12 +192,10 @@ def _cpp_biot_savart_core(source_points, dl_vectors, field_points, order=None):
 
     b_field_py = []
     for b_vec_dicts in b_field_dicts:
-        b_field_py.append(
-            [
-                MultivariateTaylorFunction(coefficients=(d["exponents"], d["coeffs"]))
-                for d in b_vec_dicts
-            ]
-        )
+        b_field_py.append([
+            MultivariateTaylorFunction(coefficients=(d["exponents"], d["coeffs"]))
+            for d in b_vec_dicts
+        ])
 
     return np.array(b_field_py)
 
@@ -193,35 +206,45 @@ def numpy_biot_savart(
     """
     NumPy vectorized Biot-Savart calculation using element inputs.
 
-    Calculates the magnetic field at specified field points due to a set of current
-    elements, using NumPy vectorization for efficiency. This function is designed for
-    serial (single-processor) execution and takes element-based descriptions of the
-    current source.
+    Calculates the magnetic field at specified field points due to a set of
+    current elements, using NumPy vectorization for efficiency. This function
+    is designed for serial (single-processor) execution and takes element-based
+    descriptions of the current source.
 
     Args:
-        element_centers (numpy.ndarray): (N, 3) array of center coordinates of current elements.
-            Each row represents the (x, y, z) coordinates of the center of a current element.
-        element_lengths (numpy.ndarray): (N,) array of lengths of current elements (dl). Each
-            element represents the length of the corresponding current element.
-        element_directions (numpy.ndarray): (N, 3) array of unit vectors representing the
-            direction of current flow for each element. Each row is a unit vector.
-        field_points (numpy.ndarray): (M, 3) array of field point coordinates. Each row
-            represents the (x, y, z) coordinates where the magnetic field is to be calculated.
+        element_centers (numpy.ndarray): (N, 3) array of center coordinates of
+            current elements. Each row represents the (x, y, z) coordinates of
+            the center of a current element.
+        element_lengths (numpy.ndarray): (N,) array of lengths of current
+            elements (dl). Each element represents the length of the
+            corresponding current element.
+        element_directions (numpy.ndarray): (N, 3) array of unit vectors
+            representing the direction of current flow for each element. Each
+            row is a unit vector.
+        field_points (numpy.ndarray): (M, 3) array of field point coordinates.
+            Each row represents the (x, y, z) coordinates where the magnetic
+            field is to be calculated.
 
     Returns:
-        numpy.ndarray: (M, 3) array of magnetic field vectors at each field point. Each row
-            is a vector representing the (Bx, By, Bz) components of the magnetic field
-            at the corresponding field point.
+        numpy.ndarray: (M, 3) array of magnetic field vectors at each field
+            point. Each row is a vector representing the (Bx, By, Bz)
+            components of the magnetic field at the corresponding field point.
 
     Raises:
-        ValueError: If input arrays do not have the expected dimensions or shapes.
+        ValueError: If input arrays do not have the expected dimensions or
+            shapes.
 
     Example:
         >>> element_centers = np.array([[0, 0, 0], [1, 0, 0]])
         >>> element_lengths = np.array([0.1, 0.1])
         >>> element_directions = np.array([[1, 0, 0], [0, 1, 0]])
         >>> field_points = np.array([[0, 1, 0], [1, 1, 0]])
-        >>> B_field = numpy_biot_savart(element_centers, element_lengths, element_directions, field_points)
+        >>> B_field = numpy_biot_savart(
+        ...     element_centers,
+        ...     element_lengths,
+        ...     element_directions,
+        ...     field_points,
+        ... )
         >>> print(B_field)
         [[ 0.00000000e+00  0.00000000e+00  1.00000000e-08]
          [ 0.00000000e+00  0.00000000e+00  5.00000000e-09]]
@@ -237,44 +260,57 @@ def mpi_biot_savart(
     """
     Parallel Biot-Savart calculation using mpi4py with element inputs.
 
-    Computes the magnetic field in parallel using MPI (mpi4py library). This function
-    distributes the calculation of the magnetic field at different field points across
-    multiple MPI processes to speed up computation.
+    Computes the magnetic field in parallel using MPI (mpi4py library). This
+    function distributes the calculation of the magnetic field at different
+    field points across multiple MPI processes to speed up computation.
 
     Note:
-        - Requires `mpi4py` to be installed. If not installed, it will raise an ImportError.
-        - Must be run in an MPI environment (e.g., using `mpiexec` or `mpirun`).
-        - Input arrays `element_centers`, `element_lengths`, and `element_directions` are
-          assumed to be the complete datasets and are broadcasted to all MPI processes.
-        - `field_points` are distributed among processes. The result is gathered on rank 0.
+        - Requires `mpi4py` to be installed. If not installed, it will raise an
+          ImportError.
+        - Must be run in an MPI environment (e.g., using `mpiexec` or
+          `mpirun`).
+        - Input arrays `element_centers`, `element_lengths`, and
+          `element_directions` are assumed to be the complete datasets and are
+          broadcasted to all MPI processes.
+        - `field_points` are distributed among processes. The result is
+          gathered on rank 0.
 
     Args:
-        element_centers (numpy.ndarray): (N, 3) array of center coordinates of current elements.
-            (Broadcasted to all MPI processes).
-        element_lengths (numpy.ndarray): (N,) array of lengths of current elements (dl).
-            (Broadcasted to all MPI processes).
-        element_directions (numpy.ndarray): (N, 3) array of unit vectors for current directions.
-            (Broadcasted to all MPI processes).
+        element_centers (numpy.ndarray): (N, 3) array of center coordinates of
+            current elements. (Broadcasted to all MPI processes).
+        element_lengths (numpy.ndarray): (N,) array of lengths of current
+            elements (dl). (Broadcasted to all MPI processes).
+        element_directions (numpy.ndarray): (N, 3) array of unit vectors for
+            current directions. (Broadcasted to all MPI processes).
         field_points (numpy.ndarray): (M, 3) array of field point coordinates.
             (Distributed across MPI processes).
 
     Returns:
         numpy.ndarray or None:
-            On MPI rank 0: (M, 3) array of magnetic field vectors at each field point.
-            On MPI ranks > 0: None.
+            On MPI rank 0: (M, 3) array of magnetic field vectors at each
+            field point. On MPI ranks > 0: None.
 
     Raises:
         ImportError: if mpi4py is not installed.
 
-    Example (Run in MPI environment, e.g., `mpiexec -n 4 python your_script.py`):
+    Example (Run in MPI environment, e.g.,
+             `mpiexec -n 4 python your_script.py`):
         >>> import numpy as np
         >>> from applications.em.biot_savart import mpi_biot_savart
         >>> element_centers = np.array([[0, 0, 0], [1, 0, 0]])
         >>> element_lengths = np.array([0.1, 0.1])
         >>> element_directions = np.array([[1, 0, 0], [0, 1, 0]])
-        >>> field_points = np.array([[0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0]]) # More field points for MPI to distribute
-        >>> B_field = mpi_biot_savart(element_centers, element_lengths, element_directions, field_points)
-        >>> if MPI.COMM_WORLD.Get_rank() == 0: # Only rank 0 has the full result
+        >>> # More field points for MPI to distribute
+        >>> field_points = np.array(
+        ...     [[0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0]]
+        ... )
+        >>> B_field = mpi_biot_savart(
+        ...     element_centers,
+        ...     element_lengths,
+        ...     element_directions,
+        ...     field_points,
+        ... )
+        >>> if MPI.COMM_WORLD.Get_rank() == 0: # Rank 0 has the full result
         >>>     print(B_field)
     """
     try:
@@ -390,27 +426,37 @@ def serial_biot_savart(
     Serial Biot-Savart calculation with element inputs.
 
     Computes the magnetic field serially (non-parallel), taking current element
-    center points, lengths, and directions as input. This function is suitable for
-    single-processor execution and serves as a serial counterpart to the
+    center points, lengths, and directions as input. This function is suitable
+    for single-processor execution and serves as a serial counterpart to the
     `mpi_biot_savart` function.
 
     Args:
-        element_centers (numpy.ndarray): (N, 3) array of center coordinates of current elements.
-        element_lengths (numpy.ndarray): (N,) array of lengths of current elements (dl).
-        element_directions (numpy.ndarray): (N, 3) array of unit vectors for current directions.
+        element_centers (numpy.ndarray): (N, 3) array of center coordinates of
+            current elements.
+        element_lengths (numpy.ndarray): (N,) array of lengths of current
+            elements (dl).
+        element_directions (numpy.ndarray): (N, 3) array of unit vectors for
+            current directions.
         field_points (numpy.ndarray): (M, 3) array of field point coordinates.
-        order (int, optional): The maximum order of the Taylor series to compute.
-                               If None, the global max order is used. Defaults to None.
+        order (int, optional): The maximum order of the Taylor series to
+            compute. If None, the global max order is used. Defaults to None.
 
     Returns:
-        numpy.ndarray: (M, 3) array of magnetic field vectors at each field point.
+        numpy.ndarray: (M, 3) array of magnetic field vectors at each field
+            point.
 
     Example:
         >>> element_centers = np.array([[0, 0, 0], [1, 0, 0]])
         >>> element_lengths = np.array([0.1, 0.1])
         >>> element_directions = np.array([[1, 0, 0], [0, 1, 0]])
         >>> field_points = np.array([[0, 1, 0], [1, 1, 0]])
-        >>> B_field = serial_biot_savart(element_centers, element_lengths, element_directions, field_points, order=0)
+        >>> B_field = serial_biot_savart(
+        ...     element_centers,
+        ...     element_lengths,
+        ...     element_directions,
+        ...     field_points,
+        ...     order=0,
+        ... )
         >>> print(B_field)
         [[ 0.00000000e+00  0.00000000e+00  1.00000000e-08]
          [ 0.00000000e+00  0.00000000e+00  5.00000000e-09]]
@@ -427,7 +473,8 @@ def serial_biot_savart(
         or element_lengths.shape[0] != element_centers.shape[0]
     ):
         raise ValueError(
-            "element_lengths must be a NumPy array of shape (N,) and have the same length as element_centers"
+            "element_lengths must be a NumPy array of shape (N,) and have the "
+            "same length as element_centers"
         )
     if (
         element_directions.ndim != 2
@@ -435,7 +482,8 @@ def serial_biot_savart(
         or element_directions.shape[0] != element_centers.shape[0]
     ):
         raise ValueError(
-            "element_directions must be a NumPy array of shape (N, 3) and have the same length as element_centers"
+            "element_directions must be a NumPy array of shape (N, 3) and "
+            "have the same length as element_centers"
         )
     if field_points.ndim != 2 or field_points.shape[1] != 3:
         raise ValueError("field_points must be a NumPy array of shape (M, 3)")

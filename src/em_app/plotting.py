@@ -2,11 +2,10 @@
 This module contains functions for plotting magnetic field data.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from mtflib import mtf
-from .vector_fields import VectorField
-from .sources import Coil
+
 from .solvers import calculate_b_field
 
 
@@ -29,29 +28,32 @@ def _get_3d_axes(ax=None):
 def plot_1d_field(
     coil_instance,
     field_component: str,
-    axis: str = 'x',
+    axis: str = "x",
     start_point: np.ndarray = None,
     end_point: np.ndarray = None,
     num_points: int = 100,
-    plot_type: str = 'line',
+    plot_type: str = "line",
     log_scale: bool = False,
     ax=None,
-    title: str = '',
-    xlabel: str = '',
-    ylabel: str = '',
-    **kwargs
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
+    **kwargs,
 ):
     """
     Plots a vector field component along a 1D line.
     """
-    if field_component not in ['x', 'y', 'z', 'norm']:
-        raise ValueError(f"field_component must be 'x', 'y', 'z', or 'norm'.")
-    if (start_point is None and end_point is not None) or \
-       (start_point is not None and end_point is None):
-        raise ValueError("start_point and end_point must both be provided or both be None.")
+    if field_component not in ["x", "y", "z", "norm"]:
+        raise ValueError("field_component must be 'x', 'y', 'z', or 'norm'.")
+    if (start_point is None and end_point is not None) or (
+        start_point is not None and end_point is None
+    ):
+        raise ValueError(
+            "start_point and end_point must both be provided or both be None."
+        )
 
     if start_point is None:
-        if axis not in ['x', 'y', 'z']:
+        if axis not in ["x", "y", "z"]:
             raise ValueError("axis must be 'x', 'y', or 'z' if start_point is None.")
 
         # Auto-size the plot based on coil dimensions
@@ -61,54 +63,71 @@ def plot_1d_field(
         min_val = center[0] - 1.25 * max_size / 2
         max_val = center[0] + 1.25 * max_size / 2
 
-        if axis == 'x':
+        if axis == "x":
             line_points = np.linspace(min_val, max_val, num_points)
-            field_points = np.vstack([line_points, np.full(num_points, center[1]), np.full(num_points, center[2])]).T
-            plot_axis_label = 'x-axis'
-        elif axis == 'y':
+            field_points = np.vstack([
+                line_points,
+                np.full(num_points, center[1]),
+                np.full(num_points, center[2]),
+            ]).T
+            plot_axis_label = "x-axis"
+        elif axis == "y":
             line_points = np.linspace(min_val, max_val, num_points)
-            field_points = np.vstack([np.full(num_points, center[0]), line_points, np.full(num_points, center[2])]).T
-            plot_axis_label = 'y-axis'
-        elif axis == 'z':
+            field_points = np.vstack([
+                np.full(num_points, center[0]),
+                line_points,
+                np.full(num_points, center[2]),
+            ]).T
+            plot_axis_label = "y-axis"
+        elif axis == "z":
             line_points = np.linspace(min_val, max_val, num_points)
-            field_points = np.vstack([np.full(num_points, center[0]), np.full(num_points, center[1]), line_points]).T
-            plot_axis_label = 'z-axis'
+            field_points = np.vstack([
+                np.full(num_points, center[0]),
+                np.full(num_points, center[1]),
+                line_points,
+            ]).T
+            plot_axis_label = "z-axis"
     else:
         line_points = np.linspace(0, 1, num_points)
-        field_points = np.array([start_point + t * (end_point - start_point) for t in line_points])
-        plot_axis_label = 'line'
+        field_points = np.array([
+            start_point + t * (end_point - start_point) for t in line_points
+        ])
+        plot_axis_label = "line"
 
     # Calculate the B-field
     vector_field = calculate_b_field(coil_instance, field_points=field_points)
 
     # Extract the requested component
-    if field_component == 'x':
+    if field_component == "x":
         field_values = np.array([v.x for v in vector_field._vectors_mtf])
-    elif field_component == 'y':
+    elif field_component == "y":
         field_values = np.array([v.y for v in vector_field._vectors_mtf])
-    elif field_component == 'z':
+    elif field_component == "z":
         field_values = np.array([v.z for v in vector_field._vectors_mtf])
-    elif field_component == 'norm':
+    elif field_component == "norm":
         field_values = vector_field.get_magnitude()
 
     # Evaluate the components if they are MTFs
     if isinstance(field_values[0], mtf):
-            field_values = np.array([val.extract_coefficient(tuple([0] * val.dimension)).item() for val in field_values])
+        field_values = np.array([
+            val.extract_coefficient(tuple([0] * val.dimension)).item()
+            for val in field_values
+        ])
 
     # Plot the data
     if ax is None:
         fig, ax = plt.subplots()
 
-    if plot_type == 'line':
+    if plot_type == "line":
         ax.plot(line_points, field_values, **kwargs)
-    elif plot_type == 'scatter':
+    elif plot_type == "scatter":
         ax.scatter(line_points, field_values, **kwargs)
     else:
         raise ValueError("plot_type must be 'line' or 'scatter'.")
 
     # Customize plot
     if log_scale:
-        ax.set_yscale('log')
+        ax.set_yscale("log")
 
     if not title:
         title = f"Field component {field_component} along {plot_axis_label}"
@@ -128,26 +147,26 @@ def plot_1d_field(
 
 def plot_2d_field(
     coil_instance,
-    field_component: str = 'norm',
-    plane: str = 'xy',
+    field_component: str = "norm",
+    plane: str = "xy",
     center: np.ndarray = None,
     normal: np.ndarray = None,
     size_a: float = None,
     size_b: float = None,
     num_points_a: int = 50,
     num_points_b: int = 50,
-    plot_type: str = 'heatmap',
+    plot_type: str = "heatmap",
     ax=None,
-    title: str = '',
+    title: str = "",
     offset_from_center: float = 0.0,
-    **kwargs
+    **kwargs,
 ):
     """
     Plots a vector field on a 2D plane.
     """
-    if field_component not in ['x', 'y', 'z', 'norm']:
-        raise ValueError(f"field_component must be 'x', 'y', 'z', or 'norm'.")
-    if plot_type not in ['quiver', 'streamline', 'heatmap']:
+    if field_component not in ["x", "y", "z", "norm"]:
+        raise ValueError("field_component must be 'x', 'y', 'z', or 'norm'.")
+    if plot_type not in ["quiver", "streamline", "heatmap"]:
         raise ValueError("plot_type must be 'quiver', 'streamline', or 'heatmap'.")
 
     # Determine the plane and default center
@@ -160,62 +179,82 @@ def plot_2d_field(
         max_size = np.max(max_size).item()
         size_a = 1.25 * max_size if size_a is None else size_a
         size_b = 1.25 * max_size if size_b is None else size_b
-        if plane == 'xy':
-            axis_labels = ('x', 'y')
-        elif plane == 'yz':
-            axis_labels = ('y', 'z')
-        elif plane == 'xz':
-            axis_labels = ('x', 'z')
+        if plane == "xy":
+            axis_labels = ("x", "y")
+        elif plane == "yz":
+            axis_labels = ("y", "z")
+        elif plane == "xz":
+            axis_labels = ("x", "z")
         else:
             if size_a is None or size_b is None:
-                raise ValueError("size_a and size_b must be specified for custom planes.")
+                raise ValueError(
+                    "size_a and size_b must be specified for custom planes."
+                )
 
     # Grid generation
     if normal is None:
-        if plane == 'xy':
-            a_coords = np.linspace(center[0] - size_a/2, center[0] + size_a/2, num_points_a)
-            b_coords = np.linspace(center[1] - size_b/2, center[1] + size_b/2, num_points_b)
+        if plane == "xy":
+            a_coords = np.linspace(
+                center[0] - size_a / 2, center[0] + size_a / 2, num_points_a
+            )
+            b_coords = np.linspace(
+                center[1] - size_b / 2, center[1] + size_b / 2, num_points_b
+            )
             A, B = np.meshgrid(a_coords, b_coords)
             C = np.full(A.shape, center[2])
             C = C + offset_from_center
             field_points = np.vstack([A.ravel(), B.ravel(), C.ravel()]).T
 
-        elif plane == 'yz':
-            a_coords = np.linspace(center[1] - size_a/2, center[1] + size_a/2, num_points_a)
-            b_coords = np.linspace(center[2] - size_b/2, center[2] + size_b/2, num_points_b)
+        elif plane == "yz":
+            a_coords = np.linspace(
+                center[1] - size_a / 2, center[1] + size_a / 2, num_points_a
+            )
+            b_coords = np.linspace(
+                center[2] - size_b / 2, center[2] + size_b / 2, num_points_b
+            )
             A, B = np.meshgrid(a_coords, b_coords)
             C = np.full(A.shape, center[0])
             C = C + offset_from_center
             field_points = np.vstack([C.ravel(), A.ravel(), B.ravel()]).T
 
-        elif plane == 'xz':
-            a_coords = np.linspace(center[0] - size_a/2, center[0] + size_a/2, num_points_a)
-            b_coords = np.linspace(center[2] - size_b/2, center[2] + size_b/2, num_points_b)
+        elif plane == "xz":
+            a_coords = np.linspace(
+                center[0] - size_a / 2, center[0] + size_a / 2, num_points_a
+            )
+            b_coords = np.linspace(
+                center[2] - size_b / 2, center[2] + size_b / 2, num_points_b
+            )
             A, B = np.meshgrid(a_coords, b_coords)
             C = np.full(A.shape, center[1])
             C = C + offset_from_center
             field_points = np.vstack([A.ravel(), C.ravel(), B.ravel()]).T
 
         else:
-            raise ValueError("plane must be 'xy', 'yz', or 'xz' if normal is not provided.")
+            raise ValueError(
+                "plane must be 'xy', 'yz', or 'xz' if normal is not provided."
+            )
     else:
         # Generate grid for a custom plane
         normal = normal / np.linalg.norm(normal)
-        if np.allclose(normal, np.array([0, 0, 1])) or np.allclose(normal, np.array([0, 0, -1])):
+        if np.allclose(normal, np.array([0, 0, 1])) or np.allclose(
+            normal, np.array([0, 0, -1])
+        ):
             u = np.array([1, 0, 0])
         else:
             u = np.cross(normal, np.array([0, 0, 1]))
             u = u / np.linalg.norm(u)
         v = np.cross(normal, u)
 
-        a_coords = np.linspace(-size_a/2, size_a/2, num_points_a)
-        b_coords = np.linspace(-size_b/2, size_b/2, num_points_b)
+        a_coords = np.linspace(-size_a / 2, size_a / 2, num_points_a)
+        b_coords = np.linspace(-size_b / 2, size_b / 2, num_points_b)
         A, B = np.meshgrid(a_coords, b_coords)
 
         field_points = np.zeros((num_points_a * num_points_b, 3))
         for i in range(A.shape[0]):
             for j in range(A.shape[1]):
-                point = center + offset_from_center * normal + A[i, j] * u + B[i, j] * v
+                point = (
+                    center + offset_from_center * normal + A[i, j] * u + B[i, j] * v
+                )
                 field_points[i * num_points_b + j] = point
 
     vector_field = calculate_b_field(coil_instance, field_points=field_points)
@@ -225,13 +264,13 @@ def plot_2d_field(
         fig, ax = plt.subplots()
 
     # Plotting logic
-    if plot_type == 'quiver':
+    if plot_type == "quiver":
         if normal is None:
-            if plane == 'xy':
+            if plane == "xy":
                 U, V = b_vectors[:, 0], b_vectors[:, 1]
-            elif plane == 'yz':
+            elif plane == "yz":
                 U, V = b_vectors[:, 1], b_vectors[:, 2]
-            elif plane == 'xz':
+            elif plane == "xz":
                 U, V = b_vectors[:, 0], b_vectors[:, 2]
             ax.quiver(A, B, U.reshape(A.shape), V.reshape(B.shape), **kwargs)
         else:
@@ -239,13 +278,13 @@ def plot_2d_field(
             U, V = np.dot(projected_b, u), np.dot(projected_b, v)
             ax.quiver(A, B, U.reshape(A.shape), V.reshape(B.shape), **kwargs)
 
-    elif plot_type == 'streamline':
+    elif plot_type == "streamline":
         if normal is None:
-            if plane == 'xy':
+            if plane == "xy":
                 U, V = b_vectors[:, 0], b_vectors[:, 1]
-            elif plane == 'yz':
+            elif plane == "yz":
                 U, V = b_vectors[:, 1], b_vectors[:, 2]
-            elif plane == 'xz':
+            elif plane == "xz":
                 U, V = b_vectors[:, 0], b_vectors[:, 2]
             ax.streamplot(A, B, U.reshape(A.shape), V.reshape(B.shape), **kwargs)
         else:
@@ -253,15 +292,24 @@ def plot_2d_field(
             U, V = np.dot(projected_b, u), np.dot(projected_b, v)
             ax.streamplot(A, B, U.reshape(A.shape), V.reshape(B.shape), **kwargs)
 
-    elif plot_type == 'heatmap':
-        if field_component == 'norm':
+    elif plot_type == "heatmap":
+        if field_component == "norm":
             field_data = vector_field.get_magnitude()
-        elif field_component == 'x':
-                field_data = np.array([b.x.extract_coefficient(tuple([0] * b.x.dimension)).item() for b in vector_field._vectors_mtf], dtype=float)
-        elif field_component == 'y':
-                field_data = np.array([b.y.extract_coefficient(tuple([0] * b.y.dimension)).item() for b in vector_field._vectors_mtf], dtype=float)
-        else: # z
-                field_data = np.array([b.z.extract_coefficient(tuple([0] * b.z.dimension)).item() for b in vector_field._vectors_mtf], dtype=float)
+        elif field_component == "x":
+            field_data = np.array([
+                b.x.extract_coefficient(tuple([0] * b.x.dimension)).item()
+                for b in vector_field._vectors_mtf
+            ], dtype=float)
+        elif field_component == "y":
+            field_data = np.array([
+                b.y.extract_coefficient(tuple([0] * b.y.dimension)).item()
+                for b in vector_field._vectors_mtf
+            ], dtype=float)
+        else:  # z
+            field_data = np.array([
+                b.z.extract_coefficient(tuple([0] * b.z.dimension)).item()
+                for b in vector_field._vectors_mtf
+            ], dtype=float)
         field_data = np.real(field_data)
         c = ax.pcolormesh(A, B, field_data.reshape(A.shape), **kwargs)
         plt.colorbar(c, ax=ax)
@@ -281,7 +329,7 @@ def plot_2d_field(
         ax.set_xlabel("a-axis")
         ax.set_ylabel("b-axis")
 
-    ax.set_aspect('equal', adjustable='box')
+    ax.set_aspect("equal", adjustable="box")
     ax.grid(True)
     if ax is None:
         plt.show()
@@ -292,9 +340,9 @@ def plot_field_vectors_3d(
     num_points_a: int = 10,
     num_points_b: int = 10,
     num_points_c: int = 10,
-    title: str = '',
+    title: str = "",
     ax=None,
-    **kwargs
+    **kwargs,
 ):
     """
     Generates a 3D quiver plot of the magnetic field vectors on a grid
@@ -319,9 +367,21 @@ def plot_field_vectors_3d(
     max_size = coil_instance.get_max_size()
     center = coil_instance.get_center_point()
 
-    x_range = np.linspace(center[0] - 1.25 * max_size[0] / 2, center[0] + 1.25 * max_size[0] / 2, num_points_a)
-    y_range = np.linspace(center[1] - 1.25 * max_size[1] / 2, center[1] + 1.25 * max_size[1] / 2, num_points_b)
-    z_range = np.linspace(center[2] - 1.25 * max_size[2] / 2, center[2] + 1.25 * max_size[2] / 2, num_points_c)
+    x_range = np.linspace(
+        center[0] - 1.25 * max_size[0] / 2,
+        center[0] + 1.25 * max_size[0] / 2,
+        num_points_a,
+    )
+    y_range = np.linspace(
+        center[1] - 1.25 * max_size[1] / 2,
+        center[1] + 1.25 * max_size[1] / 2,
+        num_points_b,
+    )
+    z_range = np.linspace(
+        center[2] - 1.25 * max_size[2] / 2,
+        center[2] + 1.25 * max_size[2] / 2,
+        num_points_c,
+    )
 
     # Create the grid of field points
     X, Y, Z = np.meshgrid(x_range, y_range, z_range)
@@ -351,7 +411,7 @@ def plot_field_vectors_3d(
     plot_ax.set_ylabel("Y-axis")
     plot_ax.set_zlabel("Z-axis")
 
-    plot_ax.set_aspect('equal', 'box')
+    plot_ax.set_aspect("equal", "box")
 
     if ax is None:
         plt.show()
