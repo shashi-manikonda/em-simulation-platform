@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2025-09-27
 
 ### Added
-- **Code Coverage Reporting**: Integrated `pytest-cov` and Codecov to measure and report test coverage.
 - **Automated Dependency Updates**: Configured Dependabot to automatically manage `pip` and `GitHub Actions` dependencies.
 - **Automated PyPI Publishing**: Added a new GitHub Actions workflow (`publish.yml`) to automatically build and publish the package to PyPI when a new version tag is pushed.
 - **Expanded Test Suite**: Added unit tests for the `em_app/plotting.py` module to improve test coverage.
