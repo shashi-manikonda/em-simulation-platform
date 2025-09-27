@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
 "numpy",
-"mtflib",
+"mtflib==1.5.1",
 "matplotlib",
 "pandas",
 ]
