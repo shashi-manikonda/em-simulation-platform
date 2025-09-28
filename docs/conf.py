@@ -15,8 +15,8 @@ project = "em-simulation-platform"
 copyright = "2025, Shashi Manikonda"
 author = "Shashi Manikonda"
 
-version = "0.2.0"
-release = "0.2.0"
+version = "0.2.1"
+release = "0.2.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
