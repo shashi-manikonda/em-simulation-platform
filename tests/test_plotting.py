@@ -2,16 +2,15 @@ import matplotlib
 
 matplotlib.use("Agg")  # Use a non-interactive backend for testing
 
-import numpy as np
-import pytest
-from mtflib import mtf
-
-from em_app.plotting import (
+import numpy as np  # noqa: E402
+import pytest  # noqa: E402
+from em_app.plotting import (  # noqa: E402
     plot_1d_field,
     plot_2d_field,
     plot_field_vectors_3d,
 )
-from em_app.sources import RingCoil
+from em_app.sources import RingCoil  # noqa: E402
+from mtflib import mtf  # noqa: E402
 
 # Global settings for tests
 MAX_ORDER = 5
