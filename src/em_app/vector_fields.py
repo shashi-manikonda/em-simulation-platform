@@ -6,7 +6,6 @@ with support for numerical data and `mtflib` Multivariate Taylor Functions (MTFs
 It includes classes like Vector, FieldVector, VectorField, and VectorFieldGrid.
 """
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -114,9 +113,9 @@ class Vector:
                     return Vector(result)
                 elif result.ndim > 1 and result.shape[-1] == 3:
                     # Return an array of Vector objects by reshaping the result
-                    return np.array([
-                        Vector(row) for row in result.reshape(-1, 3)
-                    ]).reshape(result.shape[:-1])
+                    return np.array(
+                        [Vector(row) for row in result.reshape(-1, 3)]
+                    ).reshape(result.shape[:-1])
                 # If result is not a 3-element array or a (...,3) array,
                 # return as is
                 return result
@@ -320,19 +319,23 @@ class Vector:
 
                 # Handle the case where the function is zero.
                 if df.empty:
-                    df = pd.DataFrame([{
-                        "Order": 0,
-                        "Exponents": tuple([0] * component.dimension),
-                        "Coefficient": 0.0,
-                    }])
+                    df = pd.DataFrame(
+                        [
+                            {
+                                "Order": 0,
+                                "Exponents": tuple([0] * component.dimension),
+                                "Coefficient": 0.0,
+                            }
+                        ]
+                    )
 
                 df.rename(columns={"Coefficient": name}, inplace=True)
                 df = df.sort_values(by=["Order", "Exponents"]).reset_index(drop=True)
                 dfs[name] = df
             else:
-                df = pd.DataFrame([
-                    {"Order": 0, "Exponents": (0, 0, 0), name: component}
-                ])
+                df = pd.DataFrame(
+                    [{"Order": 0, "Exponents": (0, 0, 0), name: component}]
+                )
                 dfs[name] = df
 
         # Merge the dataframes
@@ -465,21 +468,27 @@ class FieldVector(Vector):
         Returns:
             np.ndarray: A 3x3 array of MTFs representing the Jacobian matrix.
         """
-        grad_Bx = np.array([
-            self.x.derivative(1),
-            self.x.derivative(2),
-            self.x.derivative(3),
-        ])
-        grad_By = np.array([
-            self.y.derivative(1),
-            self.y.derivative(2),
-            self.y.derivative(3),
-        ])
-        grad_Bz = np.array([
-            self.z.derivative(1),
-            self.z.derivative(2),
-            self.z.derivative(3),
-        ])
+        grad_Bx = np.array(
+            [
+                self.x.derivative(1),
+                self.x.derivative(2),
+                self.x.derivative(3),
+            ]
+        )
+        grad_By = np.array(
+            [
+                self.y.derivative(1),
+                self.y.derivative(2),
+                self.y.derivative(3),
+            ]
+        )
+        grad_Bz = np.array(
+            [
+                self.z.derivative(1),
+                self.z.derivative(2),
+                self.z.derivative(3),
+            ]
+        )
 
         return np.vstack([grad_Bx, grad_By, grad_Bz])
 
@@ -574,32 +583,36 @@ class VectorField:
                 )
 
             # Evaluate MTF FieldVectors to get numerical vectors
-            vectors_numerical = np.array([
+            vectors_numerical = np.array(
                 [
-                    v.x.extract_coefficient(tuple([0] * v.x.dimension)).item(),
-                    v.y.extract_coefficient(tuple([0] * v.y.dimension)).item(),
-                    v.z.extract_coefficient(tuple([0] * v.z.dimension)).item(),
+                    [
+                        v.x.extract_coefficient(tuple([0] * v.x.dimension)).item(),
+                        v.y.extract_coefficient(tuple([0] * v.y.dimension)).item(),
+                        v.z.extract_coefficient(tuple([0] * v.z.dimension)).item(),
+                    ]
+                    for v in self._vectors_mtf
                 ]
-                for v in self._vectors_mtf
-            ])
+            )
 
             # Evaluate MTF field points to get numerical points
             if self.field_points is not None and self.field_points.size > 0:
                 if isinstance(self.field_points[0][0], mtf):
-                    numerical_points = np.array([
+                    numerical_points = np.array(
                         [
-                            p[0]
-                            .extract_coefficient(tuple([0] * p[0].dimension))
-                            .item(),
-                            p[1]
-                            .extract_coefficient(tuple([0] * p[1].dimension))
-                            .item(),
-                            p[2]
-                            .extract_coefficient(tuple([0] * p[2].dimension))
-                            .item(),
+                            [
+                                p[0]
+                                .extract_coefficient(tuple([0] * p[0].dimension))
+                                .item(),
+                                p[1]
+                                .extract_coefficient(tuple([0] * p[1].dimension))
+                                .item(),
+                                p[2]
+                                .extract_coefficient(tuple([0] * p[2].dimension))
+                                .item(),
+                            ]
+                            for p in self.field_points
                         ]
-                        for p in self.field_points
-                    ])
+                    )
                 elif isinstance(self.field_points, np.ndarray):
                     numerical_points = self.field_points
                 else:
@@ -877,14 +890,16 @@ if __name__ == "__main__":
 
         # Create a grid of evaluation points using constant MTFs
         # Each point is a 3-element array of MTF objects
-        field_points_mtf = np.array([
+        field_points_mtf = np.array(
             [
-                mtf.from_constant(p[0]),
-                mtf.from_constant(p[1]),
-                mtf.from_constant(p[2]),
+                [
+                    mtf.from_constant(p[0]),
+                    mtf.from_constant(p[1]),
+                    mtf.from_constant(p[2]),
+                ]
+                for p in field_points_numerical
             ]
-            for p in field_points_numerical
-        ])
+        )
 
         # Create a simple B-field as FieldVector objects.
         # This example assumes the B-field can be represented by a single

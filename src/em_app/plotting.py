@@ -65,33 +65,39 @@ def plot_1d_field(
 
         if axis == "x":
             line_points = np.linspace(min_val, max_val, num_points)
-            field_points = np.vstack([
-                line_points,
-                np.full(num_points, center[1]),
-                np.full(num_points, center[2]),
-            ]).T
+            field_points = np.vstack(
+                [
+                    line_points,
+                    np.full(num_points, center[1]),
+                    np.full(num_points, center[2]),
+                ]
+            ).T
             plot_axis_label = "x-axis"
         elif axis == "y":
             line_points = np.linspace(min_val, max_val, num_points)
-            field_points = np.vstack([
-                np.full(num_points, center[0]),
-                line_points,
-                np.full(num_points, center[2]),
-            ]).T
+            field_points = np.vstack(
+                [
+                    np.full(num_points, center[0]),
+                    line_points,
+                    np.full(num_points, center[2]),
+                ]
+            ).T
             plot_axis_label = "y-axis"
         elif axis == "z":
             line_points = np.linspace(min_val, max_val, num_points)
-            field_points = np.vstack([
-                np.full(num_points, center[0]),
-                np.full(num_points, center[1]),
-                line_points,
-            ]).T
+            field_points = np.vstack(
+                [
+                    np.full(num_points, center[0]),
+                    np.full(num_points, center[1]),
+                    line_points,
+                ]
+            ).T
             plot_axis_label = "z-axis"
     else:
         line_points = np.linspace(0, 1, num_points)
-        field_points = np.array([
-            start_point + t * (end_point - start_point) for t in line_points
-        ])
+        field_points = np.array(
+            [start_point + t * (end_point - start_point) for t in line_points]
+        )
         plot_axis_label = "line"
 
     # Calculate the B-field
@@ -109,10 +115,12 @@ def plot_1d_field(
 
     # Evaluate the components if they are MTFs
     if isinstance(field_values[0], mtf):
-        field_values = np.array([
-            val.extract_coefficient(tuple([0] * val.dimension)).item()
-            for val in field_values
-        ])
+        field_values = np.array(
+            [
+                val.extract_coefficient(tuple([0] * val.dimension)).item()
+                for val in field_values
+            ]
+        )
 
     # Plot the data
     if ax is None:
@@ -252,9 +260,7 @@ def plot_2d_field(
         field_points = np.zeros((num_points_a * num_points_b, 3))
         for i in range(A.shape[0]):
             for j in range(A.shape[1]):
-                point = (
-                    center + offset_from_center * normal + A[i, j] * u + B[i, j] * v
-                )
+                point = center + offset_from_center * normal + A[i, j] * u + B[i, j] * v
                 field_points[i * num_points_b + j] = point
 
     vector_field = calculate_b_field(coil_instance, field_points=field_points)
@@ -296,20 +302,26 @@ def plot_2d_field(
         if field_component == "norm":
             field_data = vector_field.get_magnitude()
         elif field_component == "x":
-            field_data = np.array([
-                b.x.extract_coefficient(tuple([0] * b.x.dimension)).item()
-                for b in vector_field._vectors_mtf
-            ])
+            field_data = np.array(
+                [
+                    b.x.extract_coefficient(tuple([0] * b.x.dimension)).item()
+                    for b in vector_field._vectors_mtf
+                ]
+            )
         elif field_component == "y":
-            field_data = np.array([
-                b.y.extract_coefficient(tuple([0] * b.y.dimension)).item()
-                for b in vector_field._vectors_mtf
-            ])
+            field_data = np.array(
+                [
+                    b.y.extract_coefficient(tuple([0] * b.y.dimension)).item()
+                    for b in vector_field._vectors_mtf
+                ]
+            )
         else:  # z
-            field_data = np.array([
-                b.z.extract_coefficient(tuple([0] * b.z.dimension)).item()
-                for b in vector_field._vectors_mtf
-            ])
+            field_data = np.array(
+                [
+                    b.z.extract_coefficient(tuple([0] * b.z.dimension)).item()
+                    for b in vector_field._vectors_mtf
+                ]
+            )
         field_data = np.real(field_data)
         c = ax.pcolormesh(A, B, field_data.reshape(A.shape), **kwargs)
         plt.colorbar(c, ax=ax)

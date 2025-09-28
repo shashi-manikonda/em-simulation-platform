@@ -70,9 +70,9 @@ The script will clean the previous build and generate the HTML documentation in 
 
 To view the documentation, open the `docs/_build/html/index.html` file in your web browser.
 
-## Example: Calculate and Plot the Magnetic Field of a Ring Coil
+## Quick Start
 
-This example demonstrates how to define a current source, calculate its magnetic field on a grid, and visualize the results.
+Here is a simple example that shows how to define a current source, calculate its magnetic field on a grid, and visualize the results.
 
 ```python
 import numpy as np

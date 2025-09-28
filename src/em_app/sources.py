@@ -32,11 +32,13 @@ def _rotation_matrix(axis, angle):
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, bd, cd = b * c, b * d, c * d
     ad, ac, ab = a * d, a * c, a * b
-    return np.array([
-        [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-        [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-        [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
-    ])
+    return np.array(
+        [
+            [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+            [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+            [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
+        ]
+    )
 
 
 def _rotation_matrix_align_vectors(v1, v2):
@@ -144,21 +146,21 @@ class Coil(object):
             return np.zeros(3)
 
         # Convert MTF objects to NumPy arrays for calculation
-        centers_numerical = np.array([
-            c.to_numpy_array() for c in self.segment_centers
-        ])
-        directions_numerical = np.array([
-            d.to_numpy_array() for d in self.segment_directions
-        ])
+        centers_numerical = np.array([c.to_numpy_array() for c in self.segment_centers])
+        directions_numerical = np.array(
+            [d.to_numpy_array() for d in self.segment_directions]
+        )
 
         # Calculate max and min coordinates
-        all_coords = np.vstack([
-            centers_numerical,
-            centers_numerical
-            + (directions_numerical * self.segment_lengths.reshape(-1, 1)),
-            centers_numerical
-            - (directions_numerical * self.segment_lengths.reshape(-1, 1)),
-        ])
+        all_coords = np.vstack(
+            [
+                centers_numerical,
+                centers_numerical
+                + (directions_numerical * self.segment_lengths.reshape(-1, 1)),
+                centers_numerical
+                - (directions_numerical * self.segment_lengths.reshape(-1, 1)),
+            ]
+        )
 
         min_coords = np.min(all_coords, axis=0)
         max_coords = np.max(all_coords, axis=0)
@@ -176,9 +178,9 @@ class Coil(object):
             return np.zeros(3)
 
         if isinstance(self.segment_centers[0], Vector):
-            centers_numerical = np.array([
-                c.to_numpy_array() for c in self.segment_centers
-            ])
+            centers_numerical = np.array(
+                [c.to_numpy_array() for c in self.segment_centers]
+            )
         else:
             centers_numerical = self.segment_centers
 
@@ -235,9 +237,9 @@ class Coil(object):
                 # Evaluate the MTF along the segment parameter u
                 # Assuming the MTF for the center point has one variable, `u`,
                 # at index 4
-                evaluated_points = np.array([
-                    x.neval(u_points) for x in center_vec_mtf
-                ]).T
+                evaluated_points = np.array(
+                    [x.neval(u_points) for x in center_vec_mtf]
+                ).T
                 plot_ax.plot(
                     evaluated_points[:, 0],
                     evaluated_points[:, 1],
@@ -253,9 +255,7 @@ class Coil(object):
                 )
             # Fallback to the original behavior
             centers = np.array([c.to_numpy_array() for c in self.segment_centers])
-            directions = np.array([
-                d.to_numpy_array() for d in self.segment_directions
-            ])
+            directions = np.array([d.to_numpy_array() for d in self.segment_directions])
             lengths = self.segment_lengths
             for i in range(len(centers)):
                 start_point = centers[i] - directions[i] * lengths[i] / 2
@@ -371,14 +371,16 @@ class RingCoil(Coil):
         self.axis_direction = axis_direction
 
         # Generate the segments using the helper function
-        self.segment_centers, self.segment_lengths, self.segment_directions = (
-            self.generate_geometry(
-                radius,
-                num_segments,
-                center_point,
-                axis_direction,
-                use_mtf_for_segments,
-            )
+        (
+            self.segment_centers,
+            self.segment_lengths,
+            self.segment_directions,
+        ) = self.generate_geometry(
+            radius,
+            num_segments,
+            center_point,
+            axis_direction,
+            use_mtf_for_segments,
         )
 
     @staticmethod
@@ -508,16 +510,16 @@ class RectangularCoil(Coil):
         self.p1 = p1
         self.p2 = p2
         self.p4 = p4
-        self.segment_centers, self.segment_lengths, self.segment_directions = (
-            self.generate_geometry(
-                p1, p2, p4, num_segments_per_side, use_mtf_for_segments
-            )
+        (
+            self.segment_centers,
+            self.segment_lengths,
+            self.segment_directions,
+        ) = self.generate_geometry(
+            p1, p2, p4, num_segments_per_side, use_mtf_for_segments
         )
 
     @staticmethod
-    def generate_geometry(
-        p1, p2, p4, num_segments_per_side, use_mtf_for_segments=True
-    ):
+    def generate_geometry(p1, p2, p4, num_segments_per_side, use_mtf_for_segments=True):
         """
         (PRIVATE) Generates segments for a rectangular coil.
 
@@ -549,9 +551,11 @@ class RectangularCoil(Coil):
         for i in range(4):
             start_p = corners[i]
             end_p = corners[(i + 1) % 4]
-            all_segments.append(StraightWire.generate_geometry(
-                start_p, end_p, num_segments_per_side, use_mtf_for_segments
-            ))
+            all_segments.append(
+                StraightWire.generate_geometry(
+                    start_p, end_p, num_segments_per_side, use_mtf_for_segments
+                )
+            )
 
         # Concatenate segments from all four sides
         segment_centers = np.concatenate([s[0] for s in all_segments], axis=0)

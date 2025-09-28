@@ -1,9 +1,10 @@
 import matplotlib
+
+matplotlib.use("Agg")  # Use a non-interactive backend for testing
+
 import numpy as np
 import pytest
 from mtflib import mtf
-
-matplotlib.use("Agg")  # Use a non-interactive backend for testing
 
 from em_app.plotting import (
     plot_1d_field,

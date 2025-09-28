@@ -1,14 +1,24 @@
+"""
+Helmholtz Coil Field
+====================
+
+This example demonstrates how to calculate and visualize the magnetic field
+of a Helmholtz coil. A Helmholtz coil consists of two identical circular coils
+placed symmetrically along a common axis, separated by a distance equal to the
+radius of the coils. This configuration produces a region of nearly uniform
+magnetic field in the center.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
-from mtflib import mtf
-
 from em_app.solvers import calculate_b_field
 from em_app.sources import RingCoil
 from em_app.vector_fields import VectorField
+from mtflib import mtf
 
 # Initialize the MTF library
 # The 4th dimension is used for numerical integration along the segments.
-mtf.initialize_mtf(max_order=1, max_dimension=4)
+mtf.initialize_mtf(max_order=6, max_dimension=4)
 
 # --- 1. Setup the Helmholtz Coil Geometry ---
 # A Helmholtz coil consists of two identical circular coils placed
@@ -17,7 +27,7 @@ mtf.initialize_mtf(max_order=1, max_dimension=4)
 radius = 0.5  # meters
 separation = radius
 current = 1.0  # Amperes
-num_segments = 20  # Reduced for performance
+num_segments = 10  # Reduced for performance
 
 # Create the first coil
 coil1 = RingCoil(
@@ -40,7 +50,7 @@ coil2 = RingCoil(
 # --- 2. Define the Field Points for Calculation ---
 # We will calculate the field on a 2D grid (XZ plane) to visualize it.
 grid_size = 1.5 * radius
-num_points = 20  # Reduced for performance
+num_points = 10  # Reduced for performance
 x_points = np.linspace(-grid_size, grid_size, num_points)
 z_points = np.linspace(-grid_size, grid_size, num_points)
 X, Z = np.meshgrid(x_points, z_points)

@@ -192,10 +192,12 @@ def _cpp_biot_savart_core(source_points, dl_vectors, field_points, order=None):
 
     b_field_py = []
     for b_vec_dicts in b_field_dicts:
-        b_field_py.append([
-            MultivariateTaylorFunction(coefficients=(d["exponents"], d["coeffs"]))
-            for d in b_vec_dicts
-        ])
+        b_field_py.append(
+            [
+                MultivariateTaylorFunction(coefficients=(d["exponents"], d["coeffs"]))
+                for d in b_vec_dicts
+            ]
+        )
 
     return np.array(b_field_py)
 

@@ -7,20 +7,19 @@ from datetime import datetime
 
 def run_demos():
     """
-    Finds and runs all .py and .ipynb demos in a predefined order.
-    For .ipynb files, it converts them to .py using jupytext first.
-    Saves text output and PNG files to 'demos/runoutput' folder.
+    Finds and runs all .py demos in a predefined order.
+    Saves text output and PNG files to the 'runoutput' folder.
     Shows execution status and timing on screen.
     """
     project_root = os.path.dirname(os.path.abspath(__file__))
     src_path = os.path.join(project_root, "src")
     demos_dir = os.path.join(project_root, "demos")
 
-    # --- Demo Files - Automatically Generated ---
+    # --- Demo Files ---
     em_demo_dir = os.path.join(demos_dir, "em")
     demo_files = []
     for fname in sorted(os.listdir(em_demo_dir)):
-        if fname.endswith(".py") or fname.endswith(".ipynb"):
+        if fname.endswith(".py"):
             demo_files.append(f"em/{fname}")
 
     # Create runoutput directory
@@ -49,7 +48,6 @@ def run_demos():
             failed_demos += 1
             continue
 
-        script_path = None
         wrapper_script = None
         demo_start_time = time.time()
 
@@ -63,19 +61,7 @@ def run_demos():
         print(f"    Output dir: {demo_output_dir}")
 
         try:
-            if file.endswith(".py"):
-                script_to_run = file_path
-            elif file.endswith(".ipynb"):
-                print("    Converting notebook...")
-                subprocess.run(
-                    ["jupytext", "--to", "py", file_path],
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                )
-                script_path = os.path.splitext(file_path)[0] + ".py"
-                script_to_run = script_path
-
+            script_to_run = file_path
             wrapper_script = create_matplotlib_wrapper(
                 script_to_run, demo_output_dir, demo_name
             )
@@ -106,9 +92,7 @@ def run_demos():
                     f.write("\n" + "=" * 50 + "\nSTDERR:\n")
                     f.write(result.stderr)
 
-            move_temp_files_to_output(
-                script_path, wrapper_script, demo_output_dir, demo_name
-            )
+            move_temp_files_to_output(wrapper_script, demo_output_dir, demo_name)
 
             if result.returncode == 0:
                 successful_demos += 1
@@ -135,15 +119,6 @@ def run_demos():
             demo_duration = time.time() - demo_start_time
             failed_demos += 1
             print(f"    ✗ TIMEOUT - {demo_duration:.2f}s")
-            # Handle timeout file logging
-        except FileNotFoundError as e:
-            demo_duration = time.time() - demo_start_time
-            failed_demos += 1
-            error_msg = "jupytext not found" if "jupytext" in str(e) else str(e)
-            print(f"    ✗ FAILED - {demo_duration:.2f}s, Error: {error_msg}")
-            if "jupytext" in str(e):
-                print("      Install with: pip install jupytext")
-                break
         except Exception as e:
             demo_duration = time.time() - demo_start_time
             failed_demos += 1
@@ -162,12 +137,9 @@ def run_demos():
     print(f"Total Time: {total_duration:.2f} seconds")
 
 
-def move_temp_files_to_output(script_path, wrapper_script, demo_output_dir, demo_name):
+def move_temp_files_to_output(wrapper_script, demo_output_dir, demo_name):
     """Moves temporary files to the demo output directory."""
     try:
-        if script_path and os.path.exists(script_path):
-            dest = os.path.join(demo_output_dir, f"{demo_name}_converted.py")
-            os.rename(script_path, dest)
         if wrapper_script and os.path.exists(wrapper_script):
             dest = os.path.join(demo_output_dir, f"{demo_name}_wrapper.py")
             os.rename(wrapper_script, dest)
@@ -177,7 +149,7 @@ def move_temp_files_to_output(script_path, wrapper_script, demo_output_dir, demo
 
 def create_matplotlib_wrapper(original_script, output_dir, demo_name):
     """Creates a wrapper to save matplotlib plots."""
-    wrapper_content = f'''
+    wrapper_content = f"""
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -214,7 +186,7 @@ except Exception as e:
 
 if plt.get_fignums():
     save_figure_as_png()
-'''
+"""
     wrapper_path = original_script + "_wrapper_temp.py"
     with open(wrapper_path, "w") as f:
         f.write(wrapper_content)

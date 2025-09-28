@@ -26,6 +26,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_rtd_theme",
+    "sphinx_gallery.gen_gallery",
 ]
 
 autodoc_mock_imports = ["mpi4py"]
@@ -39,3 +40,11 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+
+# -- Options for Sphinx-Gallery ----------------------------------------------
+sphinx_gallery_conf = {
+    "examples_dirs": "../demos/em",  # path to your example scripts
+    "gallery_dirs": "auto_examples",  # path to where to save gallery generated output
+    "filename_pattern": r"\.py$",
+    "ignore_pattern": r"__init__\.py",
+}

@@ -10,6 +10,7 @@ Welcome to em-app's documentation!
    :caption: Contents:
 
    theory
+   gallery
    modules
    api_reference
 
