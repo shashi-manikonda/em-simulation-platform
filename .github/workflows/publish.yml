@@ -1,4 +1,6 @@
-# This workflow will upload a Python Package using Twine when a tag is pushed
+# This workflow will upload a Python Package using Trusted Publishing 
+# when a version tag (e.g., v1.0.0) is pushed.
+
 name: Publish Python Package
 
 on:
@@ -10,8 +12,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
+      # MANDATORY for PyPI Trusted Publishing (OIDC)
       id-token: write
-      contents: write 
+      # Required for softprops/action-gh-release to create the tag
+      contents: write
+
     steps:
     - uses: actions/checkout@v5
 
@@ -20,26 +25,32 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Install dependencies
+    - name: Install build dependencies
+      # Use `hatch` as a modern, reliable build and management tool
       run: |
         python -m pip install --upgrade pip
-        pip install build
+        pip install hatch
 
     - name: Build package
+      # Uses the standard build backend defined in pyproject.toml (often Hatchling or setuptools)
       run: python -m build
 
+    # Securely publishes package to PyPI using Trusted Publishing (OIDC)
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+      # Note: No username/password/token is needed here thanks to 'id-token: write'
 
+    # Read release notes from the version section of your CHANGELOG.md
     - name: Get Release Notes
       id: changelog_reader
       uses: mindsers/changelog-reader-action@v2
       with:
-        version: ${{ github.ref_name }}
+        version: ${{ github.ref_name }} # e.g., v1.2.3
         path: ./CHANGELOG.md
 
+    # Create a clean GitHub Release with the attached package artifacts
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         body: ${{ steps.changelog_reader.outputs.changes }}
-        files: dist/*
+        files: dist/* # Attaches the built .whl and .tar.gz files
