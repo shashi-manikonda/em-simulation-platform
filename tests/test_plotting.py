@@ -74,23 +74,35 @@ def test_plot_1d_field_input_validation(coil):
 
 # --- Tests for plot_2d_field ---
 @pytest.mark.parametrize("field_component", ["x", "y", "z", "norm"])
-@pytest.mark.parametrize("plot_type", ["heatmap", "quiver", "streamline"])
-def test_plot_2d_field_runs_successfully(coil, field_component, plot_type):
-    """Test that plot_2d_field runs without errors for various configurations."""
-    if plot_type in ["quiver", "streamline"] and field_component != "norm":
-        pytest.skip("Quiver/streamline plots are for vector fields, not components.")
-
+def test_plot_2d_field_heatmap_runs_successfully(coil, field_component):
+    """Test that plot_2d_field runs without errors for heatmap configurations."""
     try:
         plot_2d_field(
             coil,
             field_component=field_component,
+            plot_type="heatmap",
+            plane="xy",
+            num_points_a=2,  # Drastically reduced for speed
+            num_points_b=2,  # Drastically reduced for speed
+        )
+    except Exception as e:
+        pytest.fail(f"plot_2d_field (heatmap) raised an unexpected exception: {e}")
+
+
+@pytest.mark.parametrize("plot_type", ["quiver", "streamline"])
+def test_plot_2d_field_vector_runs_successfully(coil, plot_type):
+    """Test that plot_2d_field runs without errors for vector plot configurations."""
+    try:
+        plot_2d_field(
+            coil,
+            field_component="norm",  # Component ignored for vector plots
             plot_type=plot_type,
             plane="xy",
             num_points_a=2,  # Drastically reduced for speed
             num_points_b=2,  # Drastically reduced for speed
         )
     except Exception as e:
-        pytest.fail(f"plot_2d_field raised an unexpected exception: {e}")
+        pytest.fail(f"plot_2d_field ({plot_type}) raised an unexpected exception: {e}")
 
 
 def test_plot_2d_field_input_validation(coil):
