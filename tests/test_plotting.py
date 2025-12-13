@@ -46,12 +46,9 @@ def coil():
 # --- Tests for plot_1d_field ---
 @pytest.mark.parametrize("field_component", ["x", "y", "z", "norm"])
 @pytest.mark.parametrize("plot_type", ["line", "scatter"])
+@pytest.mark.filterwarnings("ignore:Data has no positive values")
 def test_plot_1d_field_runs_successfully(coil, field_component, plot_type):
     """Test that plot_1d_field runs without errors for various configurations."""
-    # Ignore expected log-scale warning for data crossing zero
-    with pytest.warns(UserWarning, match="Data has no positive values") if plot_type == "line" and field_component != "norm" else pytest.warns(None) as record:
-         pass
-         
     try:
         plot_1d_field(
             coil,

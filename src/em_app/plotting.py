@@ -113,6 +113,9 @@ def plot_1d_field(
             val.extract_coefficient(tuple([0] * val.dimension)).item()
             for val in field_values
         ])
+    
+    # Explicitly cast to float/real to avoid ComplexWarning
+    field_values = np.real(field_values).astype(float)
 
     # Plot the data
     if ax is None:
