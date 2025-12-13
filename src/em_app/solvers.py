@@ -114,20 +114,27 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
     r_squared = np.sum(r_vectors**2, axis=2)
 
     # Avoid division by zero at the source point location
-    for i in range(r_squared.shape[0]):
-        for j in range(r_squared.shape[1]):
-            if isinstance(r_squared[i, j], MultivariateTaylorFunction):
-                if (
-                    abs(
-                        r_squared[i, j].extract_coefficient(
-                            tuple([0] * r_squared[i, j].dimension)
-                        )
+    # Avoid division by zero at the source point location
+    # Optimization: Use vectorized masking for numeric arrays
+    if r_squared.size > 0:
+        is_mtf = isinstance(r_squared.flat[0], MultivariateTaylorFunction)
+        
+        if is_mtf:
+             # Fallback to loops for MTF objects (unless we implement vectorized extraction)
+            for i in range(r_squared.shape[0]):
+                for j in range(r_squared.shape[1]):
+                    val = r_squared[i, j]
+                    # Extract constant term safely
+                    const_term = val.extract_coefficient(
+                        tuple([0] * val.dimension)
                     )
-                    < 1e-18
-                ):
-                    r_squared[i, j] += 1e-18
-            elif r_squared[i, j] == 0:
-                r_squared[i, j] = 1e-18
+                    # Check magnitude
+                    if abs(const_term) < 1e-18:
+                         r_squared[i, j] += 1e-18
+        else:
+            # Vectorized masking for numeric arrays
+            mask = np.abs(r_squared) < 1e-18
+            r_squared[mask] = 1e-18
 
     dl_vectors_reshaped = dl_vectors[:, np.newaxis, :]
     cross_products = np.cross(dl_vectors_reshaped, r_vectors, axis=2)
