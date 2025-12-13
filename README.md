@@ -78,11 +78,11 @@ This example demonstrates how to define a current source, calculate its magnetic
 import numpy as np
 import matplotlib.pyplot as plt
 from em_app.sources import RingCoil
-from em_app.solvers import calculate_b_field
+from em_app.solvers import calculate_b_field, Backend
 from mtflib import mtf
 
-# Initialize the MTF library for vector field calculations
-mtf.initialize_mtf(max_order=1, max_dimension=4)
+# Initialize the MTF library (Optional - defaults to Order 4, Dim 3 if omitted)
+# mtf.initialize_mtf(max_order=1, max_dimension=4)
 
 # --- 1. Setup the Coil Geometry ---
 coil = RingCoil(
@@ -102,7 +102,9 @@ X, Z = np.meshgrid(x_points, z_points)
 field_points = np.vstack([X.ravel(), np.zeros_like(X.ravel()), Z.ravel()]).T
 
 # --- 3. Calculate the Magnetic Field ---
-b_field = calculate_b_field(coil, field_points)
+# --- 3. Calculate the Magnetic Field ---
+# You can specify the backend explicitly using the Backend Enum
+b_field = calculate_b_field(coil, field_points, backend=Backend.PYTHON)
 b_vectors = np.array([b.to_numpy_array() for b in b_field._vectors_mtf])
 
 # --- 4. Plot the Results ---
