@@ -272,11 +272,25 @@ def plot_2d_field(
                 U, V = b_vectors[:, 1], b_vectors[:, 2]
             elif plane == "xz":
                 U, V = b_vectors[:, 0], b_vectors[:, 2]
-            ax.quiver(A, B, U.reshape(A.shape), V.reshape(B.shape), **kwargs)
+            # Explicitly cast to float to avoid ComplexWarning
+            ax.quiver(
+                A,
+                B,
+                np.real(U).reshape(A.shape).astype(float),
+                np.real(V).reshape(B.shape).astype(float),
+                **kwargs,
+            )
         else:
             projected_b = b_vectors - np.dot(b_vectors, normal[:, np.newaxis]) * normal
             U, V = np.dot(projected_b, u), np.dot(projected_b, v)
-            ax.quiver(A, B, U.reshape(A.shape), V.reshape(B.shape), **kwargs)
+            # Explicitly cast to float to avoid ComplexWarning
+            ax.quiver(
+                A,
+                B,
+                np.real(U).reshape(A.shape).astype(float),
+                np.real(V).reshape(B.shape).astype(float),
+                **kwargs,
+            )
 
     elif plot_type == "streamline":
         if normal is None:
@@ -286,11 +300,25 @@ def plot_2d_field(
                 U, V = b_vectors[:, 1], b_vectors[:, 2]
             elif plane == "xz":
                 U, V = b_vectors[:, 0], b_vectors[:, 2]
-            ax.streamplot(A, B, U.reshape(A.shape), V.reshape(B.shape), **kwargs)
+            # Explicitly cast to float to avoid ComplexWarning
+            ax.streamplot(
+                A,
+                B,
+                np.real(U).reshape(A.shape).astype(float),
+                np.real(V).reshape(B.shape).astype(float),
+                **kwargs,
+            )
         else:
             projected_b = b_vectors - np.dot(b_vectors, normal[:, np.newaxis]) * normal
             U, V = np.dot(projected_b, u), np.dot(projected_b, v)
-            ax.streamplot(A, B, U.reshape(A.shape), V.reshape(B.shape), **kwargs)
+            # Explicitly cast to float to avoid ComplexWarning
+            ax.streamplot(
+                A,
+                B,
+                np.real(U).reshape(A.shape).astype(float),
+                np.real(V).reshape(B.shape).astype(float),
+                **kwargs,
+            )
 
     elif plot_type == "heatmap":
         if field_component == "norm":
@@ -310,7 +338,8 @@ def plot_2d_field(
                 b.z.extract_coefficient(tuple([0] * b.z.dimension)).item()
                 for b in vector_field._vectors_mtf
             ])
-        field_data = np.real(field_data)
+        # Explicitly cast to float/real
+        field_data = np.real(field_data).astype(float)
         c = ax.pcolormesh(A, B, field_data.reshape(A.shape), **kwargs)
         plt.colorbar(c, ax=ax)
 
@@ -332,7 +361,9 @@ def plot_2d_field(
     ax.set_aspect("equal", adjustable="box")
     ax.grid(True)
     if ax is None:
-        plt.show()
+        # Check for interactive backend to avoid warning in tests
+        if plt.get_backend() != "Agg":
+            plt.show()
 
 
 def plot_field_vectors_3d(
@@ -393,9 +424,10 @@ def plot_field_vectors_3d(
     U, V, W = b_vectors[:, 0], b_vectors[:, 1], b_vectors[:, 2]
 
     # Reshape the 1D field component arrays to match the 3D meshgrid shape
-    U = U.reshape(X.shape)
-    V = V.reshape(Y.shape)
-    W = W.reshape(Z.shape)
+    # Explicitly cast to float to avoid ComplexWarning
+    U = np.real(U).reshape(X.shape).astype(float)
+    V = np.real(V).reshape(Y.shape).astype(float)
+    W = np.real(W).reshape(Z.shape).astype(float)
 
     # Get or create the 3D axes
     plot_ax = _get_3d_axes(ax)
@@ -414,4 +446,6 @@ def plot_field_vectors_3d(
     plot_ax.set_aspect("equal", "box")
 
     if ax is None:
-        plt.show()
+        # Check for interactive backend to avoid warning in tests
+        if plt.get_backend() != "Agg":
+            plt.show()

@@ -1,4 +1,5 @@
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from mtflib import mtf
@@ -26,6 +27,7 @@ def setup_function():
     exponent_zero = tuple([0] * global_dim)
     yield global_dim, exponent_zero
     mtf._INITIALIZED = False
+    plt.close("all")  # Ensure figures are closed after each test
 
 
 # Fixture for a simple coil to be used in tests
@@ -46,6 +48,10 @@ def coil():
 @pytest.mark.parametrize("plot_type", ["line", "scatter"])
 def test_plot_1d_field_runs_successfully(coil, field_component, plot_type):
     """Test that plot_1d_field runs without errors for various configurations."""
+    # Ignore expected log-scale warning for data crossing zero
+    with pytest.warns(UserWarning, match="Data has no positive values") if plot_type == "line" and field_component != "norm" else pytest.warns(None) as record:
+         pass
+         
     try:
         plot_1d_field(
             coil,
