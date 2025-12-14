@@ -144,9 +144,7 @@ class Coil(object):
             return np.zeros(3)
 
         # Convert MTF objects to NumPy arrays for calculation
-        centers_numerical = np.array([
-            c.to_numpy_array() for c in self.segment_centers
-        ])
+        centers_numerical = np.array([c.to_numpy_array() for c in self.segment_centers])
         directions_numerical = np.array([
             d.to_numpy_array() for d in self.segment_directions
         ])
@@ -253,9 +251,7 @@ class Coil(object):
                 )
             # Fallback to the original behavior
             centers = np.array([c.to_numpy_array() for c in self.segment_centers])
-            directions = np.array([
-                d.to_numpy_array() for d in self.segment_directions
-            ])
+            directions = np.array([d.to_numpy_array() for d in self.segment_directions])
             lengths = self.segment_lengths
             for i in range(len(centers)):
                 start_point = centers[i] - directions[i] * lengths[i] / 2
@@ -515,9 +511,7 @@ class RectangularCoil(Coil):
         )
 
     @staticmethod
-    def generate_geometry(
-        p1, p2, p4, num_segments_per_side, use_mtf_for_segments=True
-    ):
+    def generate_geometry(p1, p2, p4, num_segments_per_side, use_mtf_for_segments=True):
         """
         (PRIVATE) Generates segments for a rectangular coil.
 
@@ -549,9 +543,11 @@ class RectangularCoil(Coil):
         for i in range(4):
             start_p = corners[i]
             end_p = corners[(i + 1) % 4]
-            all_segments.append(StraightWire.generate_geometry(
-                start_p, end_p, num_segments_per_side, use_mtf_for_segments
-            ))
+            all_segments.append(
+                StraightWire.generate_geometry(
+                    start_p, end_p, num_segments_per_side, use_mtf_for_segments
+                )
+            )
 
         # Concatenate segments from all four sides
         segment_centers = np.concatenate([s[0] for s in all_segments], axis=0)

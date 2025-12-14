@@ -39,7 +39,7 @@ def calculate_b_field(coil_instance, field_points, backend=Backend.PYTHON):
         try:
             backend = Backend(backend)
         except ValueError:
-             raise ValueError(f"Backend '{backend}' is not a valid option.")
+            raise ValueError(f"Backend '{backend}' is not a valid option.")
 
     # Input validation for field_points
     if not isinstance(field_points, np.ndarray) or (
@@ -52,19 +52,19 @@ def calculate_b_field(coil_instance, field_points, backend=Backend.PYTHON):
         raise RuntimeError("Coil segments have not been generated.")
 
     if coil_instance.use_mtf_for_segments:
-        element_centers_np = np.array(
-            [[v.x, v.y, v.z] for v in coil_instance.segment_centers]
-        )
-        element_directions_np = np.array(
-            [[v.x, v.y, v.z] for v in coil_instance.segment_directions]
-        )
+        element_centers_np = np.array([
+            [v.x, v.y, v.z] for v in coil_instance.segment_centers
+        ])
+        element_directions_np = np.array([
+            [v.x, v.y, v.z] for v in coil_instance.segment_directions
+        ])
     else:
-        element_centers_np = np.array(
-            [c.to_numpy_array() for c in coil_instance.segment_centers]
-        )
-        element_directions_np = np.array(
-            [d.to_numpy_array() for d in coil_instance.segment_directions]
-        )
+        element_centers_np = np.array([
+            c.to_numpy_array() for c in coil_instance.segment_centers
+        ])
+        element_directions_np = np.array([
+            d.to_numpy_array() for d in coil_instance.segment_directions
+        ])
 
     if backend == Backend.MPI:
         b_field_vectors = mpi_biot_savart(
@@ -131,7 +131,7 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
     # Optimization: Use vectorized masking for numeric arrays
     if r_squared.size > 0:
         is_mtf = isinstance(r_squared.flat[0], MultivariateTaylorFunction)
-        
+
         if is_mtf:
             # Fallback to loops for MTF objects (unless we implement vectorized
             # extraction)
@@ -139,12 +139,10 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
                 for j in range(r_squared.shape[1]):
                     val = r_squared[i, j]
                     # Extract constant term safely
-                    const_term = val.extract_coefficient(
-                        tuple([0] * val.dimension)
-                    )
+                    const_term = val.extract_coefficient(tuple([0] * val.dimension))
                     # Check magnitude
                     if abs(const_term) < 1e-18:
-                         r_squared[i, j] += 1e-18
+                        r_squared[i, j] += 1e-18
         else:
             # Vectorized masking for numeric arrays
             mask = np.abs(r_squared) < 1e-18
@@ -518,7 +516,7 @@ def serial_biot_savart(
     # Normalize backend if needed (though it should be passed as Enum from
     # calculate_b_field)
     if isinstance(backend, str):
-         backend = Backend(backend)
+        backend = Backend(backend)
 
     if backend == Backend.CPP:
         return _cpp_biot_savart_core(source_points, dl_vectors, field_points, order)

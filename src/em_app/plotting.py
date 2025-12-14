@@ -115,7 +115,7 @@ def plot_1d_field(
             val.extract_coefficient(tuple([0] * val.dimension)).item()
             for val in field_values
         ])
-    
+
     # Explicitly cast to float/real to avoid ComplexWarning
     field_values = np.real(field_values).astype(float)
     line_points = np.real(line_points).astype(float)
@@ -267,9 +267,7 @@ def plot_2d_field(
         field_points = np.zeros((num_points_a * num_points_b, 3))
         for i in range(A.shape[0]):
             for j in range(A.shape[1]):
-                point = (
-                    center + offset_from_center * normal + A[i, j] * u + B[i, j] * v
-                )
+                point = center + offset_from_center * normal + A[i, j] * u + B[i, j] * v
                 field_points[i * num_points_b + j] = point
 
     vector_field = calculate_b_field(coil_instance, field_points=field_points)

@@ -6,7 +6,6 @@ with support for numerical data and `mtflib` Multivariate Taylor Functions (MTFs
 It includes classes like Vector, FieldVector, VectorField, and VectorFieldGrid.
 """
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -320,11 +319,13 @@ class Vector:
 
                 # Handle the case where the function is zero.
                 if df.empty:
-                    df = pd.DataFrame([{
-                        "Order": 0,
-                        "Exponents": tuple([0] * component.dimension),
-                        "Coefficient": 0.0,
-                    }])
+                    df = pd.DataFrame([
+                        {
+                            "Order": 0,
+                            "Exponents": tuple([0] * component.dimension),
+                            "Coefficient": 0.0,
+                        }
+                    ])
 
                 df.rename(columns={"Coefficient": name}, inplace=True)
                 df = df.sort_values(by=["Order", "Exponents"]).reset_index(drop=True)
