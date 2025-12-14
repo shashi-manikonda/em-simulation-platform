@@ -38,7 +38,7 @@ The ``[dev]`` extra includes dependencies for running tests and building the doc
 
 ### Run all demos
 ```bash
-python run_all_demos.py
+python scripts/run_all_demos.py
 ```
 
 ### Run a specific demo
@@ -142,7 +142,7 @@ For more detailed examples, see the demo scripts in the `demos/em` directory. Th
 
 You can run all demos at once using the following command:
 ```bash
-python run_all_demos.py
+python scripts/run_all_demos.py
 ```
 This will generate output files and plots in the `runoutput` directory.
 
