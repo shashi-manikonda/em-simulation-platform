@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.3] - 2025-12-14
+
+### Added
+- **RingCoil Support**: Fully integrated `RingCoil` source, including discretization logic and a new verification demo (`demos/05_ring_coil_demo.py`).
+
+### Changed
+- **Performance**: Optimized C++ backend integration for Biot-Savart calculations.
+- **Dependencies**: Added `pandas-stubs` for type checking compliance.
+
+### Fixed
+- **Plotting**: Resolved 47 `ComplexWarning`s by strictly handling complex-to-real casting in plotting functions.
+- **Type Safety**: Fixed `Vector` arithmetic to preserve subclass types (critical for `FieldVector`).
+- **Cleanliness**: Resolved all linting (`ruff`) and type-checking (`mypy`) issues.
+
 ## [v0.2.2] - 2025-09-27
 
 ### Fixed

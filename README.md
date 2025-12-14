@@ -8,8 +8,8 @@
 EM simulation tools for electromagnetic field analysis, visualization, and benchmarking.
 
 ## Features
-- Modular solvers for EM field calculations
-- Source modeling (dipoles, wires, loops, solenoids)
+- Modular solvers for EM field calculations (Python, C, and Optimized C++ backends)
+- Source modeling (dipoles, wires, loops/RingCoil, solenoids)
 - Advanced plotting and visualization
 - Demo scripts for validation and exploration
 - Benchmarking utilities

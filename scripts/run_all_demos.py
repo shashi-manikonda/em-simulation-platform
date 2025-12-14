@@ -12,7 +12,7 @@ def run_demos():
     Saves text output and PNG files to 'demos/runoutput' folder.
     Shows execution status and timing on screen.
     """
-    project_root = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     src_path = os.path.join(project_root, "src")
     demos_dir = os.path.join(project_root, "demos")
 

@@ -1,8 +1,9 @@
-import numpy as np
 from enum import Enum
+
+import numpy as np
 from mtflib import MultivariateTaylorFunction
-from mtflib.backends.c import mtf_c_backend
-from mtflib.backends.cpp import mtf_cpp
+from mtflib.backends.c import mtf_c_backend  # type: ignore
+from mtflib.backends.cpp import mtf_cpp  # type: ignore
 
 from .vector_fields import FieldVector, VectorField
 
@@ -132,7 +133,8 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
         is_mtf = isinstance(r_squared.flat[0], MultivariateTaylorFunction)
         
         if is_mtf:
-             # Fallback to loops for MTF objects (unless we implement vectorized extraction)
+            # Fallback to loops for MTF objects (unless we implement vectorized
+            # extraction)
             for i in range(r_squared.shape[0]):
                 for j in range(r_squared.shape[1]):
                     val = r_squared[i, j]
@@ -513,7 +515,8 @@ def serial_biot_savart(
     if backend is None:
         backend = MultivariateTaylorFunction._IMPLEMENTATION
 
-    # Normalize backend if needed (though it should be passed as Enum from calculate_b_field)
+    # Normalize backend if needed (though it should be passed as Enum from
+    # calculate_b_field)
     if isinstance(backend, str):
          backend = Backend(backend)
 

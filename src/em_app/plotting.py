@@ -2,6 +2,8 @@
 This module contains functions for plotting magnetic field data.
 """
 
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 from mtflib import mtf
@@ -29,8 +31,8 @@ def plot_1d_field(
     coil_instance,
     field_component: str,
     axis: str = "x",
-    start_point: np.ndarray = None,
-    end_point: np.ndarray = None,
+    start_point: Optional[np.ndarray] = None,
+    end_point: Optional[np.ndarray] = None,
     num_points: int = 100,
     plot_type: str = "line",
     log_scale: bool = False,
@@ -116,6 +118,7 @@ def plot_1d_field(
     
     # Explicitly cast to float/real to avoid ComplexWarning
     field_values = np.real(field_values).astype(float)
+    line_points = np.real(line_points).astype(float)
 
     # Plot the data
     if ax is None:
@@ -152,10 +155,10 @@ def plot_2d_field(
     coil_instance,
     field_component: str = "norm",
     plane: str = "xy",
-    center: np.ndarray = None,
-    normal: np.ndarray = None,
-    size_a: float = None,
-    size_b: float = None,
+    center: Optional[np.ndarray] = None,
+    normal: Optional[np.ndarray] = None,
+    size_a: Optional[float] = None,
+    size_b: Optional[float] = None,
     num_points_a: int = 50,
     num_points_b: int = 50,
     plot_type: str = "heatmap",
@@ -204,6 +207,9 @@ def plot_2d_field(
                 center[1] - size_b / 2, center[1] + size_b / 2, num_points_b
             )
             A, B = np.meshgrid(a_coords, b_coords)
+            # Ensure coordinates are real
+            A = np.real(A)
+            B = np.real(B)
             C = np.full(A.shape, center[2])
             C = C + offset_from_center
             field_points = np.vstack([A.ravel(), B.ravel(), C.ravel()]).T
@@ -216,6 +222,9 @@ def plot_2d_field(
                 center[2] - size_b / 2, center[2] + size_b / 2, num_points_b
             )
             A, B = np.meshgrid(a_coords, b_coords)
+            # Ensure coordinates are real
+            A = np.real(A)
+            B = np.real(B)
             C = np.full(A.shape, center[0])
             C = C + offset_from_center
             field_points = np.vstack([C.ravel(), A.ravel(), B.ravel()]).T
@@ -228,6 +237,9 @@ def plot_2d_field(
                 center[2] - size_b / 2, center[2] + size_b / 2, num_points_b
             )
             A, B = np.meshgrid(a_coords, b_coords)
+            # Ensure coordinates are real
+            A = np.real(A)
+            B = np.real(B)
             C = np.full(A.shape, center[1])
             C = C + offset_from_center
             field_points = np.vstack([A.ravel(), C.ravel(), B.ravel()]).T
@@ -419,6 +431,10 @@ def plot_field_vectors_3d(
 
     # Create the grid of field points
     X, Y, Z = np.meshgrid(x_range, y_range, z_range)
+    # Ensure coordinates are real
+    X = np.real(X)
+    Y = np.real(Y)
+    Z = np.real(Z)
     field_points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
 
     # Calculate the magnetic field at these points

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "em-app"
-version = "0.2.2"
+version = "0.2.3"
 authors = [
     { name="Shashikant Manikonda", email="manikonda@outlook.com" },
 ]
@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
 "numpy",
-"mtflib==1.5.1",
+"mtflib==1.5.2",
 "matplotlib",
 "pandas",
 ]
@@ -34,6 +34,7 @@ dev = [
 "jupytext",
 "nbconvert",
 "ipykernel",
+"pandas-stubs",
 ]
 benchmark = [
 "matplotlib",
@@ -60,3 +61,14 @@ select = ["E", "F", "I"]
 
 [tool.ruff.format]
 preview = true
+
+[tool.mypy]
+[[tool.mypy.overrides]]
+module = [
+    "mpi4py",
+    "mpi4py.*",
+    "mtflib",
+    "mtflib.*"
+]
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]

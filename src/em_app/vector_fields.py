@@ -19,7 +19,7 @@ try:
 except ImportError:
     _MTFLIB_AVAILABLE = False
     print("Warning: mtflib not found. Some functionality may be limited.")
-    mtf = None  # To avoid NameError if used later
+    mtf = None  # type: ignore # To avoid NameError if used later
 
 # # Placeholder imports for external libraries referenced in original code
 # try:
@@ -154,7 +154,7 @@ class Vector:
             Vector: A new Vector object representing the difference.
         """
         if isinstance(other, Vector):
-            return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+            return type(self)(self.x - other.x, self.y - other.y, self.z - other.z)
         raise TypeError(
             f"unsupported operand type(s) for -: 'Vector' and '{type(other).__name__}'"
         )
@@ -172,7 +172,7 @@ class Vector:
         if isinstance(other, (float, int)) or (
             _MTFLIB_AVAILABLE and isinstance(other, mtf)
         ):
-            return Vector(self.x * other, self.y * other, self.z * other)
+            return type(self)(self.x * other, self.y * other, self.z * other)
         raise TypeError(
             f"unsupported operand type(s) for *: 'Vector' and '{type(other).__name__}'"
         )
@@ -241,7 +241,7 @@ class Vector:
         y_component = self.z * other.x - self.x * other.z
         z_component = self.x * other.y - self.y * other.x
 
-        return Vector(x_component, y_component, z_component)
+        return type(self)(x_component, y_component, z_component)
 
     def norm(self):
         """
@@ -661,6 +661,11 @@ class VectorField:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
 
+        # Ensure data is real for plotting
+        numerical_points = numerical_points.real
+        numerical_vectors = numerical_vectors.real
+        magnitudes = magnitudes.real
+
         x = numerical_points[:, 0]
         y = numerical_points[:, 1]
         z = numerical_points[:, 2]
@@ -710,6 +715,10 @@ class VectorField:
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
+
+        # Ensure data is real for plotting
+        numerical_points = numerical_points.real
+        numerical_vectors = numerical_vectors.real
 
         x = numerical_points[:, 0]
         y = numerical_points[:, 1]
