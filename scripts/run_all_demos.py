@@ -142,7 +142,10 @@ def run_demos():
             error_msg = "jupytext not found" if "jupytext" in str(e) else str(e)
             print(f"    ✗ FAILED - {demo_duration:.2f}s, Error: {error_msg}")
             if "jupytext" in str(e):
-                print("      Install with: pip install jupytext")
+                print(
+                    "      Install with: uv pip install jupytext "
+                    "(or: pip install jupytext)"
+                )
                 break
         except Exception as e:
             demo_duration = time.time() - demo_start_time
@@ -177,7 +180,7 @@ def move_temp_files_to_output(script_path, wrapper_script, demo_output_dir, demo
 
 def create_matplotlib_wrapper(original_script, output_dir, demo_name):
     """Creates a wrapper to save matplotlib plots."""
-    wrapper_content = f'''
+    wrapper_content = f"""
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -214,7 +217,7 @@ except Exception as e:
 
 if plt.get_fignums():
     save_figure_as_png()
-'''
+"""
     wrapper_path = original_script + "_wrapper_temp.py"
     with open(wrapper_path, "w") as f:
         f.write(wrapper_content)

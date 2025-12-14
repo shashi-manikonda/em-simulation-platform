@@ -35,6 +35,9 @@ dev = [
 "nbconvert",
 "ipykernel",
 "pandas-stubs",
+"pre-commit",
+"ruff",
+"mypy",
 ]
 benchmark = [
 "matplotlib",
@@ -63,6 +66,7 @@ select = ["E", "F", "I"]
 preview = true
 
 [tool.mypy]
+exclude = ["benchmarks/", "runoutput/"]
 [[tool.mypy.overrides]]
 module = [
     "mpi4py",

@@ -29,7 +29,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # Install the package in editable mode with all development dependencies
-pip install -e .[dev,benchmark]
+uv pip install -e .[dev,benchmark]
 ```
 
 The ``[dev]`` extra includes dependencies for running tests and building the documentation. The ``[benchmark]`` extra includes dependencies for running the benchmark scripts.

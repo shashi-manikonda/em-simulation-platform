@@ -1,10 +1,9 @@
 import numpy as np
 import pytest
-from mtflib import mtf
-
 from em_app.solvers import calculate_b_field, mu_0_4pi
 from em_app.sources import RingCoil
 from em_app.vector_fields import FieldVector
+from mtflib import mtf
 
 # Global settings for tests
 MAX_ORDER = 5

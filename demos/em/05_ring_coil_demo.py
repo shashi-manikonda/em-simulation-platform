@@ -3,10 +3,9 @@ import numpy as np
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from mtflib import mtf
-
 from em_app.solvers import Backend, calculate_b_field
 from em_app.sources import RingCoil
+from mtflib import mtf
 
 # Ensure MTF is initialized with enough dimensions (4 needed for parameterization 'u')
 mtf.initialize_mtf(max_order=4, max_dimension=4)

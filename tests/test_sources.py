@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
-from mtflib import mtf
-
 from em_app.sources import RectangularCoil, RingCoil
+from mtflib import mtf
 
 # Global settings for tests
 MAX_ORDER = 5

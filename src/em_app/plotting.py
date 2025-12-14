@@ -169,11 +169,28 @@ def plot_2d_field(
 ):
     """
     Plots a vector field on a 2D plane.
+
+    Args:
+        coil_instance: The coil object to calculate the field from.
+        field_component (str): Component to plot ('x', 'y', 'z', or 'norm').
+        plane (str): Plane to plot on ('xy', 'yz', or 'xz').
+        center (np.ndarray, optional): Center point of the plot. Defaults to
+            coil center.
+        normal (np.ndarray, optional): Normal vector for custom plane.
+        size_a (float, optional): Size along the first axis of the plane.
+        size_b (float, optional): Size along the second axis of the plane.
+        num_points_a (int): Grid points along first axis.
+        num_points_b (int): Grid points along second axis.
+        plot_type (str): Type of plot ('heatmap', 'quiver', 'streamline').
+        ax (matplotlib.axes.Axes, optional): Matplotlib axis to plot on.
+        title (str): Plot title.
+        offset_from_center (float): Offset from the center along the normal.
+        **kwargs: Additional arguments passed to the plotting function.
     """
     if field_component not in ["x", "y", "z", "norm"]:
         raise ValueError("field_component must be 'x', 'y', 'z', or 'norm'.")
-    if plot_type not in ["quiver", "streamline", "heatmap"]:
-        raise ValueError("plot_type must be 'quiver', 'streamline', or 'heatmap'.")
+        if plot_type not in ["quiver", "streamline", "heatmap"]:
+            raise ValueError("plot_type must be 'quiver', 'streamline', or 'heatmap'.")
 
     # Determine the plane and default center
     if center is None:
@@ -250,15 +267,14 @@ def plot_2d_field(
             )
     else:
         # Generate grid for a custom plane
-        normal = normal / np.linalg.norm(normal)
-        if np.allclose(normal, np.array([0, 0, 1])) or np.allclose(
-            normal, np.array([0, 0, -1])
-        ):
+        assert normal is not None
+        n = normal / np.linalg.norm(normal)
+        if np.allclose(n, np.array([0, 0, 1])) or np.allclose(n, np.array([0, 0, -1])):
             u = np.array([1, 0, 0])
         else:
-            u = np.cross(normal, np.array([0, 0, 1]))
+            u = np.cross(n, np.array([0, 0, 1]))
             u = u / np.linalg.norm(u)
-        v = np.cross(normal, u)
+        v = np.cross(n, u)
 
         a_coords = np.linspace(-size_a / 2, size_a / 2, num_points_a)
         b_coords = np.linspace(-size_b / 2, size_b / 2, num_points_b)
@@ -267,7 +283,7 @@ def plot_2d_field(
         field_points = np.zeros((num_points_a * num_points_b, 3))
         for i in range(A.shape[0]):
             for j in range(A.shape[1]):
-                point = center + offset_from_center * normal + A[i, j] * u + B[i, j] * v
+                point = center + offset_from_center * n + A[i, j] * u + B[i, j] * v
                 field_points[i * num_points_b + j] = point
 
     vector_field = calculate_b_field(coil_instance, field_points=field_points)
