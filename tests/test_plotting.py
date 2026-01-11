@@ -18,8 +18,8 @@ MAX_DIMENSION = 4
 ETOL = 1e-20
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_module():
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_figures():
     yield
     plt.close("all")
 
