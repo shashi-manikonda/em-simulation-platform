@@ -3,7 +3,7 @@
 Theory and Algorithms
 =====================
 
-This section provides a theoretical background on the computational methods used in the ``em-app`` package. It covers the core algorithm for magnetic field calculation, the role of the ``mtflib`` library in multipole expansions, and the fundamental principles from Maxwell's equations.
+This section provides a theoretical background on the computational methods used in the ``em-app`` package. It covers the core algorithm for magnetic field calculation, the role of the ``sandalwood`` library in multipole expansions, and the fundamental principles from Maxwell's equations.
 
 Core Algorithm: The Biot-Savart Law
 ------------------------------------
@@ -23,12 +23,12 @@ where:
 
 In ``em-app``, complex current sources (like ``RingCoil`` or ``RectangularCoil``) are discretized into a finite number of straight-line segments. The total magnetic field is then calculated by summing the contributions from each segment, approximating the integral numerically.
 
-Multipole Expansion using ``mtflib``
+Multipole Expansion using ``sandalwood``
 --------------------------------------
 
 For points far from the source, calculating the magnetic field using the full Biot-Savart law can be computationally expensive. In these cases, a multipole expansion provides an accurate and efficient approximation. This expansion represents the complex magnetic field as a sum of simpler fields arising from multipoles (monopole, dipole, quadrupole, etc.).
 
-The ``em-app`` package leverages the ``mtflib`` library to facilitate these calculations. ``mtflib`` allows for the representation of physical quantities, such as vector components and positions, as multivariate Taylor series objects. When operations are performed on these objects, the result is also a Taylor series.
+The ``em-app`` package leverages the ``sandalwood`` library to facilitate these calculations. ``sandalwood`` allows for the representation of physical quantities, such as vector components and positions, as multivariate Taylor series objects. When operations are performed on these objects, the result is also a Taylor series.
 
 This has two main advantages:
 

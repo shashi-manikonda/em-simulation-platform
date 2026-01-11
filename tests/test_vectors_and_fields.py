@@ -1,22 +1,12 @@
 import numpy as np
 import pytest
 from em_app.vector_fields import FieldVector, VectorField
-from mtflib import mtf
+from sandalwood import mtf
 
 # Global settings for tests
 MAX_ORDER = 5
 MAX_DIMENSION = 4
 ETOL = 1e-20
-
-
-@pytest.fixture(scope="function", autouse=True)
-def setup_function():
-    mtf.initialize_mtf(max_order=MAX_ORDER, max_dimension=MAX_DIMENSION)
-    mtf.set_etol(ETOL)
-    global_dim = mtf.get_max_dimension()
-    exponent_zero = tuple([0] * global_dim)
-    yield global_dim, exponent_zero
-    mtf._INITIALIZED = False
 
 
 def test_fieldvector_initialization():
@@ -38,7 +28,7 @@ def test_fieldvector_initialization():
         fieldvector_mtf = FieldVector(x_mtf, y_mtf, z_mtf)
         assert fieldvector_mtf.is_mtf()
     except ImportError:
-        pytest.skip("mtflib not installed, skipping MTF test.")
+        pytest.skip("sandalwood not installed, skipping MTF test.")
 
 
 def test_vectorfield_magnitude():

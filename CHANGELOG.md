@@ -58,6 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Release Process**: The release process is now partially automated. Pushing a version tag triggers the PyPI publish workflow.
 
 ### Fixed
-- **CI Build Failure**: Resolved CI failures by removing the unsupported Python 3.13 from the test matrix and pinning the `mtflib` dependency to `v1.5.1`.
+- **CI Build Failure**: Resolved CI failures by removing the unsupported Python 3.13 from the test matrix and pinning the `sandalwood` dependency to `v1.5.1`.
 - **Documentation Build Script**: Corrected a path issue in `docs/build_docs.sh` that was causing CI failures.
 - **Plotting TypeError**: Fixed a `TypeError` in `em_app/plotting.py` that occurred when generating heatmaps with complex number data.

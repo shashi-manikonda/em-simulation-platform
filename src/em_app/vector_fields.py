@@ -2,22 +2,22 @@
 Vector and Vector Field representations.
 
 This module provides classes for representing 3D vectors and vector fields,
-with support for numerical data and `mtflib` Multivariate Taylor Functions (MTFs).
+with support for numerical data and `sandalwood` Multivariate Taylor Functions (MTFs).
 It includes classes like Vector, FieldVector, VectorField, and VectorFieldGrid.
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Try to import mtflib. The code will still function with numerical data
+# Try to import sandalwood. The code will still function with numerical data
 # even if this import fails.
 try:
-    from mtflib import mtf
+    from sandalwood import mtf
 
-    _MTFLIB_AVAILABLE = True
+    _SANDALWOOD_AVAILABLE = True
 except ImportError:
-    _MTFLIB_AVAILABLE = False
-    print("Warning: mtflib not found. Some functionality may be limited.")
+    _SANDALWOOD_AVAILABLE = False
+    print("Warning: sandalwood not found. Some functionality may be limited.")
     mtf = None  # type: ignore # To avoid NameError if used later
 
 # # Placeholder imports for external libraries referenced in original code
@@ -169,7 +169,7 @@ class Vector:
             Vector: A new Vector object with scaled components.
         """
         if isinstance(other, (float, int)) or (
-            _MTFLIB_AVAILABLE and isinstance(other, mtf)
+            _SANDALWOOD_AVAILABLE and isinstance(other, mtf)
         ):
             return type(self)(self.x * other, self.y * other, self.z * other)
         raise TypeError(
@@ -250,8 +250,12 @@ class Vector:
             float or mtf.MultivariateTaylorFunction: The scalar magnitude.
         """
         squared_norm = self.dot(self)
-        if _MTFLIB_AVAILABLE and isinstance(squared_norm, mtf):
-            return mtf.sqrt(squared_norm)
+        if _SANDALWOOD_AVAILABLE and isinstance(squared_norm, mtf):
+            # Regularize if the constant part is too small to avoid COSY crash
+            # or singularity in sqrt.
+            if abs(squared_norm.get_constant()) < 1e-18:
+                return (squared_norm + 1e-18).sqrt()
+            return squared_norm.sqrt()
         else:
             return np.sqrt(squared_norm)
 
@@ -262,7 +266,7 @@ class Vector:
         Returns:
             bool: True if any component is an MTF, False otherwise.
         """
-        if not _MTFLIB_AVAILABLE:
+        if not _SANDALWOOD_AVAILABLE:
             return False
         return any(isinstance(comp, mtf) for comp in [self.x, self.y, self.z])
 
@@ -276,7 +280,7 @@ class Vector:
         """
         comps = []
         for comp in [self.x, self.y, self.z]:
-            if _MTFLIB_AVAILABLE and isinstance(comp, mtf):
+            if _SANDALWOOD_AVAILABLE and isinstance(comp, mtf):
                 # If it's an MTF, get its constant part
                 comps.append(
                     comp.extract_coefficient(tuple([0] * comp.dimension)).item()
@@ -398,7 +402,7 @@ class FieldVector(Vector):
         for comp in [self.x, self.y, self.z]:
             if isinstance(comp, (int, float)):
                 comps.append(comp)
-            elif _MTFLIB_AVAILABLE and isinstance(comp, mtf):
+            elif _SANDALWOOD_AVAILABLE and isinstance(comp, mtf):
                 comps.append(
                     comp.extract_coefficient(tuple([0] * comp.dimension)).item()
                 )
@@ -420,7 +424,7 @@ class FieldVector(Vector):
         \mathbf{j} + (\frac{\partial B_y}{\partial x} -
         \frac{\partial B_x}{\partial y}) \mathbf{k}$
 
-        This method uses the `derivative` method from `mtflib` to compute the
+        This method uses the `derivative` method from `sandalwood` to compute the
         partial derivatives.
 
         Returns:
@@ -443,7 +447,7 @@ class FieldVector(Vector):
         $\nabla \cdot \mathbf{B} = \frac{\partial B_x}{\partial x} +
         \frac{\partial B_y}{\partial y} + \frac{\partial B_z}{\partial z}$
 
-        This method uses the `derivative` method from `mtflib` to compute the
+        This method uses the `derivative` method from `sandalwood` to compute the
         partial derivatives and then sums the resulting MTF objects.
 
         Returns:
@@ -569,9 +573,9 @@ class VectorField:
             return self.field_points, self._vectors_numerical
 
         elif self._vectors_mtf is not None:
-            if not _MTFLIB_AVAILABLE:
+            if not _SANDALWOOD_AVAILABLE:
                 raise RuntimeError(
-                    "mtflib is required to evaluate FieldVector objects."
+                    "sandalwood is required to evaluate FieldVector objects."
                 )
 
             # Evaluate MTF FieldVectors to get numerical vectors
@@ -626,19 +630,17 @@ class VectorField:
             if self._vectors_numerical is not None:
                 self._magnitude = np.linalg.norm(self._vectors_numerical, axis=1)
             elif self._vectors_mtf is not None:
-                if not _MTFLIB_AVAILABLE:
-                    raise RuntimeError(
-                        "mtflib is required to get magnitude of FieldVector objects."
-                    )
                 magnitudes = []
                 for v in self._vectors_mtf:
-                    norm = v.norm()
-                    if v.is_mtf():
-                        magnitudes.append(
-                            norm.extract_coefficient(tuple([0] * v.x.dimension)).item()
-                        )
+                    # For numerical plotting/analysis, we just need the constant
+                    # part magnitude
+                    if _SANDALWOOD_AVAILABLE and v.is_mtf():
+                        vx0 = np.real(v.x.get_constant())
+                        vy0 = np.real(v.y.get_constant())
+                        vz0 = np.real(v.z.get_constant())
+                        magnitudes.append(np.sqrt(vx0**2 + vy0**2 + vz0**2))
                     else:
-                        magnitudes.append(norm)
+                        magnitudes.append(v.norm())
                 self._magnitude = np.array(magnitudes)
         return self._magnitude
 
@@ -880,8 +882,8 @@ if __name__ == "__main__":
     print("Plotting the 3D B-field using scatter()...")
     vector_field_num.scatter(title="3D B-field Scatter Plot")
 
-    # 2. Create dummy data with mtflib (if available)
-    if _MTFLIB_AVAILABLE:
+    # 2. Create dummy data with sandalwood (if available)
+    if _SANDALWOOD_AVAILABLE:
         print("\nCreating a VectorField object with a NumPy array of MTF objects...")
         mtf.initialize_mtf(max_order=2, max_dimension=3)
 

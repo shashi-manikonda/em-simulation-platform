@@ -8,7 +8,7 @@ version = "0.2.7"
 authors = [
     { name="Shashikant Manikonda", email="manikonda@outlook.com" },
 ]
-description = "A package for Electromagnetic applications using MTFLibrary."
+description = "A package for Electromagnetic applications using sandalwood."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.9"
@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
 "numpy",
-"mtflib==1.5.2",
+"sandalwood",
 "matplotlib",
 "pandas",
 ]
@@ -71,8 +71,8 @@ exclude = ["benchmarks/", "runoutput/"]
 module = [
     "mpi4py",
     "mpi4py.*",
-    "mtflib",
-    "mtflib.*"
+    "sandalwood",
+    "sandalwood.*"
 ]
 ignore_missing_imports = true
 disable_error_code = ["import-untyped"]

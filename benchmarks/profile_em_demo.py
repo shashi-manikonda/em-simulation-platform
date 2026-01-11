@@ -6,7 +6,7 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from mtflib import MultivariateTaylorFunction
+from sandalwood import MultivariateTaylorFunction
 
 from em_app.solvers import mpi_biot_savart, mpi_installed, serial_biot_savart
 from em_app.sources import RingCoil
@@ -199,7 +199,7 @@ def profile_plotting(coils, field_points, backend_name):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Performance profiling for mtflib EM demos."
+        description="Performance profiling for sandalwood EM demos."
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

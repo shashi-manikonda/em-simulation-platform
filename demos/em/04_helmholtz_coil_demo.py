@@ -3,7 +3,7 @@ import numpy as np
 from em_app.solvers import calculate_b_field
 from em_app.sources import RingCoil
 from em_app.vector_fields import VectorField
-from mtflib import mtf
+from sandalwood import mtf
 
 # Initialize the MTF library
 # The 4th dimension is used for numerical integration along the segments.

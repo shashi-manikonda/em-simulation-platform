@@ -6,7 +6,7 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from mtflib import mtf
+from sandalwood import mtf
 
 from .solvers import calculate_b_field
 
@@ -189,8 +189,8 @@ def plot_2d_field(
     """
     if field_component not in ["x", "y", "z", "norm"]:
         raise ValueError("field_component must be 'x', 'y', 'z', or 'norm'.")
-        if plot_type not in ["quiver", "streamline", "heatmap"]:
-            raise ValueError("plot_type must be 'quiver', 'streamline', or 'heatmap'.")
+    if plot_type not in ["quiver", "streamline", "heatmap"]:
+        raise ValueError("plot_type must be 'quiver', 'streamline', or 'heatmap'.")
 
     # Determine the plane and default center
     if center is None:

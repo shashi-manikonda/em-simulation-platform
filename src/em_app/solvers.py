@@ -1,18 +1,13 @@
 from enum import Enum
 
 import numpy as np
-from mtflib import MultivariateTaylorFunction
-from mtflib.backends.c import mtf_c_backend  # type: ignore
-from mtflib.backends.cpp import mtf_cpp  # type: ignore
+from sandalwood import MultivariateTaylorFunction
 
 from .vector_fields import FieldVector, VectorField
 
 
 class Backend(str, Enum):
     PYTHON = "python"
-    CPP = "cpp"
-    C = "c"
-    CPP_V2 = "cpp_v2"
     MPI = "mpi"
 
 
@@ -139,7 +134,7 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
                 for j in range(r_squared.shape[1]):
                     val = r_squared[i, j]
                     # Extract constant term safely
-                    const_term = val.extract_coefficient(tuple([0] * val.dimension))
+                    const_term = val.get_constant()
                     # Check magnitude
                     if abs(const_term) < 1e-18:
                         r_squared[i, j] += 1e-18
@@ -167,56 +162,6 @@ def _python_biot_savart_core(source_points, dl_vectors, field_points, order=None
                 if isinstance(B_field[i, j], MultivariateTaylorFunction):
                     B_field[i, j] = B_field[i, j].truncate(order)
     return B_field
-
-
-def _cpp_biot_savart_core(source_points, dl_vectors, field_points, order=None):
-    """
-    Core vectorized Biot-Savart calculation using C++ backend.
-    """
-    all_exponents = []
-    all_coeffs = []
-    shapes = []
-
-    def process_points(points):
-        shapes.append(len(points))
-        point_shapes = []
-        for p in points:
-            for item in p:
-                if not isinstance(item, MultivariateTaylorFunction):
-                    item = MultivariateTaylorFunction.from_constant(item)
-                all_exponents.append(item.exponents)
-                all_coeffs.append(item.coeffs)
-                point_shapes.append(item.exponents.shape[0])
-        return point_shapes
-
-    sp_shapes = process_points(source_points)
-    dl_shapes = process_points(dl_vectors)
-    fp_shapes = process_points(field_points)
-
-    dimension = MultivariateTaylorFunction.get_max_dimension()
-
-    shapes = np.array(
-        [len(source_points), len(dl_vectors), len(field_points), dimension]
-        + sp_shapes
-        + dl_shapes
-        + fp_shapes,
-        dtype=np.int32,
-    )
-    all_exponents = np.vstack(all_exponents)
-    all_coeffs = np.concatenate(all_coeffs)
-
-    b_field_dicts = mtf_cpp.biot_savart_from_flat_numpy(
-        all_exponents, all_coeffs, shapes
-    )
-
-    b_field_py = []
-    for b_vec_dicts in b_field_dicts:
-        b_field_py.append([
-            MultivariateTaylorFunction(coefficients=(d["exponents"], d["coeffs"]))
-            for d in b_vec_dicts
-        ])
-
-    return np.array(b_field_py)
 
 
 def numpy_biot_savart(
@@ -370,69 +315,6 @@ def mpi_biot_savart(
         return None
 
 
-def _c_biot_savart_core(source_points, dl_vectors, field_points, order=None):
-    """
-    Core vectorized Biot-Savart calculation using C backend.
-    """
-    all_exponents = []
-    all_coeffs = []
-    shapes = []
-
-    def process_points(points):
-        shapes.append(len(points))
-        point_shapes = []
-        for p in points:
-            for item in p:
-                if not isinstance(item, MultivariateTaylorFunction):
-                    item = MultivariateTaylorFunction.from_constant(item)
-                all_exponents.append(item.exponents)
-                all_coeffs.append(item.coeffs)
-                point_shapes.append(item.exponents.shape[0])
-        return point_shapes
-
-    sp_shapes = process_points(source_points)
-    dl_shapes = process_points(dl_vectors)
-    fp_shapes = process_points(field_points)
-
-    dimension = MultivariateTaylorFunction.get_max_dimension()
-
-    shapes = np.array(
-        [len(source_points), len(dl_vectors), len(field_points), dimension]
-        + sp_shapes
-        + dl_shapes
-        + fp_shapes,
-        dtype=np.int32,
-    )
-    all_exponents = np.vstack(all_exponents)
-    all_coeffs = np.concatenate(all_coeffs)
-
-    result_dict = mtf_c_backend.biot_savart_c_from_flat_numpy(
-        all_exponents, all_coeffs, shapes
-    )
-
-    # Reconstruct MTF objects from the result
-    res_exps = result_dict["exponents"]
-    res_coeffs = result_dict["coeffs"]
-    res_shapes = result_dict["shapes"]
-
-    n_field_points = res_shapes[0]
-    b_field_py = []
-    current_offset = 0
-    shape_idx = 1
-    for i in range(n_field_points):
-        vec = []
-        for j in range(3):
-            n_terms = res_shapes[shape_idx]
-            exps = res_exps[current_offset : current_offset + n_terms]
-            coeffs = res_coeffs[current_offset : current_offset + n_terms]
-            vec.append(MultivariateTaylorFunction(coefficients=(exps, coeffs)))
-            current_offset += n_terms
-            shape_idx += 1
-        b_field_py.append(vec)
-
-    return np.array(b_field_py)
-
-
 def serial_biot_savart(
     element_centers,
     element_lengths,
@@ -518,11 +400,6 @@ def serial_biot_savart(
     if isinstance(backend, str):
         backend = Backend(backend)
 
-    if backend == Backend.CPP:
-        return _cpp_biot_savart_core(source_points, dl_vectors, field_points, order)
-    elif backend == Backend.C:
-        return _c_biot_savart_core(source_points, dl_vectors, field_points, order)
-    elif backend == Backend.CPP_V2:
-        return _cpp_biot_savart_core(source_points, dl_vectors, field_points, order)
-    else:  # python
-        return _python_biot_savart_core(source_points, dl_vectors, field_points, order)
+    # All backends in sandalwood route through the same Python implementation,
+    # which may use COSY or Numba acceleration internally.
+    return _python_biot_savart_core(source_points, dl_vectors, field_points, order)

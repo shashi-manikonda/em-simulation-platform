@@ -2,7 +2,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from mtflib import mtf
 
 matplotlib.use("Agg")  # Use a non-interactive backend for testing
 
@@ -19,15 +18,10 @@ MAX_DIMENSION = 4
 ETOL = 1e-20
 
 
-@pytest.fixture(scope="function", autouse=True)
-def setup_function():
-    mtf.initialize_mtf(max_order=MAX_ORDER, max_dimension=MAX_DIMENSION)
-    mtf.set_etol(ETOL)
-    global_dim = mtf.get_max_dimension()
-    exponent_zero = tuple([0] * global_dim)
-    yield global_dim, exponent_zero
-    mtf._INITIALIZED = False
-    plt.close("all")  # Ensure figures are closed after each test
+@pytest.fixture(scope="module", autouse=True)
+def setup_module():
+    yield
+    plt.close("all")
 
 
 # Fixture for a simple coil to be used in tests

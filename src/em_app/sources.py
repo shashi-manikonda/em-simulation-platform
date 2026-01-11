@@ -3,7 +3,7 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-from mtflib import mtf
+from sandalwood import mtf
 
 from .vector_fields import Vector
 

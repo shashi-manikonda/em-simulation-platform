@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-from mtflib import MultivariateTaylorFunction
+from sandalwood import MultivariateTaylorFunction
 
 from em_app.solvers import serial_biot_savart
 # from em_app.sources import current_ring

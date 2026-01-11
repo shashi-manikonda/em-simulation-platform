@@ -79,7 +79,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from em_app.sources import RingCoil
 from em_app.solvers import calculate_b_field, Backend
-from mtflib import mtf
+from sandalwood import mtf
 
 # Initialize the MTF library (Optional - defaults to Order 4, Dim 3 if omitted)
 # mtf.initialize_mtf(max_order=1, max_dimension=4)
