@@ -552,7 +552,7 @@ class VectorField:
             self._vectors_mtf = None
 
         if field_points is not None:
-            field_points = np.array(field_points, dtype=object)
+            field_points = np.array(field_points)
         self.field_points = field_points
         self._magnitude = None
 
@@ -568,8 +568,14 @@ class VectorField:
             # Data is already numerical
             if not isinstance(self.field_points, np.ndarray):
                 raise TypeError(
-                    "Numerical vector field data requires numerical field_points."
+                    "Numerical vector field data require numerical field_points."
                 )
+            # Ensure points are numerical (not object dtype) for numpy functions
+            if self.field_points.dtype == object:
+                try:
+                    return self.field_points.astype(float), self._vectors_numerical
+                except (TypeError, ValueError):
+                    pass
             return self.field_points, self._vectors_numerical
 
         elif self._vectors_mtf is not None:
