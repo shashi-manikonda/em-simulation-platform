@@ -1,5 +1,6 @@
 import numpy as np
-from em_app.solvers import calculate_b_field, mu_0_4pi
+import pytest
+from em_app.solvers import Backend, calculate_b_field, mu_0_4pi
 from em_app.sources import RingCoil
 from em_app.vector_fields import FieldVector
 from sandalwood import mtf
@@ -10,7 +11,31 @@ MAX_DIMENSION = 4
 ETOL = 1e-20
 
 
-def test_biot_savart_ring_on_axis():
+# Determine available backends
+AVAILABLE_BACKENDS = [Backend.PYTHON]
+
+# Check for COSY availability (usually available if sandalwood is installed)
+try:
+    from sandalwood.backends.cosy import cosy_backend
+
+    if cosy_backend.COSY_AVAILABLE:
+        AVAILABLE_BACKENDS.append(Backend.COSY)
+except ImportError:
+    pass
+
+# Check for MPI availability
+try:
+    import mpi4py  # noqa: F401
+
+    AVAILABLE_BACKENDS.append(Backend.MPI)
+    if Backend.COSY in AVAILABLE_BACKENDS:
+        AVAILABLE_BACKENDS.append(Backend.MPI_COSY)
+except ImportError:
+    pass
+
+
+@pytest.mark.parametrize("backend", AVAILABLE_BACKENDS)
+def test_biot_savart_ring_on_axis(backend):
     """
     Test the magnetic field calculation on the axis of a circular current loop.
 
@@ -32,8 +57,8 @@ def test_biot_savart_ring_on_axis():
     z_points = np.linspace(-2, 2, 5)
     field_points = np.array([[0, 0, z] for z in z_points])
 
-    # Calculate the magnetic field using the module
-    b_field = calculate_b_field(ring_coil, field_points)
+    # Calculate the magnetic field using the module and specified backend
+    b_field = calculate_b_field(ring_coil, field_points, backend=backend)
     b_vectors_objects = b_field._vectors_mtf
 
     # Convert the list of Bvec objects to a single numerical NumPy array
@@ -46,6 +71,7 @@ def test_biot_savart_ring_on_axis():
     b_z_analytical = (mu_0 * current * radius**2) / (
         2 * (radius**2 + z_points**2) ** 1.5
     )
+    print(f"Backend: {backend}")
     print("Numerical B-field (z-component):", np.real(b_vectors_numerical[:, 2]))
     print("Analytical B-field (z-component):", b_z_analytical)
 
@@ -61,7 +87,8 @@ def test_biot_savart_ring_on_axis():
     assert np.allclose(b_vectors_numerical[:, 1], 0, atol=1e-12)
 
 
-def test_biot_savart_with_mtf():
+@pytest.mark.parametrize("backend", AVAILABLE_BACKENDS)
+def test_biot_savart_with_mtf(backend):
     """
     Test the Biot-Savart calculation when a current is a MTF.
 
@@ -82,7 +109,7 @@ def test_biot_savart_with_mtf():
     ring_coil = RingCoil(current_mtf, radius, num_segments, center, axis)
 
     # Calculate the B-field
-    b_field = calculate_b_field(ring_coil, field_point)
+    b_field = calculate_b_field(ring_coil, field_point, backend=backend)
     b_vectors_mtf = b_field._vectors_mtf
 
     # Check if the result is an array of FieldVector objects

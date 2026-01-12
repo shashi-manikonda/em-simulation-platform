@@ -26,6 +26,7 @@ dependencies = [
 "sandalwood",
 "matplotlib",
 "pandas",
+"mpi4py",
 ]
 
 [project.optional-dependencies]
@@ -41,7 +42,6 @@ dev = [
 ]
 benchmark = [
 "matplotlib",
-"mpi4py",
 ]
 docs = [
 "sphinx",

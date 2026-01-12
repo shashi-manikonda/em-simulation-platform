@@ -9,6 +9,8 @@ from .vector_fields import FieldVector, VectorField
 class Backend(str, Enum):
     PYTHON = "python"
     MPI = "mpi"
+    COSY = "cosy"
+    MPI_COSY = "mpi_cosy"
 
 
 def calculate_b_field(coil_instance, field_points, backend=Backend.PYTHON):
@@ -67,6 +69,15 @@ def calculate_b_field(coil_instance, field_points, backend=Backend.PYTHON):
             element_lengths=coil_instance.segment_lengths,
             element_directions=element_directions_np,
             field_points=field_points,
+            backend=Backend.PYTHON,
+        )
+    elif backend == Backend.MPI_COSY:
+        b_field_vectors = mpi_biot_savart(
+            element_centers=element_centers_np,
+            element_lengths=coil_instance.segment_lengths,
+            element_directions=element_directions_np,
+            field_points=field_points,
+            backend=Backend.COSY,
         )
     else:
         b_field_vectors = serial_biot_savart(
@@ -219,7 +230,12 @@ def numpy_biot_savart(
 
 
 def mpi_biot_savart(
-    element_centers, element_lengths, element_directions, field_points, order=None
+    element_centers,
+    element_lengths,
+    element_directions,
+    field_points,
+    order=None,
+    backend=Backend.PYTHON,
 ):
     """
     Parallel Biot-Savart calculation using mpi4py with element inputs.
@@ -304,6 +320,7 @@ def mpi_biot_savart(
         element_directions,
         local_field_points,
         order=order,
+        backend=backend,
     )
 
     all_B_field_chunks = comm.gather(local_B_field, root=0)
@@ -402,4 +419,80 @@ def serial_biot_savart(
 
     # All backends in sandalwood route through the same Python implementation,
     # which may use COSY or Numba acceleration internally.
+    if backend == Backend.COSY:
+        from sandalwood.backends.cosy.cosy_backend import (
+            CosyBackend,
+            CosyMtfData,
+        )
+
+        # Ensure initialized. Use order 1 if not provided, assuming verified/synced
+        # global state.
+        # For now, rely on previous init or re-init if needed
+        # (CosyBackend manager handles check).
+
+        # Check if initialized. smart upgrade.
+        existing_order = getattr(CosyBackend, "_order", 0)
+        existing_dim = getattr(CosyBackend, "_dim", 0)
+        initialized = getattr(CosyBackend, "_initialized", False)
+
+        # If order passed, we need at least that. If not passed, default to 1
+        # or keep existing if higher.
+        req_order = (
+            order
+            if order is not None
+            else (existing_order if existing_order > 0 else 1)
+        )
+        # We need at least 3 dimensions. Keep existing if larger.
+        req_dim = max(3, existing_dim)
+
+        if not initialized or existing_order < req_order or existing_dim < req_dim:
+            # Basic check to avoid redundant init calls which might clear memory
+            # But if order/dim insufficient, we must re-init!
+            CosyBackend.initialize(order=req_order, dim=req_dim)
+
+        dl_vectors = 0.5 * element_lengths[:, np.newaxis] * element_directions
+
+        pos_x = np.ascontiguousarray(field_points[:, 0])
+        pos_y = np.ascontiguousarray(field_points[:, 1])
+        pos_z = np.ascontiguousarray(field_points[:, 2])
+
+        src_x = np.ascontiguousarray(element_centers[:, 0])
+        src_y = np.ascontiguousarray(element_centers[:, 1])
+        src_z = np.ascontiguousarray(element_centers[:, 2])
+
+        dl_x = np.ascontiguousarray(dl_vectors[:, 0])
+        dl_y = np.ascontiguousarray(dl_vectors[:, 1])
+        dl_z = np.ascontiguousarray(dl_vectors[:, 2])
+
+        bx, by, bz = CosyBackend.biot_savart_batch(
+            pos_x, pos_y, pos_z, src_x, src_y, src_z, dl_x, dl_y, dl_z
+        )
+
+        out_b = np.empty((len(pos_x), 3), dtype=object)
+        scale = mu_0_4pi
+
+        for i in range(len(pos_x)):
+            # Transfer ownership from CosyDA (bx[i]) to CosyMtfData
+            # to avoid double-free when objects go out of scope.
+
+            # X
+            idx_x = bx[i].idx
+            bx[i].owned = False
+            mtf_data_x = CosyMtfData(dimension=CosyBackend._dim, idx=idx_x, owned=True)
+            out_b[i, 0] = MultivariateTaylorFunction(mtf_data=mtf_data_x) * scale
+
+            # Y
+            idx_y = by[i].idx
+            by[i].owned = False
+            mtf_data_y = CosyMtfData(dimension=CosyBackend._dim, idx=idx_y, owned=True)
+            out_b[i, 1] = MultivariateTaylorFunction(mtf_data=mtf_data_y) * scale
+
+            # Z
+            idx_z = bz[i].idx
+            bz[i].owned = False
+            mtf_data_z = CosyMtfData(dimension=CosyBackend._dim, idx=idx_z, owned=True)
+            out_b[i, 2] = MultivariateTaylorFunction(mtf_data=mtf_data_z) * scale
+
+        return out_b
+
     return _python_biot_savart_core(source_points, dl_vectors, field_points, order)

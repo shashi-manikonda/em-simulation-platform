@@ -154,3 +154,51 @@ This will generate output files and plots in the `runoutput` directory.
 
 ## License
 MIT
+## Advanced Configuration: MPI and COSY Backend
+
+To leverage the high-performance Fortran COSY backend and MPI parallelization, additional setup is required.
+
+### 1. Prerequisites
+- **MPI Implementation**: Intel OneAPI MPI (recommended) or MPICH/OpenMPI.
+- **Fortran Compiler**: `ifx` (Intel) or `gfortran`.
+
+### 2. Environment Setup (Intel OneAPI)
+If using Intel OneAPI, you must initialize the environment variables before running any compilation or simulation commands:
+
+```bash
+source /opt/intel/oneapi/setvars.sh
+```
+
+### 3. Compiling the COSY Backend
+The COSY backend (provided by `sandalwood`) must be compiled manually if you plan to use `Backend.COSY` or `Backend.MPI_COSY`.
+
+```bash
+# Compile using the provided script (uses ifx by default if available)
+bash src/sandalwood/backends/cosy/compile_cosy.sh
+```
+*Note: If you make changes to the Fortran source code (`wrapper.f`), you must re-run this compilation script.*
+
+### 4. Setting up `mpi4py`
+`mpi4py` is required for `Backend.MPI` and `Backend.MPI_COSY`.
+
+**Intel OneAPI Users**:
+Installing `mpi4py` via pip can sometimes lead to runtime errors if the binary wheel cannot locate the Intel MPI libraries.
+- **Option A (Recommended if `libmpi.so` issues occur)**: Create a symlink to the active Intel runtime library:
+  ```bash
+  # Assuming standard OneAPI install path
+  virtual_env_lib=$(python -c "import sysconfig; print(sysconfig.get_path('stdlib'))")
+  ln -s /opt/intel/oneapi/mpi/latest/lib/libmpi.so $virtual_env_lib/../libmpi.so
+  ```
+- **Option B (Build from source)**: If you have compiler access (`mpicc`), reinstall from source:
+  ```bash
+  uv pip install --force-reinstall --no-binary=mpi4py mpi4py
+  ```
+
+### 5. Running with MPI
+To run simulations with MPI, use `mpirun` or `mpiexec`:
+
+```bash
+# Run a script on 4 processors
+mpirun -n 4 python demos/em/my_simulation.py
+```
+Ensure your script uses `Backend.MPI` or `Backend.MPI_COSY`.
