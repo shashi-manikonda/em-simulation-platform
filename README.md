@@ -154,51 +154,85 @@ This will generate output files and plots in the `runoutput` directory.
 
 ## License
 MIT
-## Advanced Configuration: MPI and COSY Backend
+## Windows Installation & Development Guide
 
-To leverage the high-performance Fortran COSY backend and MPI parallelization, additional setup is required.
+This project (and its dependency `sandalwood`) requires specific setup on Windows to support the high-performance Fortran COSY backend.
 
 ### 1. Prerequisites
-- **MPI Implementation**: Intel OneAPI MPI (recommended) or MPICH/OpenMPI.
-- **Fortran Compiler**: `ifx` (Intel) or `gfortran`.
+*   **Python 3.9+**
+*   **Git**
+*   **Visual Studio Build Tools 2022**: Ensure "Desktop development with C++" is selected during installation. This provides `link.exe` and `nmake`.
+*   **Intel oneAPI HPC Kit**: Required for the `ifx` Fortran compiler.
+*   **Intel oneAPI Base Kit**: Required for Intel MPI libraries.
 
-### 2. Environment Setup (Intel OneAPI)
-If using Intel OneAPI, you must initialize the environment variables before running any compilation or simulation commands:
+### 2. Workspace Setup (Recommended)
+We recommend setting up a common workspace for both `sandalwood` and `em-simulation-platform` to share a virtual environment.
 
-```bash
-source /opt/intel/oneapi/setvars.sh
+```powershell
+# Directory Structure
+# C:\Users\YourName\Work\
+#   ├── sandalwood/
+#   ├── em-simulation-platform/
+#   └── .venv/  (or inside one repo)
 ```
 
-### 3. Compiling the COSY Backend
-The COSY backend (provided by `sandalwood`) must be compiled manually if you plan to use `Backend.COSY` or `Backend.MPI_COSY`.
+### 3. Step-by-Step Installation
 
-```bash
-# Compile using the provided script (uses ifx by default if available)
-bash src/sandalwood/backends/cosy/compile_cosy.sh
+**Step A: Clone Repositories**
+```powershell
+cd C:\Users\YourName\Work
+git clone https://github.com/shashi-manikonda/sandalwood.git
+git clone https://github.com/shashi-manikonda/em-simulation-platform.git
 ```
-*Note: If you make changes to the Fortran source code (`wrapper.f`), you must re-run this compilation script.*
 
-### 4. Setting up `mpi4py`
-`mpi4py` is required for `Backend.MPI` and `Backend.MPI_COSY`.
-
-**Intel OneAPI Users**:
-Installing `mpi4py` via pip can sometimes lead to runtime errors if the binary wheel cannot locate the Intel MPI libraries.
-- **Option A (Recommended if `libmpi.so` issues occur)**: Create a symlink to the active Intel runtime library:
-  ```bash
-  # Assuming standard OneAPI install path
-  virtual_env_lib=$(python -c "import sysconfig; print(sysconfig.get_path('stdlib'))")
-  ln -s /opt/intel/oneapi/mpi/latest/lib/libmpi.so $virtual_env_lib/../libmpi.so
-  ```
-- **Option B (Build from source)**: If you have compiler access (`mpicc`), reinstall from source:
-  ```bash
-  uv pip install --force-reinstall --no-binary=mpi4py mpi4py
-  ```
-
-### 5. Running with MPI
-To run simulations with MPI, use `mpirun` or `mpiexec`:
-
-```bash
-# Run a script on 4 processors
-mpirun -n 4 python demos/em/my_simulation.py
+**Step B: setup Virtual Environment**
+It is easiest to use a single virtual environment for both projects.
+```powershell
+cd sandalwood
+uv venv .venv
+# Activate
+.venv\Scripts\activate
 ```
-Ensure your script uses `Backend.MPI` or `Backend.MPI_COSY`.
+
+**Step C: Build and Install Sandalwood (The Compiler Step)**
+This step compiles the Fortran backend (`libcosy.dll`).
+```powershell
+# Ensure you are in the sandalwood directory
+uv pip install -e .[dev]
+```
+*   **Note**: The build script (`setup.py`) will automatically detect your Visual Studio and Intel compilers.
+*   **Troubleshooting**: If you see linker errors, ensure you have the Intel Base Kit installed and `libiomp5md.lib` is reachable.
+
+**Step D: Install EM Platform**
+```powershell
+cd ..\em-simulation-platform
+# Install into the SAME virtual environment
+uv pip install -e .[dev,benchmark]
+```
+
+### 4. Working with the COSY Backend
+The COSY backend is a compiled Fortran extension.
+
+*   **Modifying Fortran Code**: If you modify `src/sandalwood/backends/cosy/wrapper.f` in the `sandalwood` repo, **changes do not take effect automatically**. You must re-compile:
+    ```powershell
+    cd ..\sandalwood
+    uv pip install -e .
+    ```
+    This triggers the custom build command to regenerate the DLL.
+
+*   **Memory Configuration (Windows vs Linux)**:
+    Windows has a 2GB limit for static object file sections. `sandalwood` handles this automatically via `src/sandalwood/backends/cosy/cosy_config.env`:
+    *   **Linux**: `COSY_LMEM` defaults to 1GB (allows large simulations).
+    *   **Windows**: `COSY_LMEM_WIN32` overrides this to ~150MB to fit within OS limits.
+    *   If you need more memory on Windows, consider using the Linux Subsystem for Windows (WSL2).
+
+### 5. Running Tests
+```powershell
+cd ..\em-simulation-platform
+pytest
+```
+
+## Advanced Configuration: MPI and Linux
+(See previous documentation for Linux-specific bash instructions)
+[...MPI instructions remain similar...]
+

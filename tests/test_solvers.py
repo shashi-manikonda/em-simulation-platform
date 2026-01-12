@@ -25,12 +25,16 @@ except ImportError:
 
 # Check for MPI availability
 try:
-    import mpi4py  # noqa: F401
+    import mpi4py
+    # Explicitly check if we can import MPI subsystem to catch runtime/dll errors early
+    from mpi4py import MPI  # noqa: F401
 
     AVAILABLE_BACKENDS.append(Backend.MPI)
     if Backend.COSY in AVAILABLE_BACKENDS:
         AVAILABLE_BACKENDS.append(Backend.MPI_COSY)
-except ImportError:
+except (ImportError, RuntimeError, OSError):
+    # mpi4py might import but fail to load DLLs (ImportError/OSError)
+    # or fail to initialize (RuntimeError)
     pass
 
 
