@@ -1,10 +1,10 @@
 # EM Demo Scripts
 
-This directory contains scripts that demonstrate the capabilities of the `em-app` package for electromagnetic field simulation and analysis.
+Here you will find a collection of demos that showcase the features and capabilities of the `Sandalwood` library and the `em_app`.
 
-## Running the Demos
+## Getting Started
 
-To run all the demos in the recommended order, execute the following command from the root of the project:
+To run these demos, you will need to have the `sandalwood` library and the `em_app` installed. Please refer to the [installation instructions](../README.md) for more details. To run all the demos in the recommended order, execute the following command from the root of the project:
 
 ```bash
 python run_all_demos.py

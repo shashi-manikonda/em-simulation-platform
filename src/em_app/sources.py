@@ -344,8 +344,8 @@ class RingCoil(Coil):
             num_segments (int): Number of segments for discretization.
             center_point (np.ndarray): (3,) array for the center coordinates.
             axis_direction (np.ndarray): (3,) array for the axis direction.
-            integration_var_index (int, optional): The index of the integration variable.
-                Defaults to None (uses max dimension).
+            integration_var_index (int, optional): The index of the integration
+                variable. Defaults to None (uses max dimension).
         """
         # Input validation
         if not isinstance(radius, (int, float)) or radius <= 0:
@@ -442,9 +442,14 @@ class RingCoil(Coil):
 
         for i in range(num_segments_ring):
             phi = (i + 0.5 + 0.5 * u) * d_phi
-            x_center = ring_radius * mtf.cos(phi)
-            y_center = ring_radius * mtf.sin(phi)
-            z_center = mtf.from_constant(0.0)
+            if use_mtf_for_segments:
+                x_center = ring_radius * mtf.cos(phi)
+                y_center = ring_radius * mtf.sin(phi)
+                z_center = mtf.from_constant(0.0)
+            else:
+                x_center = ring_radius * np.cos(phi)
+                y_center = ring_radius * np.sin(phi)
+                z_center = 0.0
 
             center_point = np.array([x_center, y_center, z_center], dtype=object)
             center_point_rotated = np.dot(rotation_align_z_axis, center_point)
@@ -453,19 +458,29 @@ class RingCoil(Coil):
 
             element_lengths_ring.append(ring_radius * d_phi)
 
-            direction_base = np.array(
-                [-mtf.sin(phi), mtf.cos(phi), mtf.from_constant(0.0)], dtype=object
-            )
+            if use_mtf_for_segments:
+                dx = -mtf.sin(phi)
+                dy = mtf.cos(phi)
+                dz = mtf.from_constant(0.0)
+            else:
+                dx = -np.sin(phi)
+                dy = np.cos(phi)
+                dz = 0.0
+
+            direction_base = np.array([dx, dy, dz], dtype=object)
             direction_rotated = np.dot(rotation_align_z_axis, direction_base)
             norm_mtf_squared = (
                 direction_rotated[0] ** 2
                 + direction_rotated[1] ** 2
                 + direction_rotated[2] ** 2
             )
-            norm_mtf_squared.set_coefficient(
-                tuple([0] * norm_mtf_squared.dimension), 1.0
-            )
-            norm_mtf = mtf.sqrt(norm_mtf_squared)
+            if use_mtf_for_segments:
+                norm_mtf_squared.set_coefficient(
+                    tuple([0] * norm_mtf_squared.dimension), 1.0
+                )
+                norm_mtf = mtf.sqrt(norm_mtf_squared)
+            else:
+                norm_mtf = np.sqrt(norm_mtf_squared)
             direction_normalized_mtf = [
                 direction_rotated[i] / norm_mtf for i in range(3)
             ]
