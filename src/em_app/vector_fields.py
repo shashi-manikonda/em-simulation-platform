@@ -528,28 +528,41 @@ class VectorField:
         Initializes the VectorField container.
 
         Args:
-            vectors (np.ndarray): A NumPy array of FieldVector objects (if using MTF)
-                                    or an (N, 3) NumPy array of vectors.
-            field_points (np.ndarray, optional): A corresponding (N, 3)
-                                                 NumPy array of numerical points or
-                                                 an (N, 3) NumPy array of MTF objects.
-                                                 Defaults to None.
+            vectors (tuple or np.ndarray):
+                - If tuple: (vx, vy, vz) arrays (SoA format).
+                - If ndarray: Array of FieldVector objects or (N, 3) array.
+            field_points (np.ndarray, optional): (N, 3) array of points.
         """
-        if isinstance(vectors[0], FieldVector):
-            # Case for MTF-based FieldVector objects
-            if not isinstance(vectors, np.ndarray) or vectors.ndim != 1:
-                raise TypeError(
-                    "vectors must be a 1D NumPy array of FieldVector objects."
-                )
-            if not np.all(isinstance(v, FieldVector) for v in vectors):
-                raise TypeError("All elements in vectors must be FieldVector objects.")
+        self._vectors_numerical = None
+        self._vectors_mtf = None
+        self._storage_mode = None
+        self.vx, self.vy, self.vz = None, None, None
 
+        if isinstance(vectors, tuple) and len(vectors) == 3:
+            # 1. OPTIMIZATION: Structure of Arrays (SoA)
+            self.vx, self.vy, self.vz = vectors
+            self._storage_mode = "soa"
+
+        elif (
+            isinstance(vectors, np.ndarray)
+            and vectors.ndim > 0
+            and isinstance(vectors[0], FieldVector)
+        ):
+            # 2. Legacy: Array of FieldVectors (AoS)
             self._vectors_mtf = vectors
-            self._vectors_numerical = None
+            self._storage_mode = "aos_mtf"
+
+        elif isinstance(vectors, np.ndarray):
+            # 3. Numerical Matrix (N, 3)
+            self._vectors_numerical = vectors
+            self._storage_mode = "aos_numerical"
         else:
-            # Case for numerical B-field vectors
-            self._vectors_numerical = np.array(vectors)
-            self._vectors_mtf = None
+            # Fallback/Error
+            try:
+                self._vectors_numerical = np.array(vectors)
+                self._storage_mode = "aos_numerical"
+            except Exception:
+                raise TypeError("Invalid vectors input format.")
 
         if field_points is not None:
             field_points = np.array(field_points)
@@ -564,7 +577,37 @@ class VectorField:
         Returns:
             tuple: A tuple containing (numerical_points, numerical_vectors).
         """
-        if self._vectors_numerical is not None:
+        if self._storage_mode == "soa":
+            # Reconstruct (N, 3) array from columns
+            # Handle MTF extraction if needed, assuming here likely numerical for
+            # scatter/quiver
+            # Check type of first element to decide
+            is_mtf = _SANDALWOOD_AVAILABLE and isinstance(self.vx[0], mtf)
+
+            if is_mtf:
+                vx0 = np.array([
+                    v.extract_coefficient(tuple([0] * v.dimension)).item()
+                    for v in self.vx
+                ])
+                vy0 = np.array([
+                    v.extract_coefficient(tuple([0] * v.dimension)).item()
+                    for v in self.vy
+                ])
+                vz0 = np.array([
+                    v.extract_coefficient(tuple([0] * v.dimension)).item()
+                    for v in self.vz
+                ])
+                vectors_numerical = np.column_stack((vx0, vy0, vz0))
+            else:
+                vectors_numerical = np.column_stack((self.vx, self.vy, self.vz))
+
+            if not isinstance(self.field_points, np.ndarray):
+                # Handle MTF points logic if needed (copy from below)
+                pass  # Assuming numerical points for SoA fast path usually
+
+            return self.field_points, vectors_numerical
+
+        elif self._storage_mode == "aos_numerical":
             # Data is already numerical
             if not isinstance(self.field_points, np.ndarray):
                 raise TypeError(
@@ -578,13 +621,13 @@ class VectorField:
                     pass
             return self.field_points, self._vectors_numerical
 
-        elif self._vectors_mtf is not None:
+        elif self._storage_mode == "aos_mtf":
             if not _SANDALWOOD_AVAILABLE:
                 raise RuntimeError(
                     "sandalwood is required to evaluate FieldVector objects."
                 )
 
-            # Evaluate MTF FieldVectors to get numerical vectors
+            # Use stored MTF objects
             vectors_numerical = np.array([
                 [
                     v.x.extract_coefficient(tuple([0] * v.x.dimension)).item(),
@@ -620,10 +663,10 @@ class VectorField:
                     "VectorField object with MTF data must have corresponding "
                     "field_points."
                 )
-
             return numerical_points, vectors_numerical
+
         else:
-            raise ValueError("VectorField object does not contain any data.")
+            raise ValueError("VectorField has no valid storage mode.")
 
     def get_magnitude(self):
         """
@@ -633,9 +676,21 @@ class VectorField:
             np.ndarray: A 1D NumPy array of the magnitudes.
         """
         if self._magnitude is None:
-            if self._vectors_numerical is not None:
+            if self._storage_mode == "soa":
+                if _SANDALWOOD_AVAILABLE and isinstance(self.vx[0], mtf):
+                    # MTF SoA magnitude (symbolic or constant only?)
+                    # For visualization, use constant part
+                    vx0 = np.array([np.real(v.get_constant()) for v in self.vx])
+                    vy0 = np.array([np.real(v.get_constant()) for v in self.vy])
+                    vz0 = np.array([np.real(v.get_constant()) for v in self.vz])
+                    self._magnitude = np.sqrt(vx0**2 + vy0**2 + vz0**2)
+                else:
+                    self._magnitude = np.sqrt(self.vx**2 + self.vy**2 + self.vz**2)
+
+            elif self._storage_mode == "aos_numerical":
                 self._magnitude = np.linalg.norm(self._vectors_numerical, axis=1)
-            elif self._vectors_mtf is not None:
+
+            elif self._storage_mode == "aos_mtf":
                 magnitudes = []
                 for v in self._vectors_mtf:
                     # For numerical plotting/analysis, we just need the constant
@@ -789,6 +844,62 @@ class VectorField:
         }
 
         return pd.DataFrame(data)
+
+    def __add__(self, other):
+        """
+        Adds two VectorFields together component-wise.
+        """
+        if not isinstance(other, VectorField):
+            return NotImplemented
+
+        # Check compatible shapes (implicitly checked by numpy addition usually)
+        if self.field_points is not None and other.field_points is not None:
+            # Ideally check points match, but for performance we might skip or
+            # assume user knows
+            pass
+
+        # Handle SoA Case
+        if self._storage_mode == "soa" and other._storage_mode == "soa":
+            return VectorField(
+                (self.vx + other.vx, self.vy + other.vy, self.vz + other.vz),
+                field_points=self.field_points,
+            )
+
+        # Handle Mixed or Legacy Cases (reconstruct or use existing)
+        # Attempt to get components from both as SoA
+
+        def get_comps(vf):
+            if vf._storage_mode == "soa":
+                return vf.vx, vf.vy, vf.vz
+            elif vf._storage_mode == "aos_numerical":
+                return (
+                    vf._vectors_numerical[:, 0],
+                    vf._vectors_numerical[:, 1],
+                    vf._vectors_numerical[:, 2],
+                )
+            elif vf._storage_mode == "aos_mtf":
+                # This is tricky because AoS MTF is 1D array of FieldVectors.
+                # We need to unzip it or just use it if both are AoS MTF.
+                # Use helper to extract columns if needed
+                return (
+                    np.array([v.x for v in vf._vectors_mtf]),
+                    np.array([v.y for v in vf._vectors_mtf]),
+                    np.array([v.z for v in vf._vectors_mtf]),
+                )
+            elif vf._vectors_numerical is not None:
+                return (
+                    vf._vectors_numerical[:, 0],
+                    vf._vectors_numerical[:, 1],
+                    vf._vectors_numerical[:, 2],
+                )
+            else:
+                # Last resort try to convert to numerical if empty?
+                raise ValueError("VectorField has no data to add.")
+
+        sx, sy, sz = get_comps(self)
+        ox, oy, oz = get_comps(other)
+
+        return VectorField((sx + ox, sy + oy, sz + oz), field_points=self.field_points)
 
 
 class VectorFieldGrid(VectorField):

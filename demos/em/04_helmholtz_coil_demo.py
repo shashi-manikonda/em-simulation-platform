@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from em_app.solvers import calculate_b_field
 from em_app.sources import RingCoil
-from em_app.vector_fields import VectorField
 from sandalwood import mtf
 
 # Initialize the MTF library
@@ -53,9 +52,11 @@ print("Calculating magnetic field from Coil 2...")
 b_field2 = calculate_b_field(coil2, field_points)
 
 # The total field is the vector sum of the fields from each coil
-total_b_vectors = b_field1._vectors_mtf + b_field2._vectors_mtf
-total_b_field = VectorField(vectors=total_b_vectors, field_points=field_points)
-b_vectors = np.array([b.to_numpy_array() for b in total_b_field._vectors_mtf])
+# Uses the new VectorField addition (SoA compatible)
+total_b_field = b_field1 + b_field2
+
+# Extract numerical vectors for plotting
+_, b_vectors = total_b_field._get_numerical_data()
 
 # --- 4. Plot the Results ---
 print("Generating plot...")

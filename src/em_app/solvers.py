@@ -3,7 +3,7 @@ from enum import Enum
 import numpy as np
 from sandalwood import MultivariateTaylorFunction
 
-from .vector_fields import FieldVector, VectorField
+from .vector_fields import VectorField
 
 
 class Backend(str, Enum):
@@ -88,35 +88,41 @@ def calculate_b_field(coil_instance, field_points, backend=Backend.PYTHON):
             backend=backend,
         )
 
-    # Apply the current scaling and create FieldVector objects
-    vec_objects = []
-    for vec in b_field_vectors:
-        vec_objects.append(
-            FieldVector(
-                coil_instance.current * vec[0],
-                coil_instance.current * vec[1],
-                coil_instance.current * vec[2],
-            )
-        )
-    b_field_vectors = np.array(vec_objects, dtype=object)
+    # Optimized Vector Field Creation (No Object Loop)
+    if coil_instance.use_mtf_for_segments:
+        # b_field_vectors is an (N, 3) object array of MTFs
+        # Scale columns directly
+        bx = b_field_vectors[:, 0] * coil_instance.current
+        by = b_field_vectors[:, 1] * coil_instance.current
+        bz = b_field_vectors[:, 2] * coil_instance.current
 
-    # Apply post-processing based on use_mtf_for_segments flag for all coils
-    for i, vec in enumerate(b_field_vectors):
-        if coil_instance.use_mtf_for_segments:
-            # When using MTF, a proper numerical integration is performed
-            # over the segment, which is represented by a variable `u` in
-            # the range [-1, 1].
-            vec.x = vec.x.integrate(4, -1, 1)
-            vec.y = vec.y.integrate(4, -1, 1)
-            vec.z = vec.z.integrate(4, -1, 1)
-        else:
-            # When not using MTF, the field is calculated at a single point
-            # (the center of the segment). The result is then multiplied by 2
-            # as a numerical approximation to account for the contribution
-            # of the segment's length.
-            vec = 2 * vec
-        b_field_vectors[i] = vec
-    return VectorField(field_points=field_points, vectors=b_field_vectors)
+        # Apply integration vectorized
+        # MTF integration usually returns new MTF
+        # We invoke integrate on the array of objects if supported, or map it
+        # efficiently. Since MTF doesn't support vectorization natively on object
+        # array methods yet, we might need a comprehensions or map, BUT we avoid
+        # creating FieldVector objects.
+
+        # Helper to integrate column
+        def integrate_col(col):
+            return np.array([v.integrate(4, -1, 1) for v in col], dtype=object)
+
+        bx = integrate_col(bx)
+        by = integrate_col(by)
+        bz = integrate_col(bz)
+
+    else:
+        # Fast Path: b_field_vectors is (N, 3) numerical array (float)
+        # Apply scaling and factor 2 (approximation for discrete segments)
+        scale_factor = coil_instance.current * 2
+        b_scaled = b_field_vectors * scale_factor
+
+        bx = b_scaled[:, 0]
+        by = b_scaled[:, 1]
+        bz = b_scaled[:, 2]
+
+    # Return using Structure of Arrays (tuple)
+    return VectorField(vectors=(bx, by, bz), field_points=field_points)
 
 
 mu_0_4pi = 1e-7  # Define mu_0_4pi if it's not already globally defined
