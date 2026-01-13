@@ -209,3 +209,8 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 runoutput/
+
+# Custom Setup Scripts
+setup_dev_env.sh
+
+

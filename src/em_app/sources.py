@@ -333,6 +333,7 @@ class RingCoil(Coil):
         axis_direction,
         use_mtf_for_segments=True,
         wire_thickness=0.001,
+        integration_var_index=None,
     ):
         """
         Initializes a circular coil.
@@ -343,6 +344,8 @@ class RingCoil(Coil):
             num_segments (int): Number of segments for discretization.
             center_point (np.ndarray): (3,) array for the center coordinates.
             axis_direction (np.ndarray): (3,) array for the axis direction.
+            integration_var_index (int, optional): The index of the integration variable.
+                Defaults to None (uses max dimension).
         """
         # Input validation
         if not isinstance(radius, (int, float)) or radius <= 0:
@@ -374,6 +377,7 @@ class RingCoil(Coil):
                 center_point,
                 axis_direction,
                 use_mtf_for_segments,
+                integration_var_index,
             )
         )
 
@@ -384,6 +388,7 @@ class RingCoil(Coil):
         ring_center_point,
         ring_axis_direction,
         use_mtf_for_segments=True,
+        integration_var_index=None,
     ):
         """
         (PRIVATE) Generates MTF representations for segments of a current ring.
@@ -399,6 +404,7 @@ class RingCoil(Coil):
             ring_axis_direction (numpy.ndarray): (3,) array defining the
                 direction vector of the ring's axis (normal to the plane of
                 the ring).
+            integration_var_index (int, optional): The index of variable u.
 
         Returns:
             tuple: A tuple containing:
@@ -419,7 +425,12 @@ class RingCoil(Coil):
         )
 
         if use_mtf_for_segments:
-            u = mtf.var(4)  # Use a variable for integration later
+            if integration_var_index is None:
+                # Default to the highest available dimension
+                # Assuming the user has initialized MTF with enough dimensions
+                integration_var_index = mtf.get_max_dimension()
+            
+            u = mtf.var(integration_var_index)  # Use a variable for integration later
         else:
             u = 0.0
 
@@ -451,7 +462,9 @@ class RingCoil(Coil):
                 + direction_rotated[1] ** 2
                 + direction_rotated[2] ** 2
             )
-            norm_mtf_squared.set_coefficient((0, 0, 0, 0), 1.0)
+            norm_mtf_squared.set_coefficient(
+                tuple([0] * norm_mtf_squared.dimension), 1.0
+            )
             norm_mtf = mtf.sqrt(norm_mtf_squared)
             direction_normalized_mtf = [
                 direction_rotated[i] / norm_mtf for i in range(3)
@@ -506,21 +519,19 @@ class RectangularCoil(Coil):
         self.p4 = p4
         self.segment_centers, self.segment_lengths, self.segment_directions = (
             self.generate_geometry(
-                p1, p2, p4, num_segments_per_side, use_mtf_for_segments
+                p1, p2, p4, num_segments_per_side, use_mtf_for_segments, integration_var_index=None
             )
         )
 
     @staticmethod
-    def generate_geometry(p1, p2, p4, num_segments_per_side, use_mtf_for_segments=True):
+    def generate_geometry(p1, p2, p4, num_segments_per_side, use_mtf_for_segments=True, integration_var_index=None):
         """
         (PRIVATE) Generates segments for a rectangular coil.
 
         Args:
-            p1 (np.ndarray): First corner of the rectangle.
-            p2 (np.ndarray): Second corner, defining the first side from p1.
-            p4 (np.ndarray): Fourth corner, defining the second side from p1.
             num_segments_per_side (int): Segments per side.
             use_mtf_for_segments (bool): Whether to use MTF for segments.
+            integration_var_index (int, optional): The index of variable u.
 
         Returns:
             tuple: A tuple containing:
@@ -545,7 +556,7 @@ class RectangularCoil(Coil):
             end_p = corners[(i + 1) % 4]
             all_segments.append(
                 StraightWire.generate_geometry(
-                    start_p, end_p, num_segments_per_side, use_mtf_for_segments
+                    start_p, end_p, num_segments_per_side, use_mtf_for_segments, integration_var_index
                 )
             )
 
@@ -570,6 +581,7 @@ class StraightWire(Coil):
         num_segments=1,
         use_mtf_for_segments=True,
         wire_thickness=0.001,
+        integration_var_index=None,
     ):
         """
         Initializes a straight wire.
@@ -579,6 +591,7 @@ class StraightWire(Coil):
             start_point (np.ndarray): The starting point of the wire.
             end_point (np.ndarray): The ending point of the wire.
             num_segments (int): Number of segments. Defaults to 1.
+            integration_var_index (int, optional): The index of variable u.
         """
         # Input validation
         if not isinstance(start_point, (np.ndarray, list)) or len(start_point) != 3:
@@ -598,12 +611,12 @@ class StraightWire(Coil):
             self.segment_lengths,
             self.segment_directions,
         ) = self.generate_geometry(
-            start_point, end_point, num_segments, use_mtf_for_segments
+            start_point, end_point, num_segments, use_mtf_for_segments, integration_var_index
         )
 
     @staticmethod
     def generate_geometry(
-        start_point, end_point, num_segments=1, use_mtf_for_segments=True
+        start_point, end_point, num_segments=1, use_mtf_for_segments=True, integration_var_index=None
     ):
         """
         Discretizes the straight wire into segments.
@@ -627,7 +640,10 @@ class StraightWire(Coil):
         segment_directions = []
 
         if use_mtf_for_segments:
-            u = mtf.var(4)  # Use a variable for integration later
+            if integration_var_index is None:
+                # Default to the highest available dimension
+                integration_var_index = mtf.get_max_dimension()
+            u = mtf.var(integration_var_index)  # Use a variable for integration later
         else:
             u = 0.0
 
