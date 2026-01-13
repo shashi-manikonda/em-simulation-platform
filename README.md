@@ -154,6 +154,18 @@ This will generate output files and plots in the `runoutput` directory.
 
 ## License
 MIT
+## Architecture & Optimizations
+
+This platform employs several advanced design patterns and algorithms to ensure high performance and flexibility:
+
+### Data Structures
+*   **Structure of Arrays (SoA)**: The `VectorField` class detects input formats and switches to SoA storage (`_storage_mode = "soa"`) when initialized with component arrays (vx, vy, vz). This improves memory locality and SIMD vectorization potential compared to Array of Structures (AoS).
+*   **Hybrid Storage**: Seamlessly handles both numerical data (NumPy arrays) and symbolic objects (`sandalwood` MTFs) within the same API.
+
+### Design Patterns
+*   **Factory Pattern**: `Vector.from_array_of_vectors` provides optimizing factory methods for bulk object creation.
+*   **Strategy/Adapter Pattern**: The `solvers` module uses a backend selection strategy (`Backend.PYTHON`, `Backend.COSY`, `Backend.MPI`) to dispatch computation to the most appropriate engine (local CPU, optimized Fortran, or distributed MPI).
+
 ## Windows Installation & Development Guide
 
 This project (and its dependency `sandalwood`) requires specific setup on Windows to support the high-performance Fortran COSY backend.
@@ -176,7 +188,55 @@ We recommend setting up a common workspace for both `sandalwood` and `em-simulat
 #   └── .venv/  (or inside one repo)
 ```
 
-### 3. Step-by-Step Installation
+### 3. Step-by-Step Installation (Automated)
+
+We provide a **unified setup script** that handles the complex environment configuration (detecting Visual Studio, setting up Intel compilers, installing libraries, and building extensions).
+
+**Method A: Automated Setup (Recommended)**
+```powershell
+cd C:\Users\YourName\Work\DAProjects
+.\em-simulation-platform\scripts\windows\setup_env.bat
+```
+*This script will:*
+1.  Initialize Intel oneAPI environment (`setvars.bat`).
+2.  Set up Visual Studio integration.
+3.  Create/Update the `.venv`.
+4.  Build `sandalwood` (compiling Fortran with `ifx`).
+5.  Install `em-simulation-platform`.
+
+**Method B: Manual Installation**
+If you prefer manual control:
+
+**Step 1: Clone Repositories**
+```powershell
+cd C:\Users\YourName\Work
+git clone https://github.com/shashi-manikonda/sandalwood.git
+git clone https://github.com/shashi-manikonda/em-simulation-platform.git
+```
+
+**Step 2: Setup Virtual Environment**
+It is easiest to use a single virtual environment for both projects.
+```powershell
+cd sandalwood
+uv venv .venv
+# Activate
+.venv\Scripts\activate
+```
+
+**Step 3: Build and Install Sandalwood (The Compiler Step)**
+This step compiles the Fortran backend (`libcosy.dll`).
+```powershell
+# Ensure you are in the sandalwood directory
+# Note: You MUST have 'ifx' and 'link.exe' in your PATH (run 'setvars.bat' first)
+uv pip install -e .[dev]
+```
+
+**Step 4: Install EM Platform**
+```powershell
+cd ..\em-simulation-platform
+# Install into the SAME virtual environment
+uv pip install -e .[dev,benchmark]
+```
 
 **Step A: Clone Repositories**
 ```powershell
