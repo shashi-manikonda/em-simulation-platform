@@ -422,7 +422,6 @@ def serial_biot_savart(
     if backend == Backend.COSY:
         from sandalwood.backends.cosy.cosy_backend import (
             CosyBackend,
-            CosyMtfData,
         )
 
         # Ensure initialized. Use order 1 if not provided, assuming verified/synced
@@ -471,48 +470,48 @@ def serial_biot_savart(
         is_discrete_mode = isinstance(element_centers.flat[0], (float, int, np.number))
 
         if is_discrete_mode:
-             # --- Fast Path (Discrete Geometry) ---
-             # Returns numpy arrays of floats directly
-             bx, by, bz = CosyBackend.biot_savart_batch(
+            # --- Fast Path (Discrete Geometry) ---
+            # Returns numpy arrays of floats directly
+            bx, by, bz = CosyBackend.biot_savart_batch(
                 pos_x, pos_y, pos_z, src_x, src_y, src_z, dl_x, dl_y, dl_z
-             )
-             
-             # Apply scale
-             scale = mu_0_4pi
-             bx *= scale
-             by *= scale
-             bz *= scale
-             
-             out_b = np.empty((len(pos_x), 3), dtype=np.float64)
-             out_b[:, 0] = bx
-             out_b[:, 1] = by
-             out_b[:, 2] = bz
+            )
+
+            # Apply scale
+            scale = mu_0_4pi
+            bx *= scale
+            by *= scale
+            bz *= scale
+
+            out_b = np.empty((len(pos_x), 3), dtype=np.float64)
+            out_b[:, 0] = bx
+            out_b[:, 1] = by
+            out_b[:, 2] = bz
 
         else:
-             # --- Parametric Path (MTF/DA) ---
-             # Returns raw indices, we bulk-wrap them
-             c_bx, c_by, c_bz = CosyBackend.biot_savart_batch_indices(
+            # --- Parametric Path (MTF/DA) ---
+            # Returns raw indices, we bulk-wrap them
+            c_bx, c_by, c_bz = CosyBackend.biot_savart_batch_indices(
                 pos_x, pos_y, pos_z, src_x, src_y, src_z, dl_x, dl_y, dl_z
-             )
-             
-             # Bulk create MTF objects
-             # Use the current backend dimension
-             dim = CosyBackend._dim
-             
-             mtf_x = MultivariateTaylorFunction.from_cosy_indices(c_bx, dim)
-             mtf_y = MultivariateTaylorFunction.from_cosy_indices(c_by, dim)
-             mtf_z = MultivariateTaylorFunction.from_cosy_indices(c_bz, dim)
-             
-             scale = mu_0_4pi
-             
-             # Use vectorized scalar multiplication if supported by object array,
-             # otherwise list comp (MTF array mult is usually supported if numpy-aware)
-             # MultivariateTaylorFunction supports __mul__. 
-             # Numpy object array multiplication delegates to __mul__ of elements.
-             out_b = np.empty((len(pos_x), 3), dtype=object)
-             out_b[:, 0] = mtf_x * scale
-             out_b[:, 1] = mtf_y * scale
-             out_b[:, 2] = mtf_z * scale
+            )
+
+            # Bulk create MTF objects
+            # Use the current backend dimension
+            dim = CosyBackend._dim
+
+            mtf_x = MultivariateTaylorFunction.from_cosy_indices(c_bx, dim)
+            mtf_y = MultivariateTaylorFunction.from_cosy_indices(c_by, dim)
+            mtf_z = MultivariateTaylorFunction.from_cosy_indices(c_bz, dim)
+
+            scale = mu_0_4pi
+
+            # Use vectorized scalar multiplication if supported by object array,
+            # otherwise list comp (MTF array mult is usually supported if numpy-aware)
+            # MultivariateTaylorFunction supports __mul__.
+            # Numpy object array multiplication delegates to __mul__ of elements.
+            out_b = np.empty((len(pos_x), 3), dtype=object)
+            out_b[:, 0] = mtf_x * scale
+            out_b[:, 1] = mtf_y * scale
+            out_b[:, 2] = mtf_z * scale
 
         return out_b
 

@@ -429,7 +429,7 @@ class RingCoil(Coil):
                 # Default to the highest available dimension
                 # Assuming the user has initialized MTF with enough dimensions
                 integration_var_index = mtf.get_max_dimension()
-            
+
             u = mtf.var(integration_var_index)  # Use a variable for integration later
         else:
             u = 0.0
@@ -519,12 +519,24 @@ class RectangularCoil(Coil):
         self.p4 = p4
         self.segment_centers, self.segment_lengths, self.segment_directions = (
             self.generate_geometry(
-                p1, p2, p4, num_segments_per_side, use_mtf_for_segments, integration_var_index=None
+                p1,
+                p2,
+                p4,
+                num_segments_per_side,
+                use_mtf_for_segments,
+                integration_var_index=None,
             )
         )
 
     @staticmethod
-    def generate_geometry(p1, p2, p4, num_segments_per_side, use_mtf_for_segments=True, integration_var_index=None):
+    def generate_geometry(
+        p1,
+        p2,
+        p4,
+        num_segments_per_side,
+        use_mtf_for_segments=True,
+        integration_var_index=None,
+    ):
         """
         (PRIVATE) Generates segments for a rectangular coil.
 
@@ -556,7 +568,11 @@ class RectangularCoil(Coil):
             end_p = corners[(i + 1) % 4]
             all_segments.append(
                 StraightWire.generate_geometry(
-                    start_p, end_p, num_segments_per_side, use_mtf_for_segments, integration_var_index
+                    start_p,
+                    end_p,
+                    num_segments_per_side,
+                    use_mtf_for_segments,
+                    integration_var_index,
                 )
             )
 
@@ -611,12 +627,20 @@ class StraightWire(Coil):
             self.segment_lengths,
             self.segment_directions,
         ) = self.generate_geometry(
-            start_point, end_point, num_segments, use_mtf_for_segments, integration_var_index
+            start_point,
+            end_point,
+            num_segments,
+            use_mtf_for_segments,
+            integration_var_index,
         )
 
     @staticmethod
     def generate_geometry(
-        start_point, end_point, num_segments=1, use_mtf_for_segments=True, integration_var_index=None
+        start_point,
+        end_point,
+        num_segments=1,
+        use_mtf_for_segments=True,
+        integration_var_index=None,
     ):
         """
         Discretizes the straight wire into segments.
