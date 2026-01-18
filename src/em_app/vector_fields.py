@@ -668,6 +668,32 @@ class VectorField:
         else:
             raise ValueError("VectorField has no valid storage mode.")
 
+    def __len__(self):
+        """Returns the number of vectors in the field."""
+        if self._storage_mode == "soa":
+            return len(self.vx)
+        elif self._storage_mode == "aos_numerical":
+            return len(self._vectors_numerical)
+        elif self._storage_mode == "aos_mtf":
+            return len(self._vectors_mtf)
+        return 0
+
+    def __getitem__(self, index):
+        """
+        Allows indexing into the VectorField to retrieve a specific FieldVector.
+        """
+        if self._storage_mode == "soa":
+            return FieldVector(self.vx[index], self.vy[index], self.vz[index])
+
+        elif self._storage_mode == "aos_numerical":
+            vec = self._vectors_numerical[index]
+            return FieldVector(vec[0], vec[1], vec[2])
+
+        elif self._storage_mode == "aos_mtf":
+            return self._vectors_mtf[index]
+
+        raise IndexError("VectorField storage is not initialized.")
+
     def get_magnitude(self):
         """
         Calculates and returns the magnitude of each B-vector in the field.

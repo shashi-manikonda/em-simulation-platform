@@ -90,11 +90,25 @@ def calculate_b_field(coil_instance, field_points, backend=Backend.PYTHON):
 
     # Optimized Vector Field Creation (No Object Loop)
     if coil_instance.use_mtf_for_segments:
-        # b_field_vectors is an (N, 3) object array of MTFs
-        # Scale columns directly
-        bx = b_field_vectors[:, 0] * coil_instance.current
-        by = b_field_vectors[:, 1] * coil_instance.current
-        bz = b_field_vectors[:, 2] * coil_instance.current
+        # Optimization: If current is a constant MTF, extract value to avoid
+        # overhead and potential COSY type errors with empty/zero MTFs.
+        current_scalar = coil_instance.current
+        if isinstance(current_scalar, MultivariateTaylorFunction):
+            try:
+                # Check if it has only constant term (0 exponents)
+                # This is a heuristic; valid for simple constants
+                if current_scalar.exponents.shape[0] == 1 and np.all(
+                    current_scalar.exponents == 0
+                ):
+                    current_scalar = current_scalar.extract_coefficient(
+                        tuple([0] * current_scalar.dimension)
+                    )
+            except Exception:
+                pass
+
+        bx = b_field_vectors[:, 0] * current_scalar
+        by = b_field_vectors[:, 1] * current_scalar
+        bz = b_field_vectors[:, 2] * current_scalar
 
         # Apply integration vectorized
         # MTF integration usually returns new MTF

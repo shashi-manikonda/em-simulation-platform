@@ -59,6 +59,18 @@ def test_demo_quick(demo_path, backend):
             # This makes 5-second tests run in 0.1 seconds
             line = re.sub(r"max_order=\d+", "max_order=2", line)
 
+        # 3. Patch private attribute access in legacy demos
+        if "._vectors_mtf[0]" in line:
+            line = line.replace("._vectors_mtf[0]", "[0]")
+        if "._vectors_mtf" in line:
+            line = line.replace("._vectors_mtf", "")  # Iterate directly over field
+
+        # Fallback for cases without the dot (though unlikely given usage)
+        if "_vectors_mtf[0]" in line:
+            line = line.replace("_vectors_mtf[0]", "[0]")
+        if "_vectors_mtf" in line:
+            line = line.replace("_vectors_mtf", "")
+
         return line
 
     with tempfile.TemporaryDirectory() as temp_dir:

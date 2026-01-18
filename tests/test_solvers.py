@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import numpy as np
 import pytest
 from em_app.solvers import Backend, calculate_b_field, mu_0_4pi
@@ -25,16 +28,30 @@ except ImportError:
 
 # Check for MPI availability
 try:
-    import mpi4py
-    # Explicitly check if we can import MPI subsystem to catch runtime/dll errors early
-    from mpi4py import MPI  # noqa: F401
+    # Run a subprocess to try importing mpi4py safely to catch segfaults/crashes
+    subprocess.check_call(
+        [sys.executable, "-c", "from mpi4py import MPI"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        timeout=5,
+    )
 
-    AVAILABLE_BACKENDS.append(Backend.MPI)
-    if Backend.COSY in AVAILABLE_BACKENDS:
-        AVAILABLE_BACKENDS.append(Backend.MPI_COSY)
-except (ImportError, RuntimeError, OSError):
-    # mpi4py might import but fail to load DLLs (ImportError/OSError)
-    # or fail to initialize (RuntimeError)
+    # If the above passed, it's safe to import here
+    import mpi4py
+
+    # Explicitly check availability
+    if mpi4py:
+        AVAILABLE_BACKENDS.append(Backend.MPI)
+        if Backend.COSY in AVAILABLE_BACKENDS:
+            AVAILABLE_BACKENDS.append(Backend.MPI_COSY)
+except (
+    subprocess.CalledProcessError,
+    subprocess.TimeoutExpired,
+    ImportError,
+    RuntimeError,
+    OSError,
+):
+    # mpi4py might be missing, or crash on import (segfault), or fail to initialize
     pass
 
 
@@ -63,7 +80,9 @@ def test_biot_savart_ring_on_axis(backend):
 
     # Calculate the magnetic field using the module and specified backend
     b_field = calculate_b_field(ring_coil, field_points, backend=backend)
-    b_vectors_objects = b_field._vectors_mtf
+
+    # Convert the VectorField to a list of vectors
+    b_vectors_objects = list(b_field)
 
     # Convert the list of Bvec objects to a single numerical NumPy array
     # This will preserve the complex parts if they exist
@@ -114,7 +133,7 @@ def test_biot_savart_with_mtf(backend):
 
     # Calculate the B-field
     b_field = calculate_b_field(ring_coil, field_point, backend=backend)
-    b_vectors_mtf = b_field._vectors_mtf
+    b_vectors_mtf = list(b_field)
 
     # Check if the result is an array of FieldVector objects
     assert len(b_vectors_mtf) == 1

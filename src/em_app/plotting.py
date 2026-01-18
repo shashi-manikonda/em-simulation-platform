@@ -101,11 +101,11 @@ def plot_1d_field(
 
     # Extract the requested component
     if field_component == "x":
-        field_values = np.array([v.x for v in vector_field._vectors_mtf])
+        field_values = np.array([v.x for v in vector_field])
     elif field_component == "y":
-        field_values = np.array([v.y for v in vector_field._vectors_mtf])
+        field_values = np.array([v.y for v in vector_field])
     elif field_component == "z":
-        field_values = np.array([v.z for v in vector_field._vectors_mtf])
+        field_values = np.array([v.z for v in vector_field])
     elif field_component == "norm":
         field_values = vector_field.get_magnitude()
 
@@ -287,7 +287,7 @@ def plot_2d_field(
                 field_points[i * num_points_b + j] = point
 
     vector_field = calculate_b_field(coil_instance, field_points=field_points)
-    b_vectors = np.array([b.to_numpy_array() for b in vector_field._vectors_mtf])
+    b_vectors = np.array([b.to_numpy_array() for b in vector_field])
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -355,17 +355,17 @@ def plot_2d_field(
         elif field_component == "x":
             field_data = np.array([
                 b.x.extract_coefficient(tuple([0] * b.x.dimension)).item()
-                for b in vector_field._vectors_mtf
+                for b in vector_field
             ])
         elif field_component == "y":
             field_data = np.array([
                 b.y.extract_coefficient(tuple([0] * b.y.dimension)).item()
-                for b in vector_field._vectors_mtf
+                for b in vector_field
             ])
         else:  # z
             field_data = np.array([
                 b.z.extract_coefficient(tuple([0] * b.z.dimension)).item()
-                for b in vector_field._vectors_mtf
+                for b in vector_field
             ])
         # Explicitly cast to float/real
         field_data = np.real(field_data).astype(float)
@@ -453,7 +453,7 @@ def plot_field_vectors_3d(
 
     # Calculate the magnetic field at these points
     vector_field = calculate_b_field(coil_instance, field_points)
-    b_vectors = np.array([b.to_numpy_array() for b in vector_field._vectors_mtf])
+    b_vectors = np.array([b.to_numpy_array() for b in vector_field])
     U, V, W = b_vectors[:, 0], b_vectors[:, 1], b_vectors[:, 2]
 
     # Reshape the 1D field component arrays to match the 3D meshgrid shape
