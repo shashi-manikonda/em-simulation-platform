@@ -49,7 +49,8 @@ class TestCosyOptimization:
 
     def test_biot_savart_fast_path_vs_parametric(self):
         """
-        Verify that serial_biot_savart logic correctly dispatches and returns consistent results.
+        Verify that serial_biot_savart logic correctly dispatches and returns
+        consistent results.
         """
         # Setup
         field_points = np.array([[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]])
@@ -59,10 +60,12 @@ class TestCosyOptimization:
         lengths_f = np.array([0.1])
         dirs_f = np.array([[0.0, 0.0, 1.0]])
 
-        res_fast = serial_biot_savart(
+        bx_fast, by_fast, bz_fast = serial_biot_savart(
             centers_f, lengths_f, dirs_f, field_points, backend=Backend.COSY
         )
-        assert res_fast.dtype == np.float64
+        assert bx_fast.dtype == np.float64
+        assert by_fast.dtype == np.float64
+        assert bz_fast.dtype == np.float64
 
         # 2. Parametric Source (MTF Path)
         # Create trivial MTFs (constants) to mimic floats
@@ -71,18 +74,22 @@ class TestCosyOptimization:
             dtype=object,
         )
 
-        res_param = serial_biot_savart(
+        bx_param, by_param, bz_param = serial_biot_savart(
             centers_m, lengths_f, dirs_f, field_points, backend=Backend.COSY
         )
-        assert res_param.dtype == object
+        assert bx_param.dtype == object
 
         # Value check
-        # Check y-component at point 1 (index 0, 1)
-        val_fast = res_fast[0, 1]
-        val_param = res_param[0, 1].get_constant()
+        # Check y-component at point 1 (index 0 in array? No, point 1 is index 0.
+        # Wait test used index 0)
+        # field_points has 2 points.
+        # old code: res_fast[0, 1] means point 0, By component.
 
-        print(f"DEBUG: Fast[0,1] = {val_fast}")
-        print(f"DEBUG: Param[0,1] = {val_param}")
+        val_fast = by_fast[0]
+        val_param = by_param[0].get_constant()
+
+        print(f"DEBUG: Fast[0,y] = {val_fast}")
+        print(f"DEBUG: Param[0,y] = {val_param}")
         print(f"DEBUG: Diff = {abs(val_fast - val_param)}")
 
         assert np.isclose(val_fast, val_param, atol=1e-15)

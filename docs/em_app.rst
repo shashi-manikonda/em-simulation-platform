@@ -25,7 +25,13 @@ To simulate a magnetic field, define a coil and a set of points:
     # Returns a VectorField object (SoA optimized)
     b_field = calculate_b_field(coil, points)
 
+.. note::
+    **Performance Optimization (SoA)**: As of v0.2.0, this function returns a ``VectorField`` using a **Structure of Arrays (SoA)** memory layout. 
+    The components ``(Bx, By, Bz)`` are stored as contiguous numpy arrays rather than lists of vector objects. 
+    This significantly improves memory locality and SIMD vectorization performance.
+
 **2. High-Performance Backends**
+
 
 EM-App uses `sandalwood` for accelerated computation. The solver automatically selects the best kernel ("Hybrid Dispatch"):
 
