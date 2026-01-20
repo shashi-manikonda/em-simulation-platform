@@ -34,8 +34,11 @@ class TestCosyOptimization:
         da2 = cosy_backend.CosyDA.from_const(2.0)
 
         # Create copies
-        da1_idx = (da1 + 0.0).idx
-        da2_idx = (da2 + 0.0).idx
+        # Create copies and keep them alive
+        tmp1 = da1 + 0.0
+        tmp2 = da2 + 0.0
+        da1_idx = tmp1.idx
+        da2_idx = tmp2.idx
 
         indices = np.array([da1_idx, da2_idx], dtype=np.int32)
         mtfs = MultivariateTaylorFunction.from_cosy_indices(indices, dimension=dim)
