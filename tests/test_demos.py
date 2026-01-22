@@ -8,6 +8,9 @@ import tempfile
 import pytest
 
 
+pytestmark = pytest.mark.demo
+
+
 def find_demos():
     """Recursively finds all .ipynb and .py files in the demos directory."""
     demo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "demos"))
@@ -55,9 +58,20 @@ def test_demo_quick(demo_path, backend):
             else:
                 line = line.replace(")", f', implementation="{backend}")')
 
-            # 2. SPEED HACK: Force low order for tests
-            # This makes 5-second tests run in 0.1 seconds
-            line = re.sub(r"max_order=\d+", "max_order=2", line)
+        # 2. CONDITIONAL: Optimization for Quick Checks
+        # Only apply if SANDALWOOD_TEST_FULL_DEMOS is NOT set
+        if os.environ.get("SANDALWOOD_TEST_FULL_DEMOS") != "1":
+            # Force linear order (1)
+            line = re.sub(r"max_order=\d+", "max_order=1", line)
+
+            # Reduce loops to 1 iteration
+            line = re.sub(r"range\(\s*\d+\s*\)", "range(1)", line)
+            line = re.sub(
+                r"\b(n_turns|steps|iterations|N|n_particles|n_segments|N_phi|N_z|num_segments|num_points|grid_points|n_points)\s*=\s*\d+",
+                r"\1=1",
+                line,
+                flags=re.IGNORECASE,
+            )
 
         # 3. Patch private attribute access in legacy demos
         if "._vectors_mtf[0]" in line:

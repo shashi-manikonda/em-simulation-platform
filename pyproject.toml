@@ -76,3 +76,14 @@ module = [
 ]
 ignore_missing_imports = true
 disable_error_code = ["import-untyped"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "demo: marks tests as demo-based (slow, skipped by default)",
+]
+addopts = "-m \"not demo\""
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]
