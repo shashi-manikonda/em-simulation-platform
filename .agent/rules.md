@@ -13,10 +13,12 @@ These rules ensure the high-performance and architectural standards of the **EM 
 
 *   **Workspace Sensitivity**: When working on features requiring `sandalwood` changes, ensure a local editable installation is used from the adjacent workspace directory (`../sandalwood`).
 
-## 🧪 Testing Standards
+## 🧪 Testing & Documentation
 
 *   **Demo Isolation**: strictly apply `@pytest.mark.demo` to any test that runs a full demo file. Ensure that the standard `pytest` run (standard tier) remains fast (<5s).
 *   **Dual-Mode Verification**: When modifying `tests/test_demos.py`, verify that the "Quick Mode" regex patching logic remains robust and correctly accelerates the demos for CI cycles.
+*   **Documentation Traceability**: Every new coil type or physical solver MUST be documented in `docs/theory.rst` with its corresponding integral form or multipole approximation logic.
+*   **Vector Type Consistency**: Prefer `FieldVector` (from `em_app.vector_fields`) over base `Vector` or raw NumPy arrays for physical fields to ensure metadata (like units or MTF status) is preserved during transformations.
 
 ## 🧹 Code Quality
 
