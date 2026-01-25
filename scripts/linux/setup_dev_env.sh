@@ -77,6 +77,7 @@ uv pip install -e .
 echo ":: Installing Em-App..."
 cd "$CURRENT_DIR"
 uv pip install -e ".[dev]"
+pre-commit install
 
 echo ":: Setup Complete! Environment is ready."
 echo ":: To run tests: pytest"

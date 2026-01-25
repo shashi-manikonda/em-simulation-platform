@@ -53,9 +53,6 @@ def test_demo_quick(demo_path, backend):
                 line = line.replace(
                     'implementation="python"', f'implementation="{backend}"'
                 )
-                line = line.replace(
-                    'implementation="cpp"', f'implementation="{backend}"'
-                )
             else:
                 line = line.replace(")", f', implementation="{backend}")')
 

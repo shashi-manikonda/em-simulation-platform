@@ -93,6 +93,7 @@ echo [STEP 3/3] Installing EM-Simulation-Platform
 echo ==========================================
 cd em-simulation-platform
 uv pip install -e .[dev,benchmark]
+pre-commit install
 cd ..
 
 echo.
