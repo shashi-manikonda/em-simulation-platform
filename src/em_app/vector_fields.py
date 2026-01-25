@@ -877,6 +877,31 @@ class VectorField:
 
         return pd.DataFrame(data)
 
+    def _get_components(self):
+        """Helper to get (vx, vy, vz) components for arithmetic operations."""
+        if self._storage_mode == "soa":
+            return self.vx, self.vy, self.vz
+        elif self._storage_mode == "aos_numerical":
+            return (
+                self._vectors_numerical[:, 0],
+                self._vectors_numerical[:, 1],
+                self._vectors_numerical[:, 2],
+            )
+        elif self._storage_mode == "aos_mtf":
+            return (
+                np.array([v.x for v in self._vectors_mtf]),
+                np.array([v.y for v in self._vectors_mtf]),
+                np.array([v.z for v in self._vectors_mtf]),
+            )
+        elif self._vectors_numerical is not None:
+            return (
+                self._vectors_numerical[:, 0],
+                self._vectors_numerical[:, 1],
+                self._vectors_numerical[:, 2],
+            )
+        else:
+            raise ValueError("VectorField has no data.")
+
     def __add__(self, other):
         """
         Adds two VectorFields together component-wise.
@@ -884,54 +909,40 @@ class VectorField:
         if not isinstance(other, VectorField):
             return NotImplemented
 
-        # Check compatible shapes (implicitly checked by numpy addition usually)
-        if self.field_points is not None and other.field_points is not None:
-            # Ideally check points match, but for performance we might skip or
-            # assume user knows
-            pass
-
-        # Handle SoA Case
-        if self._storage_mode == "soa" and other._storage_mode == "soa":
-            return VectorField(
-                (self.vx + other.vx, self.vy + other.vy, self.vz + other.vz),
-                field_points=self.field_points,
-            )
-
-        # Handle Mixed or Legacy Cases (reconstruct or use existing)
-        # Attempt to get components from both as SoA
-
-        def get_comps(vf):
-            if vf._storage_mode == "soa":
-                return vf.vx, vf.vy, vf.vz
-            elif vf._storage_mode == "aos_numerical":
-                return (
-                    vf._vectors_numerical[:, 0],
-                    vf._vectors_numerical[:, 1],
-                    vf._vectors_numerical[:, 2],
-                )
-            elif vf._storage_mode == "aos_mtf":
-                # This is tricky because AoS MTF is 1D array of FieldVectors.
-                # We need to unzip it or just use it if both are AoS MTF.
-                # Use helper to extract columns if needed
-                return (
-                    np.array([v.x for v in vf._vectors_mtf]),
-                    np.array([v.y for v in vf._vectors_mtf]),
-                    np.array([v.z for v in vf._vectors_mtf]),
-                )
-            elif vf._vectors_numerical is not None:
-                return (
-                    vf._vectors_numerical[:, 0],
-                    vf._vectors_numerical[:, 1],
-                    vf._vectors_numerical[:, 2],
-                )
-            else:
-                # Last resort try to convert to numerical if empty?
-                raise ValueError("VectorField has no data to add.")
-
-        sx, sy, sz = get_comps(self)
-        ox, oy, oz = get_comps(other)
+        sx, sy, sz = self._get_components()
+        ox, oy, oz = other._get_components()
 
         return VectorField((sx + ox, sy + oy, sz + oz), field_points=self.field_points)
+
+    def __sub__(self, other):
+        """
+        Subtracts another VectorField from this one component-wise.
+        """
+        if not isinstance(other, VectorField):
+            return NotImplemented
+
+        sx, sy, sz = self._get_components()
+        ox, oy, oz = other._get_components()
+
+        return VectorField((sx - ox, sy - oy, sz - oz), field_points=self.field_points)
+
+    def __mul__(self, other):
+        """
+        Multiplies the VectorField by a scalar.
+        """
+        if not isinstance(other, (int, float, complex)):
+            return NotImplemented
+
+        sx, sy, sz = self._get_components()
+        return VectorField(
+            (sx * other, sy * other, sz * other), field_points=self.field_points
+        )
+
+    def __rmul__(self, other):
+        """
+        Handles right-hand scalar multiplication.
+        """
+        return self.__mul__(other)
 
 
 class VectorFieldGrid(VectorField):

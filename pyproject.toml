@@ -82,8 +82,11 @@ disable_error_code = ["import-untyped"]
 testpaths = ["tests"]
 markers = [
     "demo: marks tests as demo-based (slow, skipped by default)",
+    "slow: marks tests that take a significant amount of time",
+    "integration: marks tests that verify multiple components together",
 ]
-addopts = "-m \"not demo\""
+addopts = "-v -m \"not demo\""
+xfail_strict = true
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning"

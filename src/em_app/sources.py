@@ -153,9 +153,9 @@ class Coil(object):
         all_coords = np.vstack([
             centers_numerical,
             centers_numerical
-            + (directions_numerical * self.segment_lengths.reshape(-1, 1)),
+            + (directions_numerical * (self.segment_lengths / 2).reshape(-1, 1)),
             centers_numerical
-            - (directions_numerical * self.segment_lengths.reshape(-1, 1)),
+            - (directions_numerical * (self.segment_lengths / 2).reshape(-1, 1)),
         ])
 
         min_coords = np.min(all_coords, axis=0)
