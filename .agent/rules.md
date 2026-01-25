@@ -6,7 +6,12 @@ These rules ensure the high-performance and architectural standards of the **EM 
 
 *   **SoA Enforcement**: When implementing new EM solvers or vector operations, always use the **Structure of Arrays (SoA)** pattern (separate contiguous arrays for x, y, z) rather than lists of objects. This ensures compatibility with vectorized Numba and Fortran kernels in the `sandalwood` backend.
 *   **Vectorized Dispatch**: Ensure that `VectorField` operations prioritize the internal `_get_components()` helper to avoid the overhead of iterating over `FieldVector` objects in Python.
+*   **MPI Result Integrity**: Parallel calculations (e.g., in `mpi_biot_savart`) must always broadcast results from the root rank to all other ranks using `comm.bcast`. Failure to do so leads to `NoneType` crashes on non-root processes during downstream operations.
 *   **Memory Benchmarking**: Any change to the core calculation loop or long-running simulations must be verified with `benchmarks/stress_test_memory.py` to ensure no memory growth/leaks.
+
+## 🌉 Workspace & Environment
+
+*   **Workspace Sensitivity**: When working on features requiring `sandalwood` changes, ensure a local editable installation is used from the adjacent workspace directory (`../sandalwood`).
 
 ## 🧪 Testing Standards
 
