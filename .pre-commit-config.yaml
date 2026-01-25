@@ -3,7 +3,7 @@ repos:
     hooks:
       - id: quick-demo-check
         name: Verify Demos (Quick)
-        entry: pytest -v -m demo tests/test_demos.py
+        entry: pytest -v tests/test_demos.py
         language: system
         pass_filenames: false
         always_run: true

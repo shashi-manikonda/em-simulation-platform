@@ -8,7 +8,7 @@ import tempfile
 import pytest
 
 
-pytestmark = pytest.mark.demo
+
 
 
 def find_demos():
@@ -59,8 +59,8 @@ def test_demo_quick(demo_path, backend):
                 line = line.replace(")", f', implementation="{backend}")')
 
         # 2. CONDITIONAL: Optimization for Quick Checks
-        # Only apply if SANDALWOOD_TEST_FULL_DEMOS is NOT set
-        if os.environ.get("SANDALWOOD_TEST_FULL_DEMOS") != "1":
+        # Only apply if EM_APP_TEST_FULL_DEMOS is NOT set
+        if os.environ.get("EM_APP_TEST_FULL_DEMOS") != "1":
             # Force linear order (1)
             line = re.sub(r"max_order=\d+", "max_order=1", line)
 

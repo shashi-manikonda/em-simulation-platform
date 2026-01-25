@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
 "numpy",
-"sandalwood",
+"sandalwood>=0.1.2",
 "matplotlib",
 "pandas",
 "mpi4py",
@@ -37,6 +37,7 @@ dev = [
 "ipykernel",
 "pandas-stubs",
 "pre-commit",
+"psutil",
 "ruff",
 "mypy",
 ]
