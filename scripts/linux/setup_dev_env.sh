@@ -34,11 +34,11 @@ fi
 
 # 2. Define Absolute Paths
 CURRENT_DIR=$(pwd)
-# Resolve absolute path for sandalwood
+# Resolve absolute path for sandalwood (assumes sibling directory structure)
 if [ -d "../sandalwood" ]; then
     SANDALWOOD_DIR=$(cd ../sandalwood && pwd)
 else
-    echo "Error: Sandalwood directory not found at ../sandalwood"
+    echo "Error: Sandalwood directory not found at ../sandalwood. Please ensure sandalwood is checked out as a sibling to em-simulation-platform."
     exit 1
 fi
 

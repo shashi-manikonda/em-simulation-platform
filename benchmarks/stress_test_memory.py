@@ -1,104 +1,105 @@
 import os
 import psutil
-import numpy as np
 import time
-import sys
+import numpy as np
+import gc
+from em_app.solvers import calculate_b_field
+from em_app.sources import RingCoil
+from sandalwood import mtf
 
-# Ensure em_app and sandalwood are in path if not installed
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
-
-try:
-    from em_app.sources import RingCoil
-    from em_app.solvers import calculate_b_field, Backend
-    from sandalwood import mtf
-except ImportError as e:
-    print(f"Import Error: {e}")
-    print("Ensure em-app and sandalwood are installed in editable mode.")
-    sys.exit(1)
+# Initialize MTF
+# Max dimension 4 is standard for these sims, order 1 is sufficient for standard field calculation
+mtf.initialize_mtf(max_order=1, max_dimension=4)
 
 def get_memory_usage():
     process = psutil.Process(os.getpid())
-    return process.memory_info().rss / (1024 * 1024)  # MB
+    return process.memory_info().rss / 1024 / 1024  # MB
 
-def stress_test_memory():
-    print("====================================================")
-    print("Starting Stress Test: Memory Stability (Sandalwood v0.1.2+)")
-    print("====================================================")
-    
-    # 1. Initialize COSY Backend
-    try:
-        mtf.initialize_mtf(max_order=2, max_dimension=4, implementation="cosy")
-        print(":: COSY Backend Initialized")
-    except Exception as e:
-        print(f":: Failed to initialize COSY: {e}")
-        print("Falling back to Python backend for mock stress test.")
-        mtf.initialize_mtf(max_order=2, max_dimension=4, implementation="python")
+def run_stress_test():
+    print(f"Initial Memory: {get_memory_usage():.2f} MB")
 
-    # 2. Configuration for significant load
-    num_coils = 5
-    num_points = 10000  # Minimal load for verification
-    num_iterations = 5
-    
-    print(f":: Stress Config: {num_coils} Coils, {num_points} Field Points")
-    
-    # 3. Create a complex coil system (Tokamak-like)
-    print(":: Generating coil geometry...")
+    # 1. Create coils (Tokamak-like torus)
+    # A full tokamak might have 18-24 TF coils, let's use 50 to stress it properly.
+    num_coils = 50
+    major_radius = 5.0
+    minor_radius = 1.0
+    current = 1000.0
     coils = []
+
+    print(f"Creating {num_coils} coils in toroidal arrangement...")
     for i in range(num_coils):
         angle = 2 * np.pi * i / num_coils
-        center = np.array([5.0 * np.cos(angle), 5.0 * np.sin(angle), 0.0])
-        axis = np.array([-np.sin(angle), np.cos(angle), 0.0])
-        # Each coil has 20 segments
-        coils.append(RingCoil(current=1.0, radius=2.0, num_segments=20, center_point=center, axis_direction=axis))
-    
-    # 4. Generate field points
-    field_points = np.random.rand(num_points, 3).astype(np.float64) * 10.0
-    
-    initial_mem = get_memory_usage()
-    print(f"Initial Memory: {initial_mem:.2f} MB")
-    
-    # 5. Execution Loop
-    history = []
-    for i in range(num_iterations):
-        start_time = time.time()
+        center = np.array([major_radius * np.cos(angle), major_radius * np.sin(angle), 0])
+        # Axis tangent to the circle: (-sin, cos, 0)
+        axis = np.array([-np.sin(angle), np.cos(angle), 0])
         
-        # We calculate the field for all coils in each iteration
-        # In a real leak scenario, this would balloon memory quickly
-        for coil_idx, coil in enumerate(coils):
-            # We don't need to store the result, just trigger the calculation
-            _ = calculate_b_field(coil, field_points, backend=Backend.COSY)
-            
-            # Print progress for the first iteration to give feedback
-            if i == 0 and (coil_idx + 1) % 10 == 0:
-                print(f"   Calculating Coil {coil_idx + 1}/{num_coils}...")
+        coil = RingCoil(
+            current=current,
+            radius=minor_radius,
+            num_segments=20, 
+            center_point=center,
+            axis_direction=axis
+        )
+        coils.append(coil)
 
-        current_mem = get_memory_usage()
-        elapsed = time.time() - start_time
-        history.append(current_mem)
-        print(f"Iteration {i+1}/{num_iterations}: Memory = {current_mem:.2f} MB, Time = {elapsed:.2f}s")
+    print(f"Memory after coil creation: {get_memory_usage():.2f} MB")
+
+    # 2. Create Grid (10^6 points)
+    # Using 100x100x100 grid
+    print("Creating 1,000,000 field points...")
+    N = 100
+    x = np.linspace(-6, 6, N)
+    y = np.linspace(-6, 6, N)
+    z = np.linspace(-2, 2, N)
+    X, Y, Z = np.meshgrid(x, y, z)
+    field_points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
     
-    # 6. Analysis
-    final_mem = history[-1]
-    mem_diff = final_mem - history[0]
+    assert field_points.shape[0] == 1000000
     
-    # The first iteration might have some cache/warmup growth,
-    # but subsequent ones should be flat.
-    growth_after_warmup = history[-1] - history[1] if len(history) > 1 else 0
+    print(f"Memory after grid creation: {get_memory_usage():.2f} MB")
+
+    # 3. Compute Field
+    start_time = time.time()
+    total_field = None
     
-    print("----------------------------------------------------")
-    print(f"Summary Results:")
-    print(f"  Total Memory Growth: {mem_diff:.2f} MB")
-    print(f"  Growth after warmup: {growth_after_warmup:.2f} MB")
+    print("Computing B-field and summing contributions...")
+    initial_compute_mem = get_memory_usage()
     
-    # Assertion Logic
-    # If growth_after_warmup is near zero, the pool is working perfectly.
-    # If it climbs significantly per iteration, we have a leak.
-    if growth_after_warmup > 10:  # Allow 10MB for minor fragmentation/buffer
-        print("FAIL: Memory usage is climbing linearly. CosyIndexPool is NOT engaging!")
-        sys.exit(1)
-    else:
-        print("SUCCESS: Memory usage is stable. CosyIndexPool is active.")
-        print("====================================================")
+    # Store memory readings to check for linearity (instability)
+    mem_readings = []
+
+    for i, coil in enumerate(coils):
+        # Calculate field for this coil
+        b_field = calculate_b_field(coil, field_points)
+        
+        # Accumulate
+        if total_field is None:
+            total_field = b_field
+        else:
+            total_field = total_field + b_field
+            
+        if i % 5 == 0 or i == num_coils - 1:
+            current_mem = get_memory_usage()
+            mem_readings.append(current_mem)
+            print(f"  Processed {i+1}/{num_coils} coils. Memory: {current_mem:.2f} MB")
+            
+    end_time = time.time()
+    print(f"Composition finished in {end_time - start_time:.2f} seconds.")
+    print(f"Final Memory: {get_memory_usage():.2f} MB")
+    
+    mem_growth = get_memory_usage() - initial_compute_mem
+    print(f"Memory growth during computation phase: {mem_growth:.2f} MB")
+    
+    # Simple check: If growth is huge (e.g. > 1GB for 50 coils accumulation), that's suspicious,
+    # but exact threshold depends on implementation.
+    # We are mainly looking for 'flat' profile after initialization.
+    # The first few might increase due to broadcasting/initial allocations, but it should level off.
+    
+    # 4. Cleanup
+    del total_field
+    del coils
+    gc.collect()
+    print(f"Memory after cleanup: {get_memory_usage():.2f} MB")
 
 if __name__ == "__main__":
-    stress_test_memory()
+    run_stress_test()

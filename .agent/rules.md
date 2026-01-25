@@ -12,6 +12,12 @@ These rules ensure the high-performance and architectural standards of the **EM 
 ## 🌉 Workspace & Environment
 
 *   **Workspace Sensitivity**: When working on features requiring `sandalwood` changes, ensure a local editable installation is used from the adjacent workspace directory (`../sandalwood`).
+*   **Linux Setup Authority**: The single source of truth for the Linux development environment is `/home/mls/work/em-simulation-platform/setup_dev_env.sh`. This script MUST handle:
+    *   Building the COSY backend.
+    *   Activating the virtual environment.
+    *   Installing `em-app` and `sandalwood`.
+    *   Any modifications to the build/install process MUST be made to this file first.
+    *   A copy MUST be maintained at `scripts/linux/setup_dev_env.sh`.
 
 ## 🧪 Testing & Documentation
 
