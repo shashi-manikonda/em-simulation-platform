@@ -32,6 +32,11 @@ source .venv/bin/activate
 uv pip install -e .[dev,benchmark]
 ```
 
+4. **Install Git Hooks:**
+```bash
+pre-commit install
+```
+
 The ``[dev]`` extra includes dependencies for running tests and building the documentation. The ``[benchmark]`` extra includes dependencies for running the benchmark scripts.
 
 ## Usage
@@ -48,9 +53,25 @@ jupytext --execute demos/em/01_validation_demo.ipynb
 ```
 
 ### Run tests
+
+1. **Standard (Fast):**
 ```bash
 pytest
 ```
+*Runs unit tests only; excludes slow demos.*
+
+2. **Commit Check (Quick Demos):**
+```bash
+pre-commit run --all-files
+```
+*Runs the "Quick" version of demo verification.*
+
+3. **Full Verification (Slow):**
+```bash
+export EM_APP_TEST_FULL_DEMOS=1
+pytest tests/test_demos.py
+```
+*Runs full physics simulations (unmodified demos).*
 
 ## Building the Documentation
 

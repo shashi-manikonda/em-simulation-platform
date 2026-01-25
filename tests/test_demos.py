@@ -8,7 +8,7 @@ import tempfile
 import pytest
 
 
-pytestmark = pytest.mark.demo
+
 
 
 def find_demos():
@@ -24,6 +24,7 @@ def find_demos():
     return sorted(demos)
 
 
+@pytest.mark.demo
 @pytest.mark.parametrize("backend", ["python", "cosy"])
 @pytest.mark.parametrize("demo_path", find_demos())
 def test_demo_quick(demo_path, backend):
