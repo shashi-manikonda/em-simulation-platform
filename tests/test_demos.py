@@ -8,7 +8,7 @@ import tempfile
 import pytest
 
 
-
+pytestmark = pytest.mark.demo
 
 
 def find_demos():
