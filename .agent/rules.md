@@ -23,4 +23,5 @@ These rules ensure the high-performance and architectural standards of the **EM 
 ## 🧹 Code Quality
 
 *   **Dependency Hygiene**: Always use `uv` for package management operations.
+*   **Linting & Typing**: Before pushing, always run `ruff check .` and `mypy src` to ensure code quality standards are met. This is enforced by CI.
 *   **Automation**: Prioritize using the established setup scripts in `scripts/` (e.g., `setup_dev_env.sh`) for environment initialization to ensure `pre-commit` hooks and MPI paths are correctly configured.
