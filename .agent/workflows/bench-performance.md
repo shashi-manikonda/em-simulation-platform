@@ -16,6 +16,6 @@ Run this workflow to verify that code changes haven't regressed calculation spee
 3. // turbo
    Run the Speed Benchmark:
    ```bash
-   python benchmarks/benchmark_biot_savart.py
+   python benchmarks/biot_savart_benchmark.py
    ```
 4. Compare performance against the baseline in `README.md`.
