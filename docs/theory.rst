@@ -23,6 +23,13 @@ where:
 
 In ``em-app``, complex current sources (like ``RingCoil`` or ``RectangularCoil``) are discretized into a finite number of straight-line segments. The total magnetic field is then calculated by summing the contributions from each segment, approximating the integral numerically.
 
+Numerical Discretization and Accuracy
+--------------------------------------
+
+The accuracy of the numerical Biot-Savart calculation depends heavily on the discretization level (the number of segments). For curved sources like a ``RingCoil``, a low number of segments (e.g., 4) preserves the total flux but introduces significant local errors in the field geometry.
+
+To achieve high fidelity (error < 0.1%), it is recommended to use at least 40-100 segments per coil. The platform includes automated tests (e.g., ``test_biot_savart_ring_on_axis``) that verify the numerical results against analytical solutions to ensure physical correctness.
+
 Multipole Expansion using ``sandalwood``
 --------------------------------------
 
@@ -36,6 +43,16 @@ This has two main advantages:
 2.  **Field Approximation**: The Taylor series itself is a power series representation of the field around a certain point. This is closely related to the multipole expansion, allowing for efficient field calculations at a distance.
 
 By initializing calculations with ``mtf.initialize_mtf()``, users can compute not just the value of the magnetic field but also its spatial derivatives, which are essential for understanding the field's local structure.
+
+High-Performance Solvers
+------------------------
+
+To handle the high computational cost of Biot-Savart integration over large sets of segments and field points, the platform utilizes a **Hybrid Backend** strategy:
+
+1.  **Direct Fortran Path**: When inputs are purely numerical (NumPy arrays), the system dispatches to a high-speed Fortran kernel (`COMPUTE_BIOT_SAVART_BATCH_FAST`) that bypasses the symbolic layer for near-native performance.
+2.  **Differential Algebra Path**: When symbolic analysis (Taylor maps or derivatives) is required, the system leverages the COSY Infinity backend via ``sandalwood`` to propagate high-order coefficients through the physics equations.
+
+This dual-path approach ensures that users do not have to compromise between physical fidelity and computational speed.
 
 Maxwell's Equations and Field Properties
 ----------------------------------------

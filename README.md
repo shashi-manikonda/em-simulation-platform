@@ -15,6 +15,26 @@ EM simulation tools for electromagnetic field analysis, visualization, and bench
 - Benchmarking utilities
 - Extensible architecture for research and teaching
 
+## 🏗️ Architecture Stack
+
+The platform is built on a high-performance hybrid stack:
+
+1.  **EM Solvers (Python)**: High-level physics logic (Biot-Savart, sources).
+2.  **Sandalwood Core**: Differential Algebra engine for symbolic derivatives and Taylor maps.
+3.  **COSY Infinity (Fortran)**: HPC-grade compiled core for massive batch operations.
+4.  **Acceleration**: OpenMP (Fortran) and Numba (Python) parallel kernels.
+
+![Architecture Diagram](https://raw.githubusercontent.com/shashi-manikonda/em-simulation-platform/main/docs/arch_diag.png) *(Placeholder for diagram)*
+
+## 🏗️ v0.3.0 Modernization Highlights
+
+The **v0.3.0 Release** introduces a complete overhaul of the simulation pipeline:
+
+*   **Robust Memory Pooling**: Integrated with `sandalwood>=0.1.2` for $O(1)$ variable allocation.
+*   **Performance Benchmarking**: Added `benchmarks/stress_test_memory.py` to verify stability.
+*   **Dual-Mode Testing**: Optimized test suite with dynamic regex patching for faster development cycles (~30s vs ~15m).
+*   **Strict Pre-commit**: Automated hook installation for consistent code quality and demo verification.
+
 ## Installation
 
 This project uses ``pyproject.toml`` to manage dependencies. For development, it is recommended to install the package in "editable" mode along with the development extras.
