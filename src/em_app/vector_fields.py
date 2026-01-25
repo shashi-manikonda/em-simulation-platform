@@ -671,11 +671,11 @@ class VectorField:
     def __len__(self):
         """Returns the number of vectors in the field."""
         if self._storage_mode == "soa":
-            return len(self.vx)
+            return len(self.vx) if self.vx is not None else 0
         elif self._storage_mode == "aos_numerical":
-            return len(self._vectors_numerical)
+            return len(self._vectors_numerical) if self._vectors_numerical is not None else 0
         elif self._storage_mode == "aos_mtf":
-            return len(self._vectors_mtf)
+            return len(self._vectors_mtf) if self._vectors_mtf is not None else 0
         return 0
 
     def __getitem__(self, index):
@@ -683,13 +683,19 @@ class VectorField:
         Allows indexing into the VectorField to retrieve a specific FieldVector.
         """
         if self._storage_mode == "soa":
+            if self.vx is None:
+                raise IndexError("VectorField SoA data is not initialized.")
             return FieldVector(self.vx[index], self.vy[index], self.vz[index])
 
         elif self._storage_mode == "aos_numerical":
+            if self._vectors_numerical is None:
+                raise IndexError("VectorField numerical data is not initialized.")
             vec = self._vectors_numerical[index]
             return FieldVector(vec[0], vec[1], vec[2])
 
         elif self._storage_mode == "aos_mtf":
+            if self._vectors_mtf is None:
+                raise IndexError("VectorField MTF data is not initialized.")
             return self._vectors_mtf[index]
 
         raise IndexError("VectorField storage is not initialized.")

@@ -273,9 +273,13 @@ def mpi_biot_savart(
         bx = np.concatenate(all_bx, axis=0)
         by = np.concatenate(all_by, axis=0)
         bz = np.concatenate(all_bz, axis=0)
-        return bx, by, bz
+        res = (bx, by, bz)
     else:
-        return None, None, None
+        res = (None, None, None)
+
+    # Broadcast results to all ranks
+    res = comm.bcast(res, root=0)
+    return res
 
 
 def serial_biot_savart(
