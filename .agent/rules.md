@@ -18,6 +18,9 @@ These rules ensure the high-performance and architectural standards of the **EM 
     *   Installing `em-app` and `sandalwood`.
     *   Any modifications to the build/install process MUST be made to this file first.
     *   A copy MUST be maintained at `scripts/linux/setup_dev_env.sh`.
+*   **Windows Setup Authority**: The single source of truth for the Windows development environment is `C:\Users\manik\Work\DAProjects\setup_windows_env.bat`. This script handles backend build, env activation, and package installation. A copy MUST be maintained at `scripts/windows/setup_env.bat`.
+*   **Virtual Environment**: Always use `C:\Users\manik\Work\DAProjects\.venv` for development.
+
 
 ## 🧪 Testing & Documentation
 
