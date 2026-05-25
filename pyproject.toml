@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
 "numpy",
-"sandalwood>=0.1.2",
+"sandalwood>=0.1.4",
 "matplotlib",
 "pandas",
 "mpi4py",
