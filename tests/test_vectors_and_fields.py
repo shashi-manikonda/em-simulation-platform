@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
-from em_app.vector_fields import FieldVector, VectorField
 from sandalwood import mtf
+
+from em_app.vector_fields import FieldVector, VectorField
 
 # Global settings for tests
 MAX_ORDER = 5
