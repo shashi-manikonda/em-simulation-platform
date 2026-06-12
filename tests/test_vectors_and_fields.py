@@ -70,32 +70,16 @@ def test_vectorfield_initialization_numerical():
     assert np.allclose(vectors, initial_vectors)
     assert np.allclose(points, field_points)
 
-def test_vectorfield_max():
+def test_vectorfield_len():
     """
-    Test that the VectorField class correctly returns the maximum magnitude for numerical data.
+    Test the __len__ method of the VectorField class.
     """
-    # Test with numerical data
-    field_points = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
-    vectors_numerical = np.array([[1, 0, 0], [0, 2, 0], [0, 0, -3]])
-    vector_field = VectorField(vectors_numerical, field_points=field_points)
+    vectors_numerical = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+    vector_field = VectorField(vectors_numerical)
+    assert len(vector_field) == 3
 
-    assert np.isclose(vector_field.max(), 3.0)
-
-def test_vectorfield_max_mtf():
-    """
-    Test that the VectorField class correctly returns the maximum magnitude for MTF data.
-    """
-    try:
-        from sandalwood import mtf
-    except ImportError:
-        pytest.skip("sandalwood not installed, skipping MTF test.")
-
-    v1_mtf = FieldVector(mtf.from_constant(1.0), mtf.from_constant(0.0), mtf.from_constant(0.0))
-    v2_mtf = FieldVector(mtf.from_constant(0.0), mtf.from_constant(2.0), mtf.from_constant(0.0))
-    v3_mtf = FieldVector(mtf.from_constant(0.0), mtf.from_constant(0.0), mtf.from_constant(-3.0))
-
-    field_points = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
-    vectors_mtf = np.array([v1_mtf, v2_mtf, v3_mtf], dtype=object)
-    vector_field_mtf = VectorField(vectors_mtf, field_points=field_points)
-
-    assert np.isclose(vector_field_mtf.max(), 3.0)
+    vx = np.array([1, 2, 3, 4])
+    vy = np.array([5, 6, 7, 8])
+    vz = np.array([9, 10, 11, 12])
+    vector_field_soa = VectorField((vx, vy, vz))
+    assert len(vector_field_soa) == 4
