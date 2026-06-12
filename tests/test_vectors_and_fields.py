@@ -69,3 +69,47 @@ def test_vectorfield_initialization_numerical():
     assert len(vectors) == 2
     assert np.allclose(vectors, initial_vectors)
     assert np.allclose(points, field_points)
+
+def test_fieldvector_cross_product():
+    """
+    Test the cross product of two FieldVector objects.
+    """
+    # Test standard basis vectors
+    i = FieldVector(1.0, 0.0, 0.0)
+    j = FieldVector(0.0, 1.0, 0.0)
+    k = FieldVector(0.0, 0.0, 1.0)
+
+    # i x j = k
+    cross_ij = i.cross(j)
+    assert np.allclose(cross_ij.to_numpy_array(), [0.0, 0.0, 1.0])
+    assert isinstance(cross_ij, FieldVector)
+
+    # j x k = i
+    cross_jk = j.cross(k)
+    assert np.allclose(cross_jk.to_numpy_array(), [1.0, 0.0, 0.0])
+
+    # k x i = j
+    cross_ki = k.cross(i)
+    assert np.allclose(cross_ki.to_numpy_array(), [0.0, 1.0, 0.0])
+
+    # Test arbitrary vectors
+    v1 = FieldVector(2.0, 3.0, 4.0)
+    v2 = FieldVector(5.0, 6.0, 7.0)
+
+    # x = 3*7 - 4*6 = 21 - 24 = -3
+    # y = 4*5 - 2*7 = 20 - 14 = 6
+    # z = 2*6 - 3*5 = 12 - 15 = -3
+    cross_v1v2 = v1.cross(v2)
+    assert np.allclose(cross_v1v2.to_numpy_array(), [-3.0, 6.0, -3.0])
+
+    # Cross product with itself should be zero vector
+    cross_v1v1 = v1.cross(v1)
+    assert np.allclose(cross_v1v1.to_numpy_array(), [0.0, 0.0, 0.0])
+
+    # Anti-commutativity: v1 x v2 = -(v2 x v1)
+    cross_v2v1 = v2.cross(v1)
+    assert np.allclose(cross_v1v2.to_numpy_array(), -cross_v2v1.to_numpy_array())
+
+    # Test TypeError
+    with pytest.raises(TypeError, match="unsupported operand type\\(s\\) for cross product"):
+        i.cross(1.0)
