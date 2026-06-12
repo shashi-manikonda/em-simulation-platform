@@ -805,32 +805,43 @@ class VectorField:
         """
         numerical_points, numerical_vectors = self._get_numerical_data()
 
-        if dimension != 3:
-            raise NotImplementedError("Only 3D quiver plots are currently supported.")
-
         if ax is None:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection="3d")
+            if dimension == 3:
+                ax = fig.add_subplot(111, projection="3d")
+            elif dimension == 2:
+                ax = fig.add_subplot(111)
+            else:
+                raise ValueError("Dimension must be 2 or 3.")
 
         # Ensure data is real for plotting
         numerical_points = numerical_points.real
         numerical_vectors = numerical_vectors.real
 
-        x = numerical_points[:, 0]
-        y = numerical_points[:, 1]
-        z = numerical_points[:, 2]
-        u = numerical_vectors[:, 0]
-        v = numerical_vectors[:, 1]
-        w = numerical_vectors[:, 2]
-
         # Default length=0.1 and normalize=True for better visualization
         length = kwargs.pop("length", 0.1)
         normalize = kwargs.pop("normalize", True)
 
-        ax.quiver(x, y, z, u, v, w, length=length, normalize=normalize, **kwargs)
+        if dimension == 3:
+            x = numerical_points[:, 0]
+            y = numerical_points[:, 1]
+            z = numerical_points[:, 2]
+            u = numerical_vectors[:, 0]
+            v = numerical_vectors[:, 1]
+            w = numerical_vectors[:, 2]
+            ax.quiver(x, y, z, u, v, w, length=length, normalize=normalize, **kwargs)
+        elif dimension == 2:
+            ax.quiver(
+                numerical_points[:, 0], numerical_points[:, 1],
+                numerical_vectors[:, 0], numerical_vectors[:, 1],
+                **kwargs
+            )
+        else:
+            raise ValueError("Dimension must be 2 or 3.")
         ax.set_xlabel("X-axis")
         ax.set_ylabel("Y-axis")
-        ax.set_zlabel("Z-axis")
+        if dimension == 3:
+            ax.set_zlabel("Z-axis")
         ax.set_title(title)
 
         if "show" not in kwargs or kwargs["show"]:
