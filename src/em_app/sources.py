@@ -57,15 +57,25 @@ def _rotation_matrix_align_vectors(v1, v2):
     if not isinstance(v2, np.ndarray) or v2.shape != (3,):
         raise TypeError("v2 must be a 3-element NumPy array.")
 
-    v1_u = v1 / np.linalg.norm(v1)
-    v2_u = v2 / np.linalg.norm(v2)
+    v1_norm = np.linalg.norm(v1)
+    v2_norm = np.linalg.norm(v2)
+    if v1_norm == 0 or v2_norm == 0:
+        raise ValueError("Vectors must not be zero length.")
+
+    v1_u = v1 / v1_norm
+    v2_u = v2 / v2_norm
     v_cross = np.cross(v1_u, v2_u)
-    if np.allclose(v_cross, 0):
+    v_cross_norm = np.linalg.norm(v_cross)
+
+    if np.allclose(v_cross_norm, 0):
         if np.dot(v1_u, v2_u) < 0:
-            return _rotation_matrix(np.array([1, 0, 0]), np.pi)
+            # Need to find an orthogonal vector to rotate 180 degrees
+            ortho = np.array([1.0, 0.0, 0.0]) if np.isclose(v1_u[0], 0) else np.array([-v1_u[1], v1_u[0], 0.0])
+            ortho = ortho / np.linalg.norm(ortho)
+            return _rotation_matrix(ortho, np.pi)
         return np.eye(3)
 
-    rotation_axis = v_cross / np.linalg.norm(v_cross)
+    rotation_axis = v_cross / v_cross_norm
     rotation_angle = np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
     return _rotation_matrix(rotation_axis, rotation_angle)
 
