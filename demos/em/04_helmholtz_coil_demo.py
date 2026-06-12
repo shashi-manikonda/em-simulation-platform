@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from sandalwood import mtf
+
 from em_app.solvers import calculate_b_field
 from em_app.sources import RingCoil
-from sandalwood import mtf
 
 # Initialize the MTF library
 # The 4th dimension is used for numerical integration along the segments.

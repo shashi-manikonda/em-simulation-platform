@@ -8,9 +8,6 @@ import tempfile
 import pytest
 
 
-
-
-
 def find_demos():
     """Recursively finds all .ipynb and .py files in the demos directory."""
     demo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "demos"))
