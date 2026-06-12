@@ -69,3 +69,23 @@ def test_vectorfield_initialization_numerical():
     assert len(vectors) == 2
     assert np.allclose(vectors, initial_vectors)
     assert np.allclose(points, field_points)
+
+import pytest
+from em_app.vector_fields import FieldVector
+
+import pytest
+from em_app.vector_fields import FieldVector
+
+def test_fieldvector_dot_invalid_type():
+    """
+    Test that calling dot product on a FieldVector with an unsupported type
+    raises a TypeError.
+    """
+    vec1 = FieldVector(1.0, 2.0, 3.0)
+
+    # Needs to be an object that doesn't have __iter__ or __getitem__
+    # object() does not have these.
+    invalid_other = object()
+
+    with pytest.raises(TypeError, match="unsupported operand type\\(s\\) for dot product: 'Vector' and 'object'"):
+        vec1.dot(invalid_other)
