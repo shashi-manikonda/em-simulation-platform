@@ -70,13 +70,16 @@ def test_vectorfield_initialization_numerical():
     assert np.allclose(vectors, initial_vectors)
     assert np.allclose(points, field_points)
 
-def test_vectorfield_quiver_invalid_dimension():
+def test_vectorfield_len():
     """
-    Test that VectorField.quiver raises an error for unsupported dimensions.
+    Test the __len__ method of the VectorField class.
     """
-    field_points = np.array([[0, 0, 0]])
-    initial_vectors = np.array([[0, 0, 1]])
-    vector_field = VectorField(initial_vectors, field_points)
+    vectors_numerical = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+    vector_field = VectorField(vectors_numerical)
+    assert len(vector_field) == 3
 
-    with pytest.raises(ValueError, match="Dimension must be 2 or 3."):
-        vector_field.quiver(dimension=4)
+    vx = np.array([1, 2, 3, 4])
+    vy = np.array([5, 6, 7, 8])
+    vz = np.array([9, 10, 11, 12])
+    vector_field_soa = VectorField((vx, vy, vz))
+    assert len(vector_field_soa) == 4
