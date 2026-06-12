@@ -80,7 +80,7 @@ def calculate_b_field(coil_instance, field_points, backend=Backend.PYTHON):
             field_points=field_points,
             backend=Backend.COSY,
         )
-    else:
+    elif backend in (Backend.PYTHON, Backend.COSY):
         bx, by, bz = serial_biot_savart(
             element_centers=element_centers_np,
             element_lengths=coil_instance.segment_lengths,
@@ -88,6 +88,8 @@ def calculate_b_field(coil_instance, field_points, backend=Backend.PYTHON):
             field_points=field_points,
             backend=backend,
         )
+    else:
+        raise ValueError(f"Unknown backend: {backend}")
 
     # Optimized Vector Field Creation (SoA enforced)
     if coil_instance.use_mtf_for_segments:

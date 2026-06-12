@@ -164,3 +164,23 @@ def test_biot_savart_with_mtf(backend):
     y_component = b_vectors_mtf[0].y
     y_coeff = y_component.extract_coefficient(tuple([0] * y_component.dimension))
     assert np.isclose(y_coeff.item(), 0)
+
+def test_calculate_b_field_unknown_backend():
+    """
+    Test that calculate_b_field raises a ValueError when an unknown backend
+    is passed (bypassing the string conversion logic).
+    """
+    radius = 1.0
+    current = 1.0
+    num_segments = 4
+    center = np.array([0, 0, 0])
+    axis = np.array([0, 0, 1])
+
+    ring_coil = RingCoil(current, radius, num_segments, center, axis)
+    field_points = np.array([[0, 0, 0]])
+
+    class UnknownBackend:
+        pass
+
+    with pytest.raises(ValueError, match="Unknown backend"):
+        calculate_b_field(ring_coil, field_points, backend=UnknownBackend())
