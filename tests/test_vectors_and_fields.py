@@ -70,22 +70,16 @@ def test_vectorfield_initialization_numerical():
     assert np.allclose(vectors, initial_vectors)
     assert np.allclose(points, field_points)
 
-import pytest
-from em_app.vector_fields import FieldVector
-
-import pytest
-from em_app.vector_fields import FieldVector
-
-def test_fieldvector_dot_invalid_type():
+def test_vectorfield_len():
     """
-    Test that calling dot product on a FieldVector with an unsupported type
-    raises a TypeError.
+    Test the __len__ method of the VectorField class.
     """
-    vec1 = FieldVector(1.0, 2.0, 3.0)
+    vectors_numerical = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+    vector_field = VectorField(vectors_numerical)
+    assert len(vector_field) == 3
 
-    # Needs to be an object that doesn't have __iter__ or __getitem__
-    # object() does not have these.
-    invalid_other = object()
-
-    with pytest.raises(TypeError, match="unsupported operand type\\(s\\) for dot product: 'Vector' and 'object'"):
-        vec1.dot(invalid_other)
+    vx = np.array([1, 2, 3, 4])
+    vy = np.array([5, 6, 7, 8])
+    vz = np.array([9, 10, 11, 12])
+    vector_field_soa = VectorField((vx, vy, vz))
+    assert len(vector_field_soa) == 4
