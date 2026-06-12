@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from em_app.sources import RectangularCoil, RingCoil
+from em_app.sources import RectangularCoil, RingCoil, _rotation_matrix
 
 # Global settings for tests
 MAX_ORDER = 5
@@ -64,83 +64,39 @@ def test_invalid_rectangular_coil_creation():
     with pytest.raises(ValueError, match="Side vectors from p1 must be orthogonal."):
         RectangularCoil(current, p1, p2, p4, num_segments_per_side=5)
 
-from em_app.sources import _rotation_matrix_align_vectors
 
-def test_rotation_matrix_align_vectors_identical():
-    """Test aligning a vector with itself returns the identity matrix."""
-    v1 = np.array([1.0, 0.0, 0.0])
-    v2 = np.array([1.0, 0.0, 0.0])
-    rot_mat = _rotation_matrix_align_vectors(v1, v2)
-    assert np.allclose(rot_mat, np.eye(3))
-    assert np.allclose(rot_mat @ v1, v2)
+def test_rotation_matrix_valid():
+    """Test valid rotation matrices."""
+    # Rotation by 0 degrees should be identity
+    axis = np.array([1.0, 0.0, 0.0])
+    rot0 = _rotation_matrix(axis, 0.0)
+    assert np.allclose(rot0, np.eye(3))
 
-def test_rotation_matrix_align_vectors_opposite():
-    """Test aligning opposite vectors returns a 180 degree rotation."""
-    v1 = np.array([1.0, 0.0, 0.0])
-    v2 = np.array([-1.0, 0.0, 0.0])
-    rot_mat = _rotation_matrix_align_vectors(v1, v2)
-    assert np.allclose(rot_mat @ v1, v2)
+    # Rotation by 90 degrees around X axis
+    rot_x_90 = _rotation_matrix(axis, np.pi / 2)
+    expected_x = np.array([
+        [1.0, 0.0, 0.0],
+        [0.0, 0.0, -1.0],
+        [0.0, 1.0, 0.0]
+    ])
+    assert np.allclose(rot_x_90, expected_x)
 
-    # Different axis
-    v1 = np.array([0.0, 1.0, 0.0])
-    v2 = np.array([0.0, -1.0, 0.0])
-    rot_mat = _rotation_matrix_align_vectors(v1, v2)
-    assert np.allclose(rot_mat @ v1, v2)
+    # Rotation by 90 degrees around Y axis
+    axis_y = np.array([0.0, 1.0, 0.0])
+    rot_y_90 = _rotation_matrix(axis_y, np.pi / 2)
+    expected_y = np.array([
+        [0.0, 0.0, 1.0],
+        [0.0, 1.0, 0.0],
+        [-1.0, 0.0, 0.0]
+    ])
+    assert np.allclose(rot_y_90, expected_y)
 
-    # Different axis 2
-    v1 = np.array([0.0, 0.0, 1.0])
-    v2 = np.array([0.0, 0.0, -1.0])
-    rot_mat = _rotation_matrix_align_vectors(v1, v2)
-    assert np.allclose(rot_mat @ v1, v2)
-
-    # Arbitrary opposite
-    v1 = np.array([1.0, 2.0, 3.0])
-    v1 = v1 / np.linalg.norm(v1)
-    v2 = -v1
-    rot_mat = _rotation_matrix_align_vectors(v1, v2)
-    assert np.allclose(rot_mat @ v1, v2)
-
-def test_rotation_matrix_align_vectors_orthogonal():
-    """Test aligning orthogonal vectors."""
-    v1 = np.array([1.0, 0.0, 0.0])
-    v2 = np.array([0.0, 1.0, 0.0])
-    rot_mat = _rotation_matrix_align_vectors(v1, v2)
-    assert np.allclose(rot_mat @ v1, v2)
-
-    v1 = np.array([0.0, 0.0, 1.0])
-    v2 = np.array([1.0, 0.0, 0.0])
-    rot_mat = _rotation_matrix_align_vectors(v1, v2)
-    assert np.allclose(rot_mat @ v1, v2)
-
-def test_rotation_matrix_align_vectors_arbitrary():
-    """Test aligning arbitrary non-orthogonal, non-opposite vectors."""
-    v1 = np.array([1.0, 2.0, 3.0])
-    v2 = np.array([-1.0, 4.0, -2.0])
-    rot_mat = _rotation_matrix_align_vectors(v1, v2)
-    v1_norm = v1 / np.linalg.norm(v1)
-    v2_norm = v2 / np.linalg.norm(v2)
-    assert np.allclose(rot_mat @ v1_norm, v2_norm)
-
-def test_rotation_matrix_align_vectors_invalid_input():
-    """Test that invalid inputs raise TypeError."""
-    with pytest.raises(TypeError, match="v1 must be a 3-element NumPy array."):
-        _rotation_matrix_align_vectors([1, 0, 0], np.array([0, 1, 0]))
-
-    with pytest.raises(TypeError, match="v2 must be a 3-element NumPy array."):
-        _rotation_matrix_align_vectors(np.array([1, 0, 0]), [0, 1, 0])
-
-    with pytest.raises(TypeError, match="v1 must be a 3-element NumPy array."):
-        _rotation_matrix_align_vectors(np.array([1, 0]), np.array([0, 1, 0]))
-
-    with pytest.raises(TypeError, match="v2 must be a 3-element NumPy array."):
-        _rotation_matrix_align_vectors(np.array([1, 0, 0]), np.array([0, 1]))
-
-def test_rotation_matrix_align_vectors_zero_length():
-    """Test zero length vectors."""
-    v1 = np.array([0.0, 0.0, 0.0])
-    v2 = np.array([1.0, 0.0, 0.0])
-    with pytest.raises(ValueError, match="Vectors must not be zero length."):
-        _rotation_matrix_align_vectors(v1, v2)
-
-    with pytest.raises(ValueError, match="Vectors must not be zero length."):
-        _rotation_matrix_align_vectors(v2, v1)
+    # Rotation by 90 degrees around Z axis
+    axis_z = np.array([0.0, 0.0, 1.0])
+    rot_z_90 = _rotation_matrix(axis_z, np.pi / 2)
+    expected_z = np.array([
+        [0.0, -1.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0]
+    ])
+    assert np.allclose(rot_z_90, expected_z)
