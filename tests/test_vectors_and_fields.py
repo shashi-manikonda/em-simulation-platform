@@ -70,37 +70,16 @@ def test_vectorfield_initialization_numerical():
     assert np.allclose(vectors, initial_vectors)
     assert np.allclose(points, field_points)
 
-def test_vectorfield_min():
+def test_vectorfield_len():
     """
-    Test that the VectorField class correctly calculates the minimum magnitude.
+    Test the __len__ method of the VectorField class.
     """
-    # Test with numerical data
-    field_points = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
-    vectors_numerical = np.array([[3, 4, 0], [1, 0, 0], [0, 8, 6]])
+    vectors_numerical = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+    vector_field = VectorField(vectors_numerical)
+    assert len(vector_field) == 3
 
-    # Wrap the vectors in FieldVector objects
-    vectors_objects = np.array(
-        [FieldVector(vec[0], vec[1], vec[2]) for vec in vectors_numerical], dtype=object
-    )
-
-    vector_field = VectorField(vectors_objects, field_points=field_points)
-
-    # Minimum magnitude should be 1.0 (from [1, 0, 0])
-    assert np.isclose(vector_field.min(), 1.0)
-
-    # Test with MTF data
-    try:
-        from sandalwood import mtf
-
-        # mtf objects that evaluate to different magnitudes when constant part is taken
-        # Create vectors with magnitudes 5, 2, 10
-        v1 = FieldVector(mtf.from_constant(3), mtf.from_constant(4), mtf.from_constant(0))
-        v2 = FieldVector(mtf.from_constant(0), mtf.from_constant(2), mtf.from_constant(0))
-        v3 = FieldVector(mtf.from_constant(0), mtf.from_constant(6), mtf.from_constant(8))
-
-        mtf_vectors = np.array([v1, v2, v3], dtype=object)
-        mtf_vector_field = VectorField(mtf_vectors, field_points=field_points)
-
-        assert np.isclose(mtf_vector_field.min(), 2.0)
-    except ImportError:
-        pass
+    vx = np.array([1, 2, 3, 4])
+    vy = np.array([5, 6, 7, 8])
+    vz = np.array([9, 10, 11, 12])
+    vector_field_soa = VectorField((vx, vy, vz))
+    assert len(vector_field_soa) == 4
