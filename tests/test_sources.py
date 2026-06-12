@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from em_app.sources import RectangularCoil, RingCoil
 
 # Global settings for tests

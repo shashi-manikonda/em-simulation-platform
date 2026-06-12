@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
-from em_app.vector_fields import FieldVector, VectorField
 from sandalwood import mtf
+
+from em_app.vector_fields import FieldVector, VectorField
 
 # Global settings for tests
 MAX_ORDER = 5
@@ -69,3 +70,17 @@ def test_vectorfield_initialization_numerical():
     assert len(vectors) == 2
     assert np.allclose(vectors, initial_vectors)
     assert np.allclose(points, field_points)
+
+def test_vectorfield_len():
+    """
+    Test the __len__ method of the VectorField class.
+    """
+    vectors_numerical = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+    vector_field = VectorField(vectors_numerical)
+    assert len(vector_field) == 3
+
+    vx = np.array([1, 2, 3, 4])
+    vy = np.array([5, 6, 7, 8])
+    vz = np.array([9, 10, 11, 12])
+    vector_field_soa = VectorField((vx, vy, vz))
+    assert len(vector_field_soa) == 4

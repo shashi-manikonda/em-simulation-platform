@@ -673,7 +673,11 @@ class VectorField:
         if self._storage_mode == "soa":
             return len(self.vx) if self.vx is not None else 0
         elif self._storage_mode == "aos_numerical":
-            return len(self._vectors_numerical) if self._vectors_numerical is not None else 0
+            return (
+                len(self._vectors_numerical)
+                if self._vectors_numerical is not None
+                else 0
+            )
         elif self._storage_mode == "aos_mtf":
             return len(self._vectors_mtf) if self._vectors_mtf is not None else 0
         return 0

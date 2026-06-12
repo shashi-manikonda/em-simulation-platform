@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
-from em_app.vector_fields import VectorFieldGrid, FieldVector
+
+from em_app.vector_fields import VectorFieldGrid
+
 
 def test_vector_field_grid_init_and_reshape():
     """Verify VectorFieldGrid correctly reshapes points and vectors."""
@@ -30,5 +32,7 @@ def test_vector_field_grid_validation():
     points = np.zeros((4, 3))
     vectors = np.zeros((4, 3))
     
-    with pytest.raises(ValueError, match="number of field points must match the product"):
+    with pytest.raises(
+        ValueError, match="number of field points must match the product"
+    ):
         VectorFieldGrid(vectors, points, (2, 3), ("x", "y"))

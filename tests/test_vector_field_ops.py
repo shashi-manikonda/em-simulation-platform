@@ -1,7 +1,8 @@
 import numpy as np
-import pytest
-from em_app.vector_fields import FieldVector, VectorField
 from sandalwood import mtf
+
+from em_app.vector_fields import FieldVector, VectorField
+
 
 def test_vector_field_arithmetic():
     """Test addition, subtraction and scalar multiplication of VectorFields."""
@@ -50,7 +51,9 @@ def test_vector_field_mtf_conversion():
     """Test handling of MTF vectors in VectorField."""
     points = np.array([[0,0,0]])
     # Create an MTF vector
-    v_mtf = FieldVector(mtf.from_constant(1.0), mtf.from_constant(0.0), mtf.from_constant(0.0))
+    v_mtf = FieldVector(
+        mtf.from_constant(1.0), mtf.from_constant(0.0), mtf.from_constant(0.0)
+    )
     vf = VectorField(np.array([v_mtf], dtype=object), points)
     
     # Check if storage mode is MTF

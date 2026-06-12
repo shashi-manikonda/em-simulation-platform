@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
-from em_app.sources import StraightWire, RingCoil, Coil
+
+from em_app.sources import RingCoil, StraightWire
+
 
 def test_straight_wire_generation():
     """Verify StraightWire discretization and orientations."""
@@ -8,7 +10,9 @@ def test_straight_wire_generation():
     end = np.array([0, 0, 2])
     n_seg = 5
     
-    wire = StraightWire(current=1.0, start_point=start, end_point=end, num_segments=n_seg)
+    wire = StraightWire(
+        current=1.0, start_point=start, end_point=end, num_segments=n_seg
+    )
     
     centers, lengths, directions = wire.get_segments()
     

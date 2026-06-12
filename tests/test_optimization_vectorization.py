@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
+from sandalwood import MultivariateTaylorFunction, mtf
+
 from em_app.solvers import Backend, serial_biot_savart
 from em_app.sources import StraightWire
-from sandalwood import MultivariateTaylorFunction, mtf
 
 # Check backend availability
 try:
